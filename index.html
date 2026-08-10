@@ -4,587 +4,533 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0A0A0A">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>EcoHybrid by Octopus Energy</title>
-<script>
-// Svuota cache vecchia PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    for (let reg of regs) { reg.unregister(); console.log('SW vecchio rimosso'); }
-  });
-  caches.keys().then(names => {
-    for (let name of names) { caches.delete(name); console.log('Cache rimossa:', name); }
-  });
-}
-</script>
 <style>
 :root {
-  --octo-pink: #E6007E; --octo-yellow: #FFD700; --octo-teal: #00D4AA;
-  --octo-dark: #0A0A0A; --octo-card: #141414; --octo-border: #2A2A2A;
-  --octo-text: #FFFFFF; --octo-text2: #A0A0A0; --octo-danger: #FF4444;
+  --pink: #E6007E; --yellow: #FFD700; --teal: #00D4AA;
+  --dark: #0A0A0A; --card: #141414; --border: #2A2A2A;
+  --text: #FFFFFF; --text2: #A0A0A0; --danger: #FF4444;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--octo-dark); color: var(--octo-text); min-height:100vh; line-height:1.5;
+  background: var(--dark); color: var(--text); min-height:100vh; line-height:1.5;
 }
-.container { max-width:560px; margin:0 auto; padding:16px; }
+.container { max-width:480px; margin:0 auto; padding:16px; }
 
-/* Header */
-.header { text-align:center; padding:20px 0 16px; border-bottom:2px solid var(--octo-pink); margin-bottom:20px; }
-.header h1 { font-size:1.7rem; font-weight:800; letter-spacing:-1px; }
-.header h1 span { color: var(--octo-pink); }
-.header p { font-size:0.8rem; color:var(--octo-text2); margin-top:4px; }
-.header .badge { display:inline-block; background:var(--octo-pink); color:white; padding:3px 10px; border-radius:12px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-top:8px; }
+.header { text-align:center; padding:24px 0 16px; border-bottom:2px solid var(--pink); margin-bottom:20px; }
+.header h1 { font-size:1.8rem; font-weight:800; letter-spacing:-1px; }
+.header h1 span { color: var(--pink); }
+.header p { font-size:0.8rem; color:var(--text2); margin-top:4px; }
+.header .badge { display:inline-block; background:var(--pink); color:white; padding:3px 10px; border-radius:12px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-top:8px; }
 
-/* Cards */
-.card { background:var(--octo-card); border:1px solid var(--octo-border); border-radius:16px; padding:18px; margin-bottom:14px; }
-.card h2 { font-size:0.7rem; color:var(--octo-text2); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
-.card h2 .num { background:var(--octo-pink); color:white; width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:14px; }
+.card h2 { font-size:0.75rem; color:var(--text2); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; }
 
-/* Step system */
-.step { display:none; }
-.step.active { display:block; animation:fadeIn 0.3s ease; }
+.screen { display:none; }
+.screen.active { display:block; animation:fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:translateY(0);} }
 
-/* Choice grid */
-.choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-.choice-btn {
-  background:var(--octo-dark); border:2px solid var(--octo-border); border-radius:12px; padding:16px;
-  text-align:center; cursor:pointer; font-weight:600; font-size:0.85rem; color:var(--octo-text);
-  transition:all 0.2s;
+.big-choice { 
+  display:block; width:100%; padding:20px; margin-bottom:12px; background:var(--dark); 
+  border:2px solid var(--border); border-radius:14px; text-align:left; cursor:pointer;
+  color:var(--text); transition:all 0.2s;
 }
-.choice-btn:hover { border-color:var(--octo-pink); }
-.choice-btn.selected { border-color:var(--octo-pink); background:rgba(230,0,126,0.1); }
+.big-choice:hover { border-color:var(--pink); }
+.big-choice.selected { border-color:var(--pink); background:rgba(230,0,126,0.08); }
+.big-choice .icon { font-size:1.8rem; margin-bottom:8px; }
+.big-choice .title { font-size:1.1rem; font-weight:700; margin-bottom:4px; }
+.big-choice .desc { font-size:0.8rem; color:var(--text2); line-height:1.4; }
+.big-choice .tag { display:inline-block; background:var(--teal); color:var(--dark); padding:2px 8px; border-radius:6px; font-size:0.65rem; font-weight:700; margin-top:8px; }
+.big-choice .tag-pink { background:var(--pink); color:white; }
 
-/* Inputs */
-.input-field {
-  width:100%; padding:12px; background:var(--octo-dark); border:1px solid var(--octo-border);
-  border-radius:10px; font-size:1rem; color:var(--octo-text); margin-top:8px;
-}
-.input-field:focus { outline:none; border-color:var(--octo-pink); }
-
-/* Buttons */
 .btn {
   width:100%; padding:14px; border:none; border-radius:12px; font-size:0.95rem; font-weight:700;
   cursor:pointer; transition:all 0.2s; margin-top:10px; color:white;
 }
 .btn:hover { opacity:0.9; transform:translateY(-1px); }
-.btn-primary { background:var(--octo-pink); }
-.btn-secondary { background:var(--octo-border); color:var(--octo-text); }
-.btn-on { background:var(--octo-teal); color:var(--octo-dark); }
-.btn-off { background:var(--octo-danger); color:white; }
-.btn-mode { background:var(--octo-dark); border:1px solid var(--octo-border); color:var(--octo-text); font-size:0.8rem; padding:10px; }
-.btn-mode.active { background:var(--octo-pink); border-color:var(--octo-pink); }
+.btn-primary { background:var(--pink); }
+.btn-secondary { background:var(--border); color:var(--text); }
+.btn-teal { background:var(--teal); color:var(--dark); }
+.btn:disabled { opacity:0.4; cursor:not-allowed; }
 
-/* Metrics */
-.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.metric { text-align:center; padding:16px 10px; background:var(--octo-dark); border-radius:12px; border:1px solid var(--octo-border); }
-.metric-value { font-size:2.4rem; font-weight:800; line-height:1; }
-.metric-unit { font-size:0.85rem; color:var(--octo-text2); }
+.input-field {
+  width:100%; padding:12px; background:var(--dark); border:1px solid var(--border);
+  border-radius:10px; font-size:1rem; color:var(--text); margin-top:6px;
+}
+.input-field:focus { outline:none; border-color:var(--pink); }
+label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
 
-/* Status */
-.status-badge { display:inline-block; padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:700; }
-.status-badge.on { background:rgba(0,212,170,0.15); color:var(--octo-teal); border:1px solid var(--octo-teal); }
-.status-badge.off { background:rgba(255,68,68,0.15); color:var(--octo-danger); border:1px solid var(--octo-danger); }
+.file-upload {
+  border:2px dashed var(--border); border-radius:12px; padding:30px; text-align:center;
+  cursor:pointer; transition:all 0.2s; margin-top:10px;
+}
+.file-upload:hover { border-color:var(--pink); }
+.file-upload .icon { font-size:2rem; margin-bottom:8px; }
+.file-upload .text { font-size:0.9rem; color:var(--text2); }
+.file-upload input { display:none; }
 
-/* Fascia */
-.fascia-bar { display:flex; gap:4px; margin-top:10px; }
-.fascia-segment { flex:1; height:8px; border-radius:4px; opacity:0.3; transition:opacity 0.3s; }
-.fascia-segment.active { opacity:1; box-shadow:0 0 8px currentColor; }
-.fascia-info { display:flex; justify-content:space-between; margin-top:8px; font-size:0.85rem; }
-.fascia-info .prezzo { color:var(--octo-yellow); font-weight:700; }
+.ocr-result { background:var(--dark); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:14px; }
+.ocr-result .field { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+.ocr-result .field:last-child { border-bottom:none; }
+.ocr-result .label { font-size:0.8rem; color:var(--text2); }
+.ocr-result .value { font-size:0.9rem; font-weight:700; color:var(--teal); }
+.ocr-result .edit { background:none; border:none; color:var(--pink); font-size:0.75rem; cursor:pointer; }
 
-/* Suggestion */
-.suggestion { padding:14px; border-radius:12px; background:rgba(230,0,126,0.08); border-left:3px solid var(--octo-pink); font-size:0.9rem; }
-.suggestion .pilastro-tag { display:inline-block; background:var(--octo-pink); color:white; padding:2px 8px; border-radius:8px; font-size:0.65rem; font-weight:700; margin-bottom:6px; }
+.learning-bar { background:var(--border); border-radius:10px; height:12px; overflow:hidden; margin:14px 0; }
+.learning-fill { background:linear-gradient(90deg,var(--pink),var(--teal)); height:100%; border-radius:10px; width:0%; transition:width 1s ease; }
+.learning-text { text-align:center; font-size:0.85rem; color:var(--text2); margin-top:8px; }
+.learning-days { text-align:center; font-size:2rem; font-weight:800; color:var(--teal); margin:10px 0; }
 
-/* Pilastri */
-.pilastri-list { display:flex; flex-direction:column; gap:8px; }
-.pilastro-item { display:flex; align-items:center; gap:12px; padding:12px; background:var(--octo-dark); border-radius:10px; border:1px solid var(--octo-border); }
-.pilastro-item.active { border-color:var(--octo-teal); }
-.pilastro-item.inactive { opacity:0.5; }
-.pilastro-num { width:28px;height:28px; border-radius:50%; background:var(--octo-pink); color:white; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; flex-shrink:0; }
-.pilastro-info { flex:1; }
-.pilastro-info .nome { font-size:0.85rem; font-weight:700; }
-.pilastro-info .desc { font-size:0.75rem; color:var(--octo-text2); }
-.pilastro-status { font-size:0.65rem; padding:3px 8px; border-radius:8px; font-weight:700; }
-.pilastro-status.on { background:rgba(0,212,170,0.15); color:var(--octo-teal); }
-.pilastro-status.off { background:rgba(255,68,68,0.15); color:var(--octo-danger); }
+.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.metric { text-align:center; padding:16px 10px; background:var(--dark); border-radius:12px; border:1px solid var(--border); }
+.metric-value { font-size:2rem; font-weight:800; }
+.metric-unit { font-size:0.8rem; color:var(--text2); }
 
-/* Controls */
-.temp-slider { width:100%; margin:10px 0; accent-color:var(--octo-pink); height:6px; }
-.mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+.status-badge { display:inline-block; padding:5px 14px; border-radius:20px; font-size:0.8rem; font-weight:700; }
+.status-on { background:rgba(0,212,170,0.15); color:var(--teal); border:1px solid var(--teal); }
+.status-off { background:rgba(255,68,68,0.15); color:var(--danger); border:1px solid var(--danger); }
+.status-wait { background:rgba(255,215,0,0.15); color:var(--yellow); border:1px solid var(--yellow); }
 
-/* Progress */
-.progress-container { background:var(--octo-border); border-radius:12px; height:20px; margin-bottom:8px; overflow:hidden; }
-.progress-bar { background:linear-gradient(90deg,var(--octo-pink),var(--octo-teal)); height:100%; border-radius:12px; width:0%; transition:width 0.5s ease; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; color:white; font-size:0.75rem; font-weight:700; }
+.setup-step { display:flex; align-items:flex-start; gap:14px; padding:14px; background:var(--dark); border-radius:10px; margin-bottom:10px; border:1px solid var(--border); }
+.setup-step .num { width:32px;height:32px; border-radius:50%; background:var(--pink); color:white; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:800; flex-shrink:0; }
+.setup-step .content { flex:1; }
+.setup-step .content .title { font-size:0.9rem; font-weight:700; margin-bottom:4px; }
+.setup-step .content .desc { font-size:0.8rem; color:var(--text2); line-height:1.4; }
+.setup-step.done .num { background:var(--teal); }
+.setup-step.done { border-color:var(--teal); }
 
-/* Log */
-.log-box { background:var(--octo-dark); color:var(--octo-teal); font-family:monospace; font-size:0.75rem; padding:12px; border-radius:12px; height:200px; overflow-y:auto; border:1px solid var(--octo-border); }
-.log-line { margin-bottom:4px; padding-bottom:4px; border-bottom:1px dashed var(--octo-border); }
+.modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:2000; display:none; align-items:center; justify-content:center; padding:16px; }
+.modal-overlay.active { display:flex; }
+.modal-content { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; max-width:420px; width:100%; max-height:80vh; overflow-y:auto; }
+.modal-content h3 { font-size:1.1rem; margin-bottom:12px; }
+.modal-content .compat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+.modal-content .compat-item { padding:10px; background:var(--dark); border-radius:8px; font-size:0.8rem; text-align:center; }
+.modal-content .compat-item.ok { border:1px solid var(--teal); color:var(--teal); }
+.modal-content .compat-item.no { border:1px solid var(--border); color:var(--text2); }
+.modal-content .close-btn { width:100%; margin-top:10px; }
 
-/* Savings */
-.savings-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
-.savings-item { background:var(--octo-dark); padding:14px; border-radius:12px; text-align:center; border:1px solid var(--octo-border); }
-.savings-item .value { font-size:1.4rem; font-weight:700; color:var(--octo-teal); }
-.savings-item .label { font-size:0.75rem; color:var(--octo-text2); margin-top:4px; }
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--card); color:white; padding:12px 24px; border-radius:30px; font-size:0.875rem; border:1px solid var(--pink); transition:transform 0.3s; z-index:1000; }
+#toast.show { transform:translateX(-50%) translateY(0); }
 
-/* Risparmio big */
-.risparmio-big { font-size:2.5rem; font-weight:800; color:var(--octo-teal); text-align:center; }
-.risparmio-label { font-size:0.85rem; color:var(--octo-text2); text-align:center; }
-
-/* Hour table */
-.hour-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--octo-border); font-size:0.8rem; }
-.hour-badge { min-width:50px; text-align:center; font-weight:700; font-size:0.7rem; padding:3px 8px; border-radius:6px; }
-.hour-badge.gas { background:rgba(255,193,7,0.15); color:var(--octo-yellow); }
-.hour-badge.pompa { background:rgba(0,212,170,0.15); color:var(--octo-teal); }
-.hour-badge.circ { background:rgba(230,0,126,0.15); color:var(--octo-pink); }
-.hour-badge.none { background:var(--octo-border); color:var(--octo-text2); }
-
-/* Hidden */
 .hidden { display:none !important; }
 
-/* Toast */
-#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--octo-card); color:white; padding:12px 24px; border-radius:30px; font-size:0.875rem; border:1px solid var(--octo-pink); transition:transform 0.3s; z-index:1000; }
-#toast.show { transform:translateX(-50%) translateY(0); }
+.link-text { color:var(--pink); text-decoration:underline; cursor:pointer; font-size:0.85rem; text-align:center; display:block; margin-top:14px; }
 </style>
 <base target="_blank">
 </head>
 <body>
 <div class="container">
 
-  <!-- HEADER -->
   <header class="header">
     <h1><span>Eco</span>Hybrid</h1>
     <p>Ottimizzazione energetica intelligente</p>
     <span class="badge">Powered by Octopus Energy</span>
   </header>
 
-  <!-- ========== WIZARD STEPS ========== -->
+  <!-- ==================== SCREEN 0: SCELTA PERCORSO ==================== -->
+  <div class="screen active" id="screen-0">
+    <div class="card">
+      <h2>Scegli il tuo percorso</h2>
 
-  <!-- STEP 0 -->
-  <div class="card step active" id="step-0">
-    <h2>Benvenuto</h2>
-    <p style="font-size:0.9rem; color:var(--octo-text2); line-height:1.5; margin-bottom:14px;">
-      EcoHybrid ottimizza il tuo riscaldamento e raffrescamento attraverso <strong>5 pilastri innovativi</strong>.
-      Scegli la tua configurazione e scopri quanto risparmi.
-    </p>
-    <div class="progress-container"><div class="progress-bar" id="progress-bar">0%</div></div>
-    <button class="btn btn-primary" onclick="nextStep(1)">Iniziamo</button>
+      <button class="big-choice" id="choice-compat" onclick="selectPath('compatibile')">
+        <div class="icon">❄️</div>
+        <div class="title">Ho un climatizzatore compatibile</div>
+        <div class="desc">Samsung, Matter, o qualsiasi clima smart con WiFi. Nessun hardware aggiuntivo.</div>
+        <span class="tag">INIZIA ORA</span>
+      </button>
+
+      <button class="big-choice" id="choice-altro" onclick="selectPath('altro')">
+        <div class="icon">🏠</div>
+        <div class="title">Ho un climatizzatore qualsiasi</div>
+        <div class="desc">Midea, Comfee, Gree, LG, etc. Serve un Mini PC (~100EUR) e 30 minuti di setup.</div>
+        <span class="tag tag-pink">RICHIEDE HARDWARE</span>
+      </button>
+
+      <span class="link-text" onclick="showCompatModal()">Non so se il mio condizionatore e compatibile</span>
+    </div>
   </div>
 
-  <!-- STEP 1: Setup -->
-  <div class="card step" id="step-1">
-    <h2><span class="num">1</span> Configurazione</h2>
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-bottom:10px;">Cosa hai gia in casa?</p>
-    <div class="choice-grid">
-      <div class="choice-btn" id="opt-pc" onclick="toggleOpt('opt-pc')">Mini PC / Raspberry</div>
-      <div class="choice-btn" id="opt-st" onclick="toggleOpt('opt-st')">SmartThings</div>
-      <div class="choice-btn" id="opt-alexa" onclick="toggleOpt('opt-alexa')">Alexa</div>
-      <div class="choice-btn" id="opt-google" onclick="toggleOpt('opt-google')">Google Home</div>
+  <!-- MODAL COMPATIBILITA -->
+  <div class="modal-overlay" id="compat-modal" onclick="if(event.target===this)hideCompatModal()">
+    <div class="modal-content">
+      <h3>Condizionatori compatibili</h3>
+      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:10px;">
+        EcoHybrid funziona in modalita cloud con questi marchi senza hardware aggiuntivo:
+      </p>
+      <div class="compat-grid">
+        <div class="compat-item ok">Samsung WindFree</div>
+        <div class="compat-item ok">Samsung Smart</div>
+        <div class="compat-item ok">Matter Certified</div>
+        <div class="compat-item ok">SmartThings Hub</div>
+      </div>
+      <p style="font-size:0.85rem; color:var(--text2); margin:10px 0;">
+        Per tutti gli altri (Midea, Comfee, Gree, LG non-smart, Panasonic, Haier, Hisense, etc.) serve il Mini PC con Home Assistant.
+      </p>
+      <div class="compat-grid">
+        <div class="compat-item no">Midea</div>
+        <div class="compat-item no">Comfee</div>
+        <div class="compat-item no">Gree</div>
+        <div class="compat-item no">LG (non-smart)</div>
+        <div class="compat-item no">Panasonic</div>
+        <div class="compat-item no">Haier</div>
+        <div class="compat-item no">Hisense</div>
+        <div class="compat-item no">Ariel Energia</div>
+      </div>
+      <button class="btn btn-secondary close-btn" onclick="hideCompatModal()">Chiudi</button>
     </div>
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-top:14px; margin-bottom:8px;">Tipo casa:</p>
-    <div class="choice-grid">
-      <div class="choice-btn" onclick="selectType(this,'appartamento')">Appartamento</div>
-      <div class="choice-btn" onclick="selectType(this,'villetta')">Villetta</div>
-    </div>
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-top:14px; margin-bottom:8px;">Costo kWh (EUR):</p>
-    <input type="number" class="input-field" id="costo-kwh" value="0.28" step="0.01">
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-top:10px; margin-bottom:8px;">Costo gas Smc (EUR):</p>
-    <input type="number" class="input-field" id="costo-gas" value="1.15" step="0.01">
-    <button class="btn btn-primary" onclick="nextStep(2)">Continua</button>
   </div>
 
-  <!-- STEP 2: Zone -->
-  <div class="card step" id="step-2">
-    <h2><span class="num">2</span> Zone</h2>
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-bottom:10px;">Split nella stessa stanza del termosifone?</p>
-    <div class="choice-grid">
-      <div class="choice-btn" id="opt-split-si" onclick="toggleOpt('opt-split-si')">Si, circolazione possibile</div>
-      <div class="choice-btn" id="opt-split-no" onclick="toggleOpt('opt-split-no')">No, stanze separate</div>
+  <!-- ==================== SCREEN 1: CARICA BOLLETTA ==================== -->
+  <div class="screen" id="screen-1">
+    <div class="card">
+      <h2>Carica la tua bolletta</h2>
+      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:12px;">
+        Scatta una foto alla tua bolletta luce e gas. Estraiamo i dati automaticamente per calcolare il tuo risparmio reale.
+      </p>
+
+      <div class="file-upload" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📷</div>
+        <div class="text">Tocca per scattare o caricare foto</div>
+        <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)">
+      </div>
+
+      <div id="ocr-loading" class="hidden" style="text-align:center; padding:20px;">
+        <div style="font-size:1.5rem; margin-bottom:10px;">🔍</div>
+        <div style="font-size:0.9rem; color:var(--text2);">Sto leggendo la bolletta...</div>
+      </div>
+
+      <div id="ocr-result" class="hidden">
+        <div class="ocr-result">
+          <div class="field">
+            <span class="label">Costo kWh luce</span>
+            <div><span class="value" id="val-kwh">0.28</span> <button class="edit" onclick="editField('kwh')">✏️</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Costo gas Smc</span>
+            <div><span class="value" id="val-gas">1.15</span> <button class="edit" onclick="editField('gas')">✏️</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Spesa mensile totale</span>
+            <div><span class="value" id="val-spesa">120</span> <button class="edit" onclick="editField('spesa')">✏️</button></div>
+          </div>
+          <div class="field">
+            <span class="label">Consumo kWh/mese</span>
+            <div><span class="value" id="val-consumo">350</span> <button class="edit" onclick="editField('consumo')">✏️</button></div>
+          </div>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text2); margin-top:10px; text-align:center;">
+          I dati sono corretti? Se non hai la bolletta, puoi usare questi valori medi.
+        </p>
+        <button class="btn btn-primary" onclick="confirmBill()">Conferma dati</button>
+        <button class="btn btn-secondary" onclick="manualInput()">Inserisci manualmente</button>
+      </div>
     </div>
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-top:14px; margin-bottom:8px;">Esposizione principale:</p>
-    <div class="choice-grid">
-      <div class="choice-btn" onclick="selectExp(this,'nord')">Nord</div>
-      <div class="choice-btn" onclick="selectExp(this,'sud')">Sud</div>
-      <div class="choice-btn" onclick="selectExp(this,'est')">Est</div>
-      <div class="choice-btn" onclick="selectExp(this,'ovest')">Ovest</div>
-    </div>
-    <button class="btn btn-primary" onclick="nextStep(3)">Continua</button>
   </div>
 
-  <!-- STEP 3: Abitudini -->
-  <div class="card step" id="step-3">
-    <h2><span class="num">3</span> Abitudini</h2>
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-bottom:8px;">A che ora ti alzi?</p>
-    <input type="time" class="input-field" id="ora-alzata" value="07:00">
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-top:12px; margin-bottom:8px;">A che ora vai a dormire?</p>
-    <input type="time" class="input-field" id="ora-dormire" value="23:00">
-    <p style="font-size:0.85rem; color:var(--octo-text2); margin-top:12px; margin-bottom:8px;">Fuori casa dalle:</p>
-    <div style="display:flex; gap:10px;">
-      <input type="time" class="input-field" id="fuori-dalle" value="08:30">
-      <input type="time" class="input-field" id="fuori-alle" value="18:00">
+  <!-- ==================== SCREEN 2A: COMPATIBILE ==================== -->
+  <div class="screen" id="screen-2a">
+    <div class="card">
+      <h2>Collega il tuo clima</h2>
+      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:14px;">
+        Accedi al tuo account per collegare EcoHybrid al tuo climatizzatore.
+      </p>
+
+      <div id="st-login">
+        <button class="btn btn-primary" onclick="mockSTLogin()">
+          🔐 Accedi con Samsung Account
+        </button>
+        <p style="font-size:0.75rem; color:var(--text2); margin-top:10px; text-align:center;">
+          EcoHybrid legge solo i dati del climatizzatore. Non accediamo ad altri dispositivi.
+        </p>
+      </div>
+
+      <div id="st-devices" class="hidden">
+        <p style="font-size:0.9rem; margin-bottom:10px;">Dispositivi trovati:</p>
+        <div style="background:var(--dark); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.5rem;">❄️</span>
+            <div>
+              <div style="font-weight:700;">Climatizzatore Soggiorno</div>
+              <div style="font-size:0.8rem; color:var(--text2);">Samsung WindFree</div>
+            </div>
+            <span class="status-on" style="margin-left:auto;">ONLINE</span>
+          </div>
+        </div>
+        <button class="btn btn-teal" onclick="finishST()">Conferma e inizia</button>
+      </div>
     </div>
-    <button class="btn btn-primary" onclick="calcolaRisparmio()">Calcola Risparmio %</button>
   </div>
 
-  <!-- ========== DASHBOARD ========== -->
+  <!-- ==================== SCREEN 2B: MINI PC ==================== -->
+  <div class="screen" id="screen-2b">
+    <div class="card">
+      <h2>Setup Mini PC</h2>
+      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:14px;">
+        Il tuo Dell sta arrivando. Ecco cosa fare in 3 semplici passi. Nessuna competenza tecnica richiesta.
+      </p>
 
-  <div id="dashboard" style="display:none;">
+      <div class="setup-step" id="step-pc-1">
+        <div class="num">1</div>
+        <div class="content">
+          <div class="title">Inserisci la SD card e accendi</div>
+          <div class="desc">Ti invieremo una SD card pre-configurata con Home Assistant. Inseriscila nel Mini PC e accendilo.</div>
+        </div>
+      </div>
 
-    <!-- Metrics -->
-    <div class="metrics-grid">
+      <div class="setup-step" id="step-pc-2">
+        <div class="num">2</div>
+        <div class="content">
+          <div class="title">Collega al WiFi di casa</div>
+          <div class="desc">Dalla TV o da un altro PC, collega il Mini PC alla tua rete WiFi. Una volta online, si configura da solo.</div>
+        </div>
+      </div>
+
+      <div class="setup-step" id="step-pc-3">
+        <div class="num">3</div>
+        <div class="content">
+          <div class="title">Home Assistant e pronto</div>
+          <div class="desc">Apri l'app EcoHybrid e troverai il tuo Mini PC in automatico. Inizia la raccolta dati istantanea.</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(0,212,170,0.08); border:1px solid var(--teal); border-radius:10px; padding:14px; margin-top:14px;">
+        <div style="font-weight:700; color:var(--teal); margin-bottom:6px;">Cosa avrai in piu con il Mini PC:</div>
+        <ul style="font-size:0.85rem; color:var(--text2); line-height:1.6; margin-left:16px;">
+          <li>Sensori temperatura/umidita per stanza</li>
+          <li>Geofencing WiFi (senza GPS, senza app sul telefono)</li>
+          <li>Storico dati 1 anno + grafici</li>
+          <li>Machine learning sui tuoi consumi reali</li>
+          <li>Integrazione telecamere, tapparelle, luci</li>
+        </ul>
+      </div>
+
+      <button class="btn btn-teal" onclick="finishPC()">Avvisami quando arriva</button>
+      <button class="btn btn-secondary" onclick="goToDashboard()">Vai alla dashboard (demo)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SCREEN 3: DASHBOARD ==================== -->
+  <div class="screen" id="screen-3">
+
+    <div id="phase-learning">
       <div class="card">
-        <h2>Temperatura</h2>
-        <div class="metric">
-          <div class="metric-value" id="d-temp" style="color:var(--octo-text);">24.5</div>
-          <div class="metric-unit">C</div>
+        <h2>📊 Fase di apprendimento</h2>
+        <div class="learning-days" id="learning-day">1<span style="font-size:1rem; color:var(--text2);">/30</span></div>
+        <div class="learning-bar"><div class="learning-fill" id="learning-fill" style="width:3%;"></div></div>
+        <div class="learning-text" id="learning-text">
+          Sto imparando i pattern della tua casa. Temperature, umidita, orari di utilizzo.
+        </div>
+        <div style="margin-top:14px; padding:12px; background:var(--dark); border-radius:10px;">
+          <div style="font-size:0.8rem; color:var(--text2); margin-bottom:6px;">Dati raccolti oggi:</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <span class="status-on" style="font-size:0.75rem;">Temperatura</span>
+            <span class="status-on" style="font-size:0.75rem;">Umidita</span>
+            <span class="status-wait" style="font-size:0.75rem;">Presenza</span>
+            <span class="status-wait" style="font-size:0.75rem;">Consumi</span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div id="phase-active" class="hidden">
+
+      <div class="metrics-grid">
+        <div class="card" style="margin-bottom:0;">
+          <h2>Temperatura</h2>
+          <div class="metric">
+            <div class="metric-value" style="color:var(--text);">24.5</div>
+            <div class="metric-unit">C interna</div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <h2>Umidita</h2>
+          <div class="metric">
+            <div class="metric-value" style="color:var(--teal);">58</div>
+            <div class="metric-unit">%</div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
-        <h2>Umidita</h2>
-        <div class="metric">
-          <div class="metric-value" id="d-umid" style="color:var(--octo-teal);">58</div>
-          <div class="metric-unit">%</div>
+        <h2>Stato Climatizzatore</h2>
+        <span class="status-off" id="dash-status">SPENTO</span>
+        <div style="margin-top:10px; font-size:0.85rem; color:var(--text2);">
+          Target: 22C | Modalita: cool
         </div>
       </div>
-    </div>
 
-    <!-- Risparmio -->
-    <div class="card" id="card-risparmio">
-      <h2>Risparmio Stimato</h2>
-      <div class="risparmio-big" id="risparmio-pct">0%</div>
-      <div class="risparmio-label">vs gestione classica 24h</div>
-      <div class="savings-grid" style="margin-top:14px;">
-        <div class="savings-item"><div class="value" id="risp-eur">0.00</div><div class="label">EUR/oggi</div></div>
-        <div class="savings-item"><div class="value" id="risp-mese">0.00</div><div class="label">EUR/mese</div></div>
-        <div class="savings-item"><div class="value" id="risp-anno">0.00</div><div class="label">EUR/anno</div></div>
-      </div>
-    </div>
-
-    <!-- Stato -->
-    <div class="card">
-      <h2>Stato Climatizzatore</h2>
-      <span class="status-badge off" id="d-status">SPENTO</span>
-      <div style="margin-top:10px; font-size:0.85rem; color:var(--octo-text2);">
-        Target: <span id="d-target">22</span>C | Modalita: <span id="d-mode">cool</span>
-      </div>
-    </div>
-
-    <!-- Fascia -->
-    <div class="card">
-      <h2>Fascia Energetica</h2>
-      <div class="fascia-bar">
-        <div class="fascia-segment" id="f-f1" style="background:#E6007E; color:#E6007E;"></div>
-        <div class="fascia-segment" id="f-f2" style="background:#FFD700; color:#FFD700;"></div>
-        <div class="fascia-segment" id="f-f3" style="background:#00D4AA; color:#00D4AA;"></div>
-      </div>
-      <div class="fascia-info">
-        <span class="nome" id="f-nome" style="font-weight:700;">F1 - Giorno</span>
-        <span class="prezzo" id="f-prezzo">0.35 EUR/kWh</span>
-      </div>
-    </div>
-
-    <!-- Suggerimento -->
-    <div class="card">
-      <h2>Suggerimento IA</h2>
-      <div class="suggestion" id="d-suggestion">
-        <span class="pilastro-tag">Pilastro 2</span><br>
-        Anticipo raffreddamento in fascia economica
-      </div>
-      <button class="btn btn-primary" style="margin-top:10px;" id="btn-applica" onclick="applicaSuggerimento()">Applica Suggerimento</button>
-    </div>
-
-    <!-- Controllo Manuale -->
-    <div class="card">
-      <h2>Controllo Manuale</h2>
-      <button class="btn btn-on" onclick="setPower(true)">Accendi</button>
-      <button class="btn btn-off" onclick="setPower(false)">Spegni</button>
-      <div style="margin-top:12px;">
-        <label style="font-size:0.8rem; color:var(--octo-text2);">Target: <span id="tval" style="color:var(--octo-pink); font-weight:800;">22</span>C</label>
-        <input type="range" class="temp-slider" min="16" max="30" value="22" oninput="document.getElementById('tval').textContent=this.value; setTarget(this.value)">
-      </div>
-      <div style="margin-top:10px;">
-        <label style="font-size:0.8rem; color:var(--octo-text2);">Modalita</label>
-        <div class="mode-grid">
-          <button class="btn btn-mode" id="m-cool" onclick="setMode('cool')">Freddo</button>
-          <button class="btn btn-mode" id="m-heat" onclick="setMode('heat')">Caldo</button>
-          <button class="btn btn-mode" id="m-dry" onclick="setMode('dry')">Dry</button>
-          <button class="btn btn-mode" id="m-fan" onclick="setMode('fan_only')">Ventola</button>
-          <button class="btn btn-mode" id="m-auto" onclick="setMode('auto')">Auto</button>
+      <div class="card">
+        <h2>Risparmio reale (ultimi 7 giorni)</h2>
+        <div style="text-align:center; padding:10px 0;">
+          <div style="font-size:2rem; font-weight:800; color:var(--teal);">EUR 3.45</div>
+          <div style="font-size:0.8rem; color:var(--text2);">vs settimana precedente</div>
+        </div>
+        <div style="font-size:0.8rem; color:var(--text2); line-height:1.5; margin-top:10px;">
+          Basato sui tuoi consumi misurati. Non su stime teoriche.
         </div>
       </div>
+
+      <div class="card">
+        <h2>Suggerimento</h2>
+        <div style="padding:12px; background:rgba(230,0,126,0.08); border-left:3px solid var(--pink); border-radius:8px; font-size:0.9rem;">
+          Ho notato che accendi il clima alle 18:00 ma arrivi a casa alle 19:00. 
+          Vuoi che anticipi il raffreddamento alle 17:30 quando l'elettricita costa meno?
+        </div>
+        <button class="btn btn-primary" style="margin-top:10px;">Applica suggerimento</button>
+        <button class="btn btn-secondary">Non ora</button>
+      </div>
+
     </div>
 
-    <!-- 5 Pilastri -->
-    <div class="card">
-      <h2>I 5 Pilastri EcoHybrid</h2>
-      <div class="pilastri-list" id="pilastri-list"></div>
-    </div>
-
-    <!-- Log -->
-    <div class="card">
-      <h2>Log Decisionale</h2>
-      <div class="log-box" id="log-box"><div class="log-line">In attesa di configurazione...</div></div>
-    </div>
-
-    <!-- Tabella 24h -->
-    <div class="card">
-      <h2>Previsione 24h</h2>
-      <div id="ore-container" style="max-height:250px; overflow-y:auto;"></div>
+    <div style="text-align:center; margin-top:10px;">
+      <button class="btn btn-secondary" style="font-size:0.75rem; padding:8px;" onclick="forceDay31()">[Debug] Simula giorno 31</button>
     </div>
 
   </div>
-
-  <div class="update-time" id="updateTime" style="text-align:center; font-size:0.65rem; color:var(--octo-text2); margin-top:16px;"></div>
 
 </div>
 
-<div id="toast">Notifica</div>
+<div id="toast"></div>
 
 <script>
-// ============== STATE ==============
-let currentStep = 0;
-let appState = {
-  power: false, currentTemp: 24.5, targetTemp: 22, humidity: 58, mode: 'cool',
-  config: { hasPC:false, hasST:false, houseType:'', expos:'', splitSameRoom:false, costoKwh:0.28, costoGas:1.15 }
+let state = {
+  path: null,
+  bill: { kwh: 0.28, gas: 1.15, spesa: 120, consumo: 350 },
+  day: 1,
+  stConnected: false
 };
 
-// ============== UI HELPERS ==============
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
 function toast(msg) {
   const t = document.getElementById('toast');
   t.innerText = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
-function log(msg) {
-  const box = document.getElementById('log-box');
-  const ts = new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  box.innerHTML += '<div class="log-line">[' + ts + '] ' + msg + '</div>';
-  box.scrollTop = box.scrollHeight;
+
+function showCompatModal() {
+  document.getElementById('compat-modal').classList.add('active');
 }
-function updateProgress(pct) {
-  const bar = document.getElementById('progress-bar');
-  bar.style.width = pct + '%'; bar.innerText = Math.round(pct) + '%';
+function hideCompatModal() {
+  document.getElementById('compat-modal').classList.remove('active');
 }
 
-// ============== WIZARD ==============
-function nextStep(n) {
-  document.getElementById('step-' + currentStep).classList.remove('active');
-  document.getElementById('step-' + n).classList.add('active');
-  currentStep = n;
-  updateProgress(n * 33);
-}
-function toggleOpt(id) {
-  const el = document.getElementById(id);
-  el.classList.toggle('selected');
-  if (id === 'opt-pc') appState.config.hasPC = el.classList.contains('selected');
-  if (id === 'opt-st') appState.config.hasST = el.classList.contains('selected');
-  if (id === 'opt-split-si') { appState.config.splitSameRoom = true; document.getElementById('opt-split-no').classList.remove('selected'); }
-  if (id === 'opt-split-no') { appState.config.splitSameRoom = false; document.getElementById('opt-split-si').classList.remove('selected'); }
-}
-function selectType(el, type) {
-  document.querySelectorAll('#step-1 .choice-btn').forEach(b => { if (!b.id) b.classList.remove('selected'); });
-  el.classList.add('selected');
-  appState.config.houseType = type;
-}
-function selectExp(el, exp) {
-  document.querySelectorAll('#step-2 .choice-btn').forEach(b => { if (!b.id) b.classList.remove('selected'); });
-  el.classList.add('selected');
-  appState.config.expos = exp;
+function selectPath(path) {
+  state.path = path;
+  document.querySelectorAll('.big-choice').forEach(b => b.classList.remove('selected'));
+  document.getElementById('choice-' + (path === 'compatibile' ? 'compat' : 'altro')).classList.add('selected');
+  setTimeout(() => showScreen('screen-1'), 300);
 }
 
-// ============== ALGORITMO ==============
-const Algoritmo = {
-  calcolaCOP(tempEst, umid, target) {
-    let cop = 3.5 - ((7 - tempEst) * 0.035);
-    if (umid > 70) cop *= 0.96;
-    return Math.max(1.0, Math.min(5.5, cop)).toFixed(2);
-  },
-  costoGas(costoSmc) { return (costoSmc / (9.6 * 0.92)).toFixed(4); },
-  costoPompa(costoKwh, cop) { return (costoKwh / cop).toFixed(4); },
-  costoCirc(costoGas, costoKwh) {
-    const gasComp = (parseFloat(costoGas) * 0.75).toFixed(4);
-    const vent = (costoKwh * 0.04).toFixed(4);
-    return (parseFloat(gasComp) + parseFloat(vent)).toFixed(4);
-  },
-  simula24h(cfg) {
-    const ris = [];
-    for (let h = 0; h < 24; h++) {
-      const temp = 5 + Math.sin(((h - 6) / 24) * Math.PI * 2) * 8;
-      const umid = 70 + Math.sin(((h - 12) / 24) * Math.PI * 2) * 15;
-      const cop = this.calcolaCOP(temp, umid, 20);
-      const cGas = this.costoGas(cfg.costoGas);
-      const cPompa = this.costoPompa(cfg.costoKwh, cop);
-      const cCirc = this.costoCirc(cGas, cfg.costoKwh);
-      let dec = 'gas', det = '', risp = 0, gasPct = 100, pompaPct = 0, circPct = 0;
+function handleFile(input) {
+  if (!input.files || !input.files[0]) return;
+  document.getElementById('ocr-loading').classList.remove('hidden');
+  document.querySelector('.file-upload').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('ocr-loading').classList.add('hidden');
+    document.getElementById('ocr-result').classList.remove('hidden');
+    const kwh = (0.24 + Math.random() * 0.08).toFixed(2);
+    const gas = (1.05 + Math.random() * 0.20).toFixed(2);
+    const spesa = Math.floor(90 + Math.random() * 80);
+    const consumo = Math.floor(280 + Math.random() * 200);
+    document.getElementById('val-kwh').innerText = kwh;
+    document.getElementById('val-gas').innerText = gas;
+    document.getElementById('val-spesa').innerText = spesa;
+    document.getElementById('val-consumo').innerText = consumo;
+    state.bill = { kwh: parseFloat(kwh), gas: parseFloat(gas), spesa: spesa, consumo: consumo };
+    toast('Dati estratti dalla bolletta');
+  }, 2000);
+}
 
-      if (temp < 2) {
-        if (cfg.splitSameRoom) { dec = 'circ'; gasPct = 75; circPct = 25; det = 'Circolazione recupero: gas + ventilazione'; risp = 25; }
-        else { dec = 'gas'; det = 'Gas obbligatorio, troppo freddo'; }
-      } else if (temp <= 8) {
-        if (parseFloat(cCirc) < parseFloat(cGas) * 0.9 && cfg.splitSameRoom) {
-          dec = 'circ'; gasPct = 75; circPct = 25; det = 'Circ piu conveniente del gas'; risp = 25;
-        } else if (parseFloat(cPompa) < parseFloat(cGas)) {
-          dec = 'pompa'; pompaPct = 100; det = 'Pompa vince sul gas'; risp = ((1 - parseFloat(cPompa)/parseFloat(cGas)) * 100).toFixed(0);
-        } else {
-          dec = 'gas'; det = 'Gas piu conveniente';
-        }
-      } else if (temp <= 18) {
-        if (cop >= 2.5) { dec = 'pompa'; pompaPct = 100; det = 'Mezze stagioni: pompa ottimale'; risp = 40; }
-        else { dec = 'gas'; det = 'COP basso, gas di supporto'; }
-      } else if (temp <= 24) {
-        dec = 'none'; det = 'Nessun riscaldamento necessario'; risp = 100;
-      } else {
-        dec = 'pompa'; pompaPct = 100; det = 'Raffrescamento estate';
-      }
-      ris.push({ ora: h, temp: temp.toFixed(1), umid: Math.round(umid), cop: cop, decisione: dec, dettaglio: det, risparmio: risp, gasPct, pompaPct, circPct });
-    }
-    return ris;
+function editField(field) {
+  const val = prompt('Inserisci valore corretto:');
+  if (val && !isNaN(parseFloat(val))) {
+    document.getElementById('val-' + field).innerText = parseFloat(val).toFixed(2);
   }
-};
-
-// ============== CALCOLO RISPARMIO ==============
-function calcolaRisparmio() {
-  appState.config.costoKwh = parseFloat(document.getElementById('costo-kwh').value) || 0.28;
-  appState.config.costoGas = parseFloat(document.getElementById('costo-gas').value) || 1.15;
-
-  // Nascondi wizard, mostra dashboard
-  for (let i = 0; i <= 3; i++) document.getElementById('step-' + i).classList.remove('active');
-  document.getElementById('dashboard').style.display = 'block';
-
-  log('Configurazione: ' + appState.config.houseType + ', split=' + appState.config.splitSameRoom);
-  log('Costi: luce ' + appState.config.costoKwh + ' EUR/kWh, gas ' + appState.config.costoGas + ' EUR/Smc');
-
-  const ris24 = Algoritmo.simula24h(appState.config);
-  const oraNow = new Date().getHours();
-  const now = ris24[oraNow];
-
-  // Calcola totali
-  let totRisp = 0, oreRisp = 0;
-  ris24.forEach(r => { if (r.risparmio > 0) { totRisp += parseFloat(r.risparmio); oreRisp++; } });
-  const rispMedio = oreRisp > 0 ? (totRisp / oreRisp).toFixed(0) : 0;
-  const rispEur = (rispMedio * 0.05).toFixed(2);
-  const rispMese = (rispEur * 30).toFixed(2);
-  const rispAnno = (rispMese * 12).toFixed(2);
-
-  document.getElementById('risparmio-pct').innerText = rispMedio + '%';
-  document.getElementById('risp-eur').innerText = rispEur;
-  document.getElementById('risp-mese').innerText = rispMese;
-  document.getElementById('risp-anno').innerText = rispAnno;
-
-  // Aggiorna dashboard
-  updateDashboard(now, ris24);
-  renderPilastri();
-  render24h(ris24);
-
-  toast('EcoHybrid attivo! Risparmio: ' + rispMedio + '%');
-  log('Risparmio stimato: ' + rispMedio + '% (' + rispEur + ' EUR/gg)');
 }
 
-// ============== DASHBOARD ==============
-function updateDashboard(now, ris24) {
-  document.getElementById('d-temp').innerText = now.temp;
-  document.getElementById('d-umid').innerText = now.umid;
-  document.getElementById('d-target').innerText = appState.targetTemp;
-  document.getElementById('d-mode').innerText = appState.mode;
-
-  const st = document.getElementById('d-status');
-  st.innerText = appState.power ? 'ACCESO' : 'SPENTO';
-  st.className = 'status-badge ' + (appState.power ? 'on' : 'off');
-
-  // Fascia
-  const h = now.ora;
-  let fName = 'F3 - Notte', fPrice = '0.18', fColor = '#00D4AA', fKey = 'f-f3';
-  if (h >= 8 && h < 19) { fName = 'F1 - Giorno'; fPrice = '0.35'; fColor = '#E6007E'; fKey = 'f-f1'; }
-  else if (h >= 19 && h < 23) { fName = 'F2 - Sera'; fPrice = '0.28'; fColor = '#FFD700'; fKey = 'f-f2'; }
-  document.getElementById('f-nome').innerText = fName;
-  document.getElementById('f-nome').style.color = fColor;
-  document.getElementById('f-prezzo').innerText = fPrice + ' EUR/kWh';
-  ['f-f1','f-f2','f-f3'].forEach(k => document.getElementById(k).classList.remove('active'));
-  document.getElementById(fKey).classList.add('active');
-
-  // Suggerimento
-  let sug = '', pil = 0, action = 'none', mode = '';
-  if (now.decisione === 'circ') { sug = 'Pilastro 1: Attiva circolazione recupero. Gas + ventilazione = -25% consumo'; pil = 1; action = 'fan_recycle'; mode = 'fan_only'; }
-  else if (now.decisione === 'pompa' && now.temp < 15) { sug = 'Pilastro 2: Pompa di calore piu efficiente del gas. COP ' + now.cop; pil = 2; action = 'on'; mode = 'heat'; }
-  else if (now.decisione === 'none' && now.temp > 18) { sug = 'Pilastro 2: Temperatura sufficiente, nessun intervento'; pil = 2; action = 'off'; }
-  else if (now.decisione === 'pompa' && now.temp > 24) { sug = 'Pilastro 2: Raffrescamento preventivo in fascia economica'; pil = 2; action = 'on'; mode = 'cool'; }
-  else { sug = now.dettaglio; }
-
-  const sugEl = document.getElementById('d-suggestion');
-  sugEl.innerHTML = (pil > 0 ? '<span class="pilastro-tag">Pilastro ' + pil + '</span><br>' : '') + sug;
-  document.getElementById('btn-applica').onclick = function() { applicaSuggerimento(action, mode); };
-
-  document.getElementById('updateTime').innerText = 'Aggiornato: ' + new Date().toLocaleTimeString('it-IT');
+function confirmBill() {
+  toast('Dati confermati');
+  if (state.path === 'compatibile') {
+    showScreen('screen-2a');
+  } else {
+    showScreen('screen-2b');
+  }
 }
 
-function renderPilastri() {
-  const pilastri = [
-    { id: 1, nome: 'Riciclo Termico Invernale', desc: 'Destratificazione FAN a costo zero', attivo: appState.config.splitSameRoom },
-    { id: 2, nome: 'Meteo Predittivo', desc: 'Raffreddamento preventivo mattutino', attivo: true },
-    { id: 3, nome: 'Schermatura Solare Passiva', desc: 'Tapparelle motorizzate anti-serra', attivo: false },
-    { id: 4, nome: 'Riciclo Aria (CO2/VOC)', desc: 'VMC nelle ore fresche', attivo: false },
-    { id: 5, nome: 'Geofencing Dinamico', desc: 'Rilevamento distanza smartphone', attivo: false }
+function manualInput() {
+  document.getElementById('ocr-result').classList.add('hidden');
+  document.querySelector('.file-upload').classList.remove('hidden');
+  toast('Carica la foto o inserisci i dati');
+}
+
+function mockSTLogin() {
+  document.getElementById('st-login').classList.add('hidden');
+  document.getElementById('st-devices').classList.remove('hidden');
+  toast('Account collegato');
+}
+
+function finishST() {
+  state.stConnected = true;
+  showScreen('screen-3');
+  startLearning();
+  toast('EcoHybrid attivo! Inizio raccolta dati.');
+}
+
+function finishPC() {
+  toast('Ti avviseremo quando il Mini PC e disponibile');
+}
+
+function goToDashboard() {
+  showScreen('screen-3');
+  startLearning();
+}
+
+function startLearning() {
+  updateLearningUI();
+  const interval = setInterval(() => {
+    state.day++;
+    updateLearningUI();
+    if (state.day >= 31) {
+      clearInterval(interval);
+      showActivePhase();
+    }
+  }, 3000);
+}
+
+function updateLearningUI() {
+  document.getElementById('learning-day').innerHTML = state.day + '<span style="font-size:1rem; color:var(--text2);">/30</span>';
+  document.getElementById('learning-fill').style.width = (state.day / 30 * 100) + '%';
+  const texts = [
+    'Sto imparando i pattern della tua casa.',
+    'Analizzo temperature e umidita orarie.',
+    'Calcolo inerzia termica della tua casa.',
+    'Identifico orari di utilizzo reali.',
+    'Misuro dispersione termica per stanza.',
+    'Quasi pronto per i primi suggerimenti...'
   ];
-  document.getElementById('pilastri-list').innerHTML = pilastri.map(p => `
-    <div class="pilastro-item ${p.attivo ? 'active' : 'inactive'}">
-      <div class="pilastro-num">${p.id}</div>
-      <div class="pilastro-info">
-        <div class="nome">${p.nome}</div>
-        <div class="desc">${p.desc}</div>
-      </div>
-      <div class="pilastro-status ${p.attivo ? 'on' : 'off'}">${p.attivo ? 'ON' : 'OFF'}</div>
-    </div>
-  `).join('');
+  const idx = Math.min(Math.floor(state.day / 5), texts.length - 1);
+  document.getElementById('learning-text').innerText = texts[idx];
 }
 
-function render24h(ris24) {
-  const container = document.getElementById('ore-container');
-  container.innerHTML = ris24.map(r => {
-    const badge = r.decisione === 'gas' ? 'gas' : (r.decisione === 'pompa' ? 'pompa' : (r.decisione === 'circ' ? 'circ' : 'none'));
-    const label = r.decisione === 'gas' ? 'GAS' : (r.decisione === 'pompa' ? 'POMPA' : (r.decisione === 'circ' ? 'CIRC' : 'OFF'));
-    const risp = r.risparmio > 0 ? ' (-' + r.risparmio + '%)' : '';
-    return `<div class="hour-row">
-      <span class="hour-badge ${badge}">${label}</span>
-      <span style="flex:1;">${r.ora}:00 - ${r.temp}C, umid ${r.umid}%</span>
-      <span style="font-size:0.75rem;color:var(--octo-text2);">COP ${r.cop}</span>
-      <span style="font-size:0.75rem;color:var(--octo-teal);font-weight:700;">${risp}</span>
-    </div>`;
-  }).join('');
+function showActivePhase() {
+  document.getElementById('phase-learning').classList.add('hidden');
+  document.getElementById('phase-active').classList.remove('hidden');
+  toast('Fase di apprendimento completata! Ora vedrai dati reali.');
 }
 
-// ============== CONTROLLI ==============
-function setPower(on) {
-  appState.power = on;
-  log('Clima ' + (on ? 'ACCESO' : 'SPENTO'));
-  refreshDashboard();
-}
-function setTarget(t) {
-  appState.targetTemp = parseInt(t);
-  log('Target: ' + t + 'C');
-}
-function setMode(m) {
-  appState.mode = m;
-  document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
-  const el = document.getElementById('m-' + (m === 'fan_only' ? 'fan' : m));
-  if (el) el.classList.add('active');
-  log('Modalita: ' + m);
-}
-function applicaSuggerimento(action, mode) {
-  if (action === 'on') setPower(true);
-  if (action === 'off') setPower(false);
-  if (action === 'fan_recycle') { setPower(true); setMode('fan_only'); }
-  if (mode) setMode(mode);
-  toast('Suggerimento applicato');
-}
-function refreshDashboard() {
-  const ris24 = Algoritmo.simula24h(appState.config);
-  const oraNow = new Date().getHours();
-  updateDashboard(ris24[oraNow], ris24);
+function forceDay31() {
+  state.day = 31;
+  updateLearningUI();
+  showActivePhase();
 }
 
-// Auto refresh ogni 30s
-setInterval(refreshDashboard, 30000);
+console.log('EcoHybrid v2.2 - Octopus Energy');
 </script>
 </body>
 </html>
