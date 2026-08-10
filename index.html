@@ -165,19 +165,53 @@ label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
   <div class="screen" id="screen-1">
     <div class="card">
       <h2>⚡ Bolletta luce</h2>
+      <p style="font-size:0.8rem; color:var(--text2); margin-bottom:10px;">Carica la bolletta completa (PDF o foto). Poi verifica i dati estratti.</p>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="btn btn-secondary" style="flex:1; margin-top:0; font-size:0.8rem; padding:10px;" onclick="document.getElementById('camera-luce').click()">📷 Scatta</button>
+        <button class="btn btn-secondary" style="flex:1; margin-top:0; font-size:0.8rem; padding:10px;" onclick="document.getElementById('file-luce').click()">📁 Carica PDF/Foto</button>
+        <input type="file" id="camera-luce" accept="image/*" capture="environment" style="display:none" onchange="handleBillUpload('luce', this)">
+        <input type="file" id="file-luce" accept="image/*,application/pdf" style="display:none" onchange="handleBillUpload('luce', this)">
+      </div>
+      <div id="preview-luce" style="display:none; margin-bottom:10px; padding:8px; background:var(--dark); border-radius:8px; font-size:0.8rem; color:var(--teal);">📎 Bolletta luce allegata</div>
       <label>Costo kWh (EUR)</label>
       <input type="number" class="input-field" id="input-kwh" value="0.28" step="0.01">
       <label>Consumo kWh/mese</label>
       <input type="number" class="input-field" id="input-consumo" value="350">
+      <label>Potenza contrattuale (kW)</label>
+      <input type="number" class="input-field" id="input-potenza" value="3" step="0.5">
+      <label>Spesa totale luce (EUR)</label>
+      <input type="number" class="input-field" id="input-spesa-luce" value="65">
     </div>
     <div class="card">
       <h2>🔥 Bolletta gas</h2>
+      <p style="font-size:0.8rem; color:var(--text2); margin-bottom:10px;">Carica la bolletta completa (PDF o foto). Poi verifica i dati estratti.</p>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="btn btn-secondary" style="flex:1; margin-top:0; font-size:0.8rem; padding:10px;" onclick="document.getElementById('camera-gas').click()">📷 Scatta</button>
+        <button class="btn btn-secondary" style="flex:1; margin-top:0; font-size:0.8rem; padding:10px;" onclick="document.getElementById('file-gas').click()">📁 Carica PDF/Foto</button>
+        <input type="file" id="camera-gas" accept="image/*" capture="environment" style="display:none" onchange="handleBillUpload('gas', this)">
+        <input type="file" id="file-gas" accept="image/*,application/pdf" style="display:none" onchange="handleBillUpload('gas', this)">
+      </div>
+      <div id="preview-gas" style="display:none; margin-bottom:10px; padding:8px; background:var(--dark); border-radius:8px; font-size:0.8rem; color:var(--teal);">📎 Bolletta gas allegata</div>
       <label>Costo Smc (EUR)</label>
       <input type="number" class="input-field" id="input-gas" value="1.15" step="0.01">
-      <label>Spesa gas mensile (EUR)</label>
+      <label>Consumo Smc/mese</label>
+      <input type="number" class="input-field" id="input-consumo-gas" value="45">
+      <label>Spesa totale gas (EUR)</label>
       <input type="number" class="input-field" id="input-spesa-gas" value="80">
     </div>
+    <div class="card" style="background:rgba(255,215,0,0.05); border-color:var(--yellow);">
+      <h2 style="color:var(--yellow);">📊 Totale spese mensili</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+        <span style="font-size:0.9rem; color:var(--text2);">Luce + Gas</span>
+        <span style="font-size:1.4rem; font-weight:800; color:var(--yellow);">145 EUR</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:0.8rem; color:var(--text2);">
+        <span>Stimato annuo</span>
+        <span>1.740 EUR</span>
+      </div>
+    </div>
     <button class="btn btn-primary" onclick="confirmBill()">Conferma e continua</button>
+    <button class="btn btn-secondary" style="font-size:0.85rem;" onclick="skipBill()">Non ho la bolletta, uso stime</button>
   </div>
 
   <!-- SCREEN 2A: COMPATIBILE -->
@@ -323,8 +357,54 @@ function selectPath(path) {
   showScreen('screen-1');
 }
 
+function handleBillUpload(tipo, input) {
+  if (input.files && input.files[0]) {
+    var nome = input.files[0].name;
+    toast('Bolletta ' + tipo + ' caricata: ' + nome);
+    document.getElementById('preview-' + tipo).style.display = 'block';
+  }
+}
+
+function skipBill() {
+  toast('Usati valori medi di stima');
+  if (state.path === 'compatibile') {
+    showScreen('screen-2a');
+  } else {
+    showScreen('screen-2b');
+  }
+}
+
+function saveBillData() {
+  var data = {
+    kwh: document.getElementById('input-kwh').value,
+    consumo: document.getElementById('input-consumo').value,
+    potenza: document.getElementById('input-potenza').value,
+    spesaLuce: document.getElementById('input-spesa-luce').value,
+    gas: document.getElementById('input-gas').value,
+    consumoGas: document.getElementById('input-consumo-gas').value,
+    spesaGas: document.getElementById('input-spesa-gas').value
+  };
+  try { localStorage.setItem('ecohybrid_bill', JSON.stringify(data)); } catch(e) {}
+}
+
+function loadBillData() {
+  try {
+    var data = JSON.parse(localStorage.getItem('ecohybrid_bill'));
+    if (data) {
+      if (data.kwh) document.getElementById('input-kwh').value = data.kwh;
+      if (data.consumo) document.getElementById('input-consumo').value = data.consumo;
+      if (data.potenza) document.getElementById('input-potenza').value = data.potenza;
+      if (data.spesaLuce) document.getElementById('input-spesa-luce').value = data.spesaLuce;
+      if (data.gas) document.getElementById('input-gas').value = data.gas;
+      if (data.consumoGas) document.getElementById('input-consumo-gas').value = data.consumoGas;
+      if (data.spesaGas) document.getElementById('input-spesa-gas').value = data.spesaGas;
+    }
+  } catch(e) {}
+}
+
 function confirmBill() {
-  toast('Dati confermati');
+  saveBillData();
+  toast('Dati salvati');
   if (state.path === 'compatibile') {
     showScreen('screen-2a');
   } else {
@@ -340,6 +420,22 @@ function finishST() {
 
 function finishPC() {
   toast('Ti avviseremo quando disponibile');
+}
+
+function completeStep(n) {
+  var step = document.getElementById('w-step-' + n);
+  step.classList.add('done');
+  step.classList.remove('locked');
+  toast('Step ' + n + ' completato');
+
+  var next = document.getElementById('w-step-' + (n + 1));
+  if (next) {
+    next.classList.remove('locked');
+    next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    document.getElementById('wizard-complete').classList.remove('hidden');
+    document.getElementById('wizard-complete').scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 function goToDashboard() {
@@ -386,6 +482,7 @@ function forceDay31() {
   showActivePhase();
 }
 
+loadBillData();
 console.log('EcoHybrid v2.3 - pronto');
 </script>
 </body>
