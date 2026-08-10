@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0A0A0A">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>EcoHybrid by Octopus Energy</title>
+<title>EcoHybrid</title>
 <style>
 :root {
   --pink: #E6007E; --yellow: #FFD700; --teal: #00D4AA;
@@ -23,7 +22,6 @@ body {
 .header h1 { font-size:1.8rem; font-weight:800; letter-spacing:-1px; }
 .header h1 span { color: var(--pink); }
 .header p { font-size:0.8rem; color:var(--text2); margin-top:4px; }
-.header .badge { display:inline-block; background:var(--pink); color:white; padding:3px 10px; border-radius:12px; font-size:0.65rem; font-weight:700; text-transform:uppercase; margin-top:8px; }
 
 .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:14px; }
 .card h2 { font-size:0.75rem; color:var(--text2); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; }
@@ -53,7 +51,6 @@ body {
 .btn-primary { background:var(--pink); }
 .btn-secondary { background:var(--border); color:var(--text); }
 .btn-teal { background:var(--teal); color:var(--dark); }
-.btn:disabled { opacity:0.4; cursor:not-allowed; }
 
 .input-field {
   width:100%; padding:12px; background:var(--dark); border:1px solid var(--border);
@@ -61,32 +58,6 @@ body {
 }
 .input-field:focus { outline:none; border-color:var(--pink); }
 label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
-
-.file-upload {
-  border:2px dashed var(--border); border-radius:12px; padding:30px; text-align:center;
-  cursor:pointer; transition:all 0.2s; margin-top:10px;
-}
-.file-upload:hover { border-color:var(--pink); }
-.file-upload .icon { font-size:2rem; margin-bottom:8px; }
-.file-upload .text { font-size:0.9rem; color:var(--text2); }
-.file-upload input { display:none; }
-
-.ocr-result { background:var(--dark); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:14px; }
-.ocr-result .field { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
-.ocr-result .field:last-child { border-bottom:none; }
-.ocr-result .label { font-size:0.8rem; color:var(--text2); }
-.ocr-result .value { font-size:0.9rem; font-weight:700; color:var(--teal); }
-.ocr-result .edit { background:none; border:none; color:var(--pink); font-size:0.75rem; cursor:pointer; }
-
-.learning-bar { background:var(--border); border-radius:10px; height:12px; overflow:hidden; margin:14px 0; }
-.learning-fill { background:linear-gradient(90deg,var(--pink),var(--teal)); height:100%; border-radius:10px; width:0%; transition:width 1s ease; }
-.learning-text { text-align:center; font-size:0.85rem; color:var(--text2); margin-top:8px; }
-.learning-days { text-align:center; font-size:2rem; font-weight:800; color:var(--teal); margin:10px 0; }
-
-.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-.metric { text-align:center; padding:16px 10px; background:var(--dark); border-radius:12px; border:1px solid var(--border); }
-.metric-value { font-size:2rem; font-weight:800; }
-.metric-unit { font-size:0.8rem; color:var(--text2); }
 
 .status-badge { display:inline-block; padding:5px 14px; border-radius:20px; font-size:0.8rem; font-weight:700; }
 .status-on { background:rgba(0,212,170,0.15); color:var(--teal); border:1px solid var(--teal); }
@@ -98,8 +69,24 @@ label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
 .setup-step .content { flex:1; }
 .setup-step .content .title { font-size:0.9rem; font-weight:700; margin-bottom:4px; }
 .setup-step .content .desc { font-size:0.8rem; color:var(--text2); line-height:1.4; }
-.setup-step.done .num { background:var(--teal); }
-.setup-step.done { border-color:var(--teal); }
+
+.learning-bar { background:var(--border); border-radius:10px; height:12px; overflow:hidden; margin:14px 0; }
+.learning-fill { background:linear-gradient(90deg,var(--pink),var(--teal)); height:100%; border-radius:10px; width:0%; transition:width 1s ease; }
+.learning-text { text-align:center; font-size:0.85rem; color:var(--text2); margin-top:8px; }
+.learning-days { text-align:center; font-size:2rem; font-weight:800; color:var(--teal); margin:10px 0; }
+
+.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.metric { text-align:center; padding:16px 10px; background:var(--dark); border-radius:12px; border:1px solid var(--border); }
+.metric-value { font-size:2rem; font-weight:800; }
+.metric-unit { font-size:0.8rem; color:var(--text2); }
+
+.risparmio-big { font-size:2.5rem; font-weight:800; color:var(--teal); text-align:center; }
+.risparmio-label { font-size:0.85rem; color:var(--text2); text-align:center; }
+
+.savings-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+.savings-item { background:var(--dark); padding:14px; border-radius:12px; text-align:center; border:1px solid var(--border); }
+.savings-item .value { font-size:1.4rem; font-weight:700; color:var(--teal); }
+.savings-item .label { font-size:0.75rem; color:var(--text2); margin-top:4px; }
 
 .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:2000; display:none; align-items:center; justify-content:center; padding:16px; }
 .modal-overlay.active { display:flex; }
@@ -126,48 +113,40 @@ label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
   <header class="header">
     <h1><span>Eco</span>Hybrid</h1>
     <p>Ottimizzazione energetica intelligente</p>
-    <span class="badge">Powered by Octopus Energy</span>
   </header>
 
-  <!-- ==================== SCREEN 0: SCELTA PERCORSO ==================== -->
+  <!-- SCREEN 0 -->
   <div class="screen active" id="screen-0">
     <div class="card">
       <h2>Scegli il tuo percorso</h2>
-
       <button class="big-choice" id="choice-compat" onclick="selectPath('compatibile')">
         <div class="icon">❄️</div>
         <div class="title">Ho un climatizzatore compatibile</div>
         <div class="desc">Samsung, Matter, o qualsiasi clima smart con WiFi. Nessun hardware aggiuntivo.</div>
         <span class="tag">INIZIA ORA</span>
       </button>
-
       <button class="big-choice" id="choice-altro" onclick="selectPath('altro')">
         <div class="icon">🏠</div>
         <div class="title">Ho un climatizzatore qualsiasi</div>
-        <div class="desc">Midea, Comfee, Gree, LG, etc. Serve un Mini PC (~100EUR) e 30 minuti di setup.</div>
+        <div class="desc">Midea, Comfee, Gree, LG, etc. Serve un Mini PC (~100EUR).</div>
         <span class="tag tag-pink">RICHIEDE HARDWARE</span>
       </button>
-
       <span class="link-text" onclick="showCompatModal()">Non so se il mio condizionatore e compatibile</span>
     </div>
   </div>
 
-  <!-- MODAL COMPATIBILITA -->
+  <!-- MODAL -->
   <div class="modal-overlay" id="compat-modal" onclick="if(event.target===this)hideCompatModal()">
     <div class="modal-content">
       <h3>Condizionatori compatibili</h3>
-      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:10px;">
-        EcoHybrid funziona in modalita cloud con questi marchi senza hardware aggiuntivo:
-      </p>
+      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:10px;">Senza hardware aggiuntivo:</p>
       <div class="compat-grid">
         <div class="compat-item ok">Samsung WindFree</div>
         <div class="compat-item ok">Samsung Smart</div>
         <div class="compat-item ok">Matter Certified</div>
         <div class="compat-item ok">SmartThings Hub</div>
       </div>
-      <p style="font-size:0.85rem; color:var(--text2); margin:10px 0;">
-        Per tutti gli altri (Midea, Comfee, Gree, LG non-smart, Panasonic, Haier, Hisense, etc.) serve il Mini PC con Home Assistant.
-      </p>
+      <p style="font-size:0.85rem; color:var(--text2); margin:10px 0;">Serve Mini PC:</p>
       <div class="compat-grid">
         <div class="compat-item no">Midea</div>
         <div class="compat-item no">Comfee</div>
@@ -182,146 +161,84 @@ label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
     </div>
   </div>
 
-  <!-- ==================== SCREEN 1: CARICA BOLLETTA ==================== -->
+  <!-- SCREEN 1: BOLLETTE -->
   <div class="screen" id="screen-1">
     <div class="card">
-      <h2>Carica la tua bolletta</h2>
-      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:12px;">
-        Scatta una foto alla tua bolletta luce e gas. Estraiamo i dati automaticamente per calcolare il tuo risparmio reale.
-      </p>
-
-      <div class="file-upload" onclick="document.getElementById('file-input').click()">
-        <div class="icon">📷</div>
-        <div class="text">Tocca per scattare o caricare foto</div>
-        <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)">
-      </div>
-
-      <div id="ocr-loading" class="hidden" style="text-align:center; padding:20px;">
-        <div style="font-size:1.5rem; margin-bottom:10px;">🔍</div>
-        <div style="font-size:0.9rem; color:var(--text2);">Sto leggendo la bolletta...</div>
-      </div>
-
-      <div id="ocr-result" class="hidden">
-        <div class="ocr-result">
-          <div class="field">
-            <span class="label">Costo kWh luce</span>
-            <div><span class="value" id="val-kwh">0.28</span> <button class="edit" onclick="editField('kwh')">✏️</button></div>
-          </div>
-          <div class="field">
-            <span class="label">Costo gas Smc</span>
-            <div><span class="value" id="val-gas">1.15</span> <button class="edit" onclick="editField('gas')">✏️</button></div>
-          </div>
-          <div class="field">
-            <span class="label">Spesa mensile totale</span>
-            <div><span class="value" id="val-spesa">120</span> <button class="edit" onclick="editField('spesa')">✏️</button></div>
-          </div>
-          <div class="field">
-            <span class="label">Consumo kWh/mese</span>
-            <div><span class="value" id="val-consumo">350</span> <button class="edit" onclick="editField('consumo')">✏️</button></div>
-          </div>
-        </div>
-        <p style="font-size:0.8rem; color:var(--text2); margin-top:10px; text-align:center;">
-          I dati sono corretti? Se non hai la bolletta, puoi usare questi valori medi.
-        </p>
-        <button class="btn btn-primary" onclick="confirmBill()">Conferma dati</button>
-        <button class="btn btn-secondary" onclick="manualInput()">Inserisci manualmente</button>
-      </div>
+      <h2>⚡ Bolletta luce</h2>
+      <label>Costo kWh (EUR)</label>
+      <input type="number" class="input-field" id="input-kwh" value="0.28" step="0.01">
+      <label>Consumo kWh/mese</label>
+      <input type="number" class="input-field" id="input-consumo" value="350">
     </div>
+    <div class="card">
+      <h2>🔥 Bolletta gas</h2>
+      <label>Costo Smc (EUR)</label>
+      <input type="number" class="input-field" id="input-gas" value="1.15" step="0.01">
+      <label>Spesa gas mensile (EUR)</label>
+      <input type="number" class="input-field" id="input-spesa-gas" value="80">
+    </div>
+    <button class="btn btn-primary" onclick="confirmBill()">Conferma e continua</button>
   </div>
 
-  <!-- ==================== SCREEN 2A: COMPATIBILE ==================== -->
+  <!-- SCREEN 2A: COMPATIBILE -->
   <div class="screen" id="screen-2a">
     <div class="card">
-      <h2>Collega il tuo clima</h2>
-      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:14px;">
-        Accedi al tuo account per collegare EcoHybrid al tuo climatizzatore.
-      </p>
-
-      <div id="st-login">
-        <button class="btn btn-primary" onclick="mockSTLogin()">
-          🔐 Accedi con Samsung Account
-        </button>
-        <p style="font-size:0.75rem; color:var(--text2); margin-top:10px; text-align:center;">
-          EcoHybrid legge solo i dati del climatizzatore. Non accediamo ad altri dispositivi.
-        </p>
-      </div>
-
-      <div id="st-devices" class="hidden">
-        <p style="font-size:0.9rem; margin-bottom:10px;">Dispositivi trovati:</p>
-        <div style="background:var(--dark); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:1.5rem;">❄️</span>
-            <div>
-              <div style="font-weight:700;">Climatizzatore Soggiorno</div>
-              <div style="font-size:0.8rem; color:var(--text2);">Samsung WindFree</div>
-            </div>
-            <span class="status-on" style="margin-left:auto;">ONLINE</span>
+      <h2>❄️ Collega il tuo clima</h2>
+      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:14px;">EcoHybrid ha trovato un dispositivo compatibile.</p>
+      <div style="background:var(--dark); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.5rem;">❄️</span>
+          <div>
+            <div style="font-weight:700;">Climatizzatore Soggiorno</div>
+            <div style="font-size:0.8rem; color:var(--text2);">Samsung WindFree / WiFi</div>
           </div>
+          <span class="status-on" style="margin-left:auto;">TROVATO</span>
         </div>
-        <button class="btn btn-teal" onclick="finishST()">Conferma e inizia</button>
       </div>
+      <button class="btn btn-teal" onclick="finishST()">Collega e inizia</button>
+      <button class="btn btn-secondary" onclick="goToDashboard()">Salta (modalita demo)</button>
     </div>
   </div>
 
-  <!-- ==================== SCREEN 2B: MINI PC ==================== -->
+  <!-- SCREEN 2B: MINI PC -->
   <div class="screen" id="screen-2b">
     <div class="card">
-      <h2>Setup Mini PC</h2>
-      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:14px;">
-        Il tuo Dell sta arrivando. Ecco cosa fare in 3 semplici passi. Nessuna competenza tecnica richiesta.
-      </p>
-
-      <div class="setup-step" id="step-pc-1">
+      <h2>🖥️ Setup Mini PC</h2>
+      <p style="font-size:0.85rem; color:var(--text2); margin-bottom:14px;">Per il tuo condizionatore serve un Mini PC con Home Assistant.</p>
+      <div class="setup-step">
         <div class="num">1</div>
         <div class="content">
-          <div class="title">Inserisci la SD card e accendi</div>
-          <div class="desc">Ti invieremo una SD card pre-configurata con Home Assistant. Inseriscila nel Mini PC e accendilo.</div>
+          <div class="title">Inserisci la SD e accendi</div>
+          <div class="desc">SD pre-configurata con Home Assistant. Inseriscila e accendi il Mini PC.</div>
         </div>
       </div>
-
-      <div class="setup-step" id="step-pc-2">
+      <div class="setup-step">
         <div class="num">2</div>
         <div class="content">
-          <div class="title">Collega al WiFi di casa</div>
-          <div class="desc">Dalla TV o da un altro PC, collega il Mini PC alla tua rete WiFi. Una volta online, si configura da solo.</div>
+          <div class="title">Collega al WiFi</div>
+          <div class="desc">Dalla TV o PC, connetti il Mini PC alla rete WiFi. Si configura automaticamente.</div>
         </div>
       </div>
-
-      <div class="setup-step" id="step-pc-3">
+      <div class="setup-step">
         <div class="num">3</div>
         <div class="content">
-          <div class="title">Home Assistant e pronto</div>
-          <div class="desc">Apri l'app EcoHybrid e troverai il tuo Mini PC in automatico. Inizia la raccolta dati istantanea.</div>
+          <div class="title">Pronto</div>
+          <div class="desc">Apri EcoHybrid e troverai il Mini PC in rete. Raccolta dati istantanea.</div>
         </div>
       </div>
-
-      <div style="background:rgba(0,212,170,0.08); border:1px solid var(--teal); border-radius:10px; padding:14px; margin-top:14px;">
-        <div style="font-weight:700; color:var(--teal); margin-bottom:6px;">Cosa avrai in piu con il Mini PC:</div>
-        <ul style="font-size:0.85rem; color:var(--text2); line-height:1.6; margin-left:16px;">
-          <li>Sensori temperatura/umidita per stanza</li>
-          <li>Geofencing WiFi (senza GPS, senza app sul telefono)</li>
-          <li>Storico dati 1 anno + grafici</li>
-          <li>Machine learning sui tuoi consumi reali</li>
-          <li>Integrazione telecamere, tapparelle, luci</li>
-        </ul>
-      </div>
-
       <button class="btn btn-teal" onclick="finishPC()">Avvisami quando arriva</button>
-      <button class="btn btn-secondary" onclick="goToDashboard()">Vai alla dashboard (demo)</button>
+      <button class="btn btn-secondary" onclick="goToDashboard()">Prova demo ora</button>
     </div>
   </div>
 
-  <!-- ==================== SCREEN 3: DASHBOARD ==================== -->
+  <!-- SCREEN 3: DASHBOARD -->
   <div class="screen" id="screen-3">
-
     <div id="phase-learning">
       <div class="card">
         <h2>📊 Fase di apprendimento</h2>
         <div class="learning-days" id="learning-day">1<span style="font-size:1rem; color:var(--text2);">/30</span></div>
         <div class="learning-bar"><div class="learning-fill" id="learning-fill" style="width:3%;"></div></div>
-        <div class="learning-text" id="learning-text">
-          Sto imparando i pattern della tua casa. Temperature, umidita, orari di utilizzo.
-        </div>
+        <div class="learning-text" id="learning-text">Sto imparando i pattern della tua casa.</div>
         <div style="margin-top:14px; padding:12px; background:var(--dark); border-radius:10px;">
           <div style="font-size:0.8rem; color:var(--text2); margin-bottom:6px;">Dati raccolti oggi:</div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -333,9 +250,7 @@ label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
         </div>
       </div>
     </div>
-
     <div id="phase-active" class="hidden">
-
       <div class="metrics-grid">
         <div class="card" style="margin-bottom:0;">
           <h2>Temperatura</h2>
@@ -352,42 +267,30 @@ label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
           </div>
         </div>
       </div>
-
       <div class="card">
         <h2>Stato Climatizzatore</h2>
-        <span class="status-off" id="dash-status">SPENTO</span>
-        <div style="margin-top:10px; font-size:0.85rem; color:var(--text2);">
-          Target: 22C | Modalita: cool
-        </div>
+        <span class="status-off">SPENTO</span>
+        <div style="margin-top:10px; font-size:0.85rem; color:var(--text2);">Target: 22C | Modalita: cool</div>
       </div>
-
       <div class="card">
         <h2>Risparmio reale (ultimi 7 giorni)</h2>
         <div style="text-align:center; padding:10px 0;">
           <div style="font-size:2rem; font-weight:800; color:var(--teal);">EUR 3.45</div>
           <div style="font-size:0.8rem; color:var(--text2);">vs settimana precedente</div>
         </div>
-        <div style="font-size:0.8rem; color:var(--text2); line-height:1.5; margin-top:10px;">
-          Basato sui tuoi consumi misurati. Non su stime teoriche.
-        </div>
       </div>
-
       <div class="card">
         <h2>Suggerimento</h2>
         <div style="padding:12px; background:rgba(230,0,126,0.08); border-left:3px solid var(--pink); border-radius:8px; font-size:0.9rem;">
-          Ho notato che accendi il clima alle 18:00 ma arrivi a casa alle 19:00. 
-          Vuoi che anticipi il raffreddamento alle 17:30 quando l'elettricita costa meno?
+          Ho notato che accendi il clima alle 18:00 ma arrivi a casa alle 19:00. Vuoi che anticipi il raffreddamento alle 17:30 quando l'elettricita costa meno?
         </div>
-        <button class="btn btn-primary" style="margin-top:10px;">Applica suggerimento</button>
-        <button class="btn btn-secondary">Non ora</button>
+        <button class="btn btn-primary" style="margin-top:10px;" onclick="toast('Suggerimento applicato')">Applica suggerimento</button>
+        <button class="btn btn-secondary" onclick="toast('Suggerimento rimandato')">Non ora</button>
       </div>
-
     </div>
-
     <div style="text-align:center; margin-top:10px;">
       <button class="btn btn-secondary" style="font-size:0.75rem; padding:8px;" onclick="forceDay31()">[Debug] Simula giorno 31</button>
     </div>
-
   </div>
 
 </div>
@@ -395,22 +298,17 @@ label { font-size:0.85rem; color:var(--text2); display:block; margin-top:12px; }
 <div id="toast"></div>
 
 <script>
-let state = {
-  path: null,
-  bill: { kwh: 0.28, gas: 1.15, spesa: 120, consumo: 350 },
-  day: 1,
-  stConnected: false
-};
+let state = { path: null, day: 1 };
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
 }
 
 function toast(msg) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.innerText = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
 }
 
 function showCompatModal() {
@@ -422,36 +320,7 @@ function hideCompatModal() {
 
 function selectPath(path) {
   state.path = path;
-  document.querySelectorAll('.big-choice').forEach(b => b.classList.remove('selected'));
-  document.getElementById('choice-' + (path === 'compatibile' ? 'compat' : 'altro')).classList.add('selected');
-  setTimeout(() => showScreen('screen-1'), 300);
-}
-
-function handleFile(input) {
-  if (!input.files || !input.files[0]) return;
-  document.getElementById('ocr-loading').classList.remove('hidden');
-  document.querySelector('.file-upload').classList.add('hidden');
-  setTimeout(() => {
-    document.getElementById('ocr-loading').classList.add('hidden');
-    document.getElementById('ocr-result').classList.remove('hidden');
-    const kwh = (0.24 + Math.random() * 0.08).toFixed(2);
-    const gas = (1.05 + Math.random() * 0.20).toFixed(2);
-    const spesa = Math.floor(90 + Math.random() * 80);
-    const consumo = Math.floor(280 + Math.random() * 200);
-    document.getElementById('val-kwh').innerText = kwh;
-    document.getElementById('val-gas').innerText = gas;
-    document.getElementById('val-spesa').innerText = spesa;
-    document.getElementById('val-consumo').innerText = consumo;
-    state.bill = { kwh: parseFloat(kwh), gas: parseFloat(gas), spesa: spesa, consumo: consumo };
-    toast('Dati estratti dalla bolletta');
-  }, 2000);
-}
-
-function editField(field) {
-  const val = prompt('Inserisci valore corretto:');
-  if (val && !isNaN(parseFloat(val))) {
-    document.getElementById('val-' + field).innerText = parseFloat(val).toFixed(2);
-  }
+  showScreen('screen-1');
 }
 
 function confirmBill() {
@@ -463,27 +332,14 @@ function confirmBill() {
   }
 }
 
-function manualInput() {
-  document.getElementById('ocr-result').classList.add('hidden');
-  document.querySelector('.file-upload').classList.remove('hidden');
-  toast('Carica la foto o inserisci i dati');
-}
-
-function mockSTLogin() {
-  document.getElementById('st-login').classList.add('hidden');
-  document.getElementById('st-devices').classList.remove('hidden');
-  toast('Account collegato');
-}
-
 function finishST() {
-  state.stConnected = true;
   showScreen('screen-3');
   startLearning();
-  toast('EcoHybrid attivo! Inizio raccolta dati.');
+  toast('EcoHybrid attivo!');
 }
 
 function finishPC() {
-  toast('Ti avviseremo quando il Mini PC e disponibile');
+  toast('Ti avviseremo quando disponibile');
 }
 
 function goToDashboard() {
@@ -493,7 +349,7 @@ function goToDashboard() {
 
 function startLearning() {
   updateLearningUI();
-  const interval = setInterval(() => {
+  var interval = setInterval(function() {
     state.day++;
     updateLearningUI();
     if (state.day >= 31) {
@@ -506,7 +362,7 @@ function startLearning() {
 function updateLearningUI() {
   document.getElementById('learning-day').innerHTML = state.day + '<span style="font-size:1rem; color:var(--text2);">/30</span>';
   document.getElementById('learning-fill').style.width = (state.day / 30 * 100) + '%';
-  const texts = [
+  var texts = [
     'Sto imparando i pattern della tua casa.',
     'Analizzo temperature e umidita orarie.',
     'Calcolo inerzia termica della tua casa.',
@@ -514,14 +370,14 @@ function updateLearningUI() {
     'Misuro dispersione termica per stanza.',
     'Quasi pronto per i primi suggerimenti...'
   ];
-  const idx = Math.min(Math.floor(state.day / 5), texts.length - 1);
+  var idx = Math.min(Math.floor(state.day / 5), texts.length - 1);
   document.getElementById('learning-text').innerText = texts[idx];
 }
 
 function showActivePhase() {
   document.getElementById('phase-learning').classList.add('hidden');
   document.getElementById('phase-active').classList.remove('hidden');
-  toast('Fase di apprendimento completata! Ora vedrai dati reali.');
+  toast('Fase completata! Dati reali attivi.');
 }
 
 function forceDay31() {
@@ -530,7 +386,7 @@ function forceDay31() {
   showActivePhase();
 }
 
-console.log('EcoHybrid v2.2 - Octopus Energy');
+console.log('EcoHybrid v2.3 - pronto');
 </script>
 </body>
 </html>
