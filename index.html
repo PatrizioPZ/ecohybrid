@@ -539,6 +539,17 @@
     </div>
   </div>
 
+  <!-- DATI DEMO (per test) -->
+  <div class="card" style="border:1px dashed rgba(255,0,136,0.4);">
+    <div class="card-title" style="color:#FF0088;">Test rapido</div>
+    <p style="font-size:12px; color:#a0a0c0; margin-bottom:10px;">
+      Per testare senza caricare PDF reali:
+    </p>
+    <button class="btn btn-outline" style="border-color:#FF0088; color:#FF0088;" onclick="caricaDatiDemo()">
+      Carica dati demo
+    </button>
+  </div>
+
   <!-- RIEPILOGO -->
   <div class="card">
     <div class="card-title">Totale spese mensili</div>
@@ -648,8 +659,111 @@
 
   <div class="card">
     <div class="card-title">Gestione dati</div>
-    <button class="btn btn-secondary" onclick="goToBillsFromDashboard()">Modifica bollette</button>
+    <button class="btn btn-primary" onclick="showScreen('screen-4'); renderStorico();">Il tuo risparmio</button>
+    <button class="btn btn-secondary" onclick="goToBillsFromDashboard()" style="margin-top:8px;">Modifica bollette</button>
     <button class="btn btn-outline" onclick="resetAllData()" style="margin-top:8px;">Ricomincia da zero</button>
+  </div>
+
+  <div style="height:80px;"></div>
+</div>
+
+
+<!-- ==================== SCREEN 4: PANNELLO UTENTE / RISPARMIO ==================== -->
+<div id="screen-4" class="screen">
+  <div class="app-header">
+    <h1>Il tuo <span style="color:#FF0088">Risparmio</span></h1>
+    <p>Confronto reale bolletta per bolletta</p>
+  </div>
+  <div class="divider"></div>
+
+  <!-- RIEPILOGO RISPARMIO -->
+  <div class="card" id="card-riepilogo-risparmio">
+    <div class="card-title">Risparmio effettivo</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div>
+        <div class="summary-value" id="storico-risparmio-totale">0,00 EUR</div>
+        <div class="summary-label">Totale risparmiato</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="summary-value" id="storico-risparmio-pct" style="font-size:22px; color:#00d4aa;">0%</div>
+        <div class="summary-label">vs prima bolletta</div>
+      </div>
+    </div>
+    <div class="info-box" id="storico-risparmio-msg">
+      Inserisci almeno due bollette per vedere il confronto reale.
+    </div>
+  </div>
+
+  <!-- TABELLA STORICO -->
+  <div class="card">
+    <div class="card-title">Storico bollette</div>
+    <div id="storico-tabella-container" style="overflow-x:auto;">
+      <table id="storico-tabella" style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+            <th style="text-align:left; padding:8px 4px; color:#a0a0c0; font-weight:600;">Mese</th>
+            <th style="text-align:right; padding:8px 4px; color:#a0a0c0; font-weight:600;">Luce</th>
+            <th style="text-align:right; padding:8px 4px; color:#a0a0c0; font-weight:600;">Gas</th>
+            <th style="text-align:right; padding:8px 4px; color:#a0a0c0; font-weight:600;">Totale</th>
+            <th style="text-align:right; padding:8px 4px; color:#a0a0c0; font-weight:600;">vs Base</th>
+          </tr>
+        </thead>
+        <tbody id="storico-tabella-body">
+          <!-- Popolato da JS -->
+        </tbody>
+      </table>
+    </div>
+    <div id="storico-vuoto" style="text-align:center; padding:24px; color:#a0a0c0; font-size:14px;">
+      Nessuna bolletta inserita.<br>Vai alla sezione bollette per caricare la prima.
+    </div>
+  </div>
+
+  <!-- BASELINE -->
+  <div class="card" id="card-baseline" style="display:none;">
+    <div class="card-title">Bolletta di riferimento (Baseline)</div>
+    <div style="display:flex; justify-content:space-between; font-size:14px;">
+      <span id="baseline-mese" style="color:#fff;">--</span>
+      <span id="baseline-totale" style="color:#FF0088; font-weight:700;">-- EUR</span>
+    </div>
+    <p style="font-size:12px; color:#a0a0c0; margin-top:8px;">
+      Questa e la tua bolletta di partenza. Ogni nuova bolletta viene confrontata con questa.
+    </p>
+  </div>
+
+  <!-- AZIONI -->
+  <div class="card">
+    <div class="card-title">Azioni</div>
+    <button class="btn btn-primary" onclick="aggiungiBolletta()">
+      + Aggiungi bolletta mese successivo
+    </button>
+    <button class="btn btn-secondary" onclick="showScreen('screen-3')">
+      Vai alla dashboard
+    </button>
+    <button class="btn btn-outline" onclick="showScreen('screen-bills-unified')" style="margin-top:8px;">
+      Modifica bollette
+    </button>
+  </div>
+
+  <!-- GESTIONE DEVICE (placeholder per futuro) -->
+  <div class="card" style="opacity:0.6;">
+    <div class="card-title">Gestione device</div>
+    <p style="font-size:13px; color:#a0a0c0; margin-bottom:12px;">
+      Aggiungi o rimuovi climatizzatori, termostati, VMC e altri device.
+    </p>
+    <button class="btn btn-outline" disabled style="opacity:0.5;">
+      Gestisci device (prossimamente)
+    </button>
+  </div>
+
+  <!-- MODALITA MANUALE (placeholder per futuro) -->
+  <div class="card" style="opacity:0.6;">
+    <div class="card-title">Modalita manuale</div>
+    <p style="font-size:13px; color:#a0a0c0; margin-bottom:12px;">
+      Attiva la modalita manuale a tuo rischio e pericolo. EcoHybrid non interverra piu automaticamente.
+    </p>
+    <button class="btn btn-outline" disabled style="opacity:0.5;">
+      Attiva manuale (prossimamente)
+    </button>
   </div>
 
   <div style="height:80px;"></div>
@@ -1204,6 +1318,28 @@ function parseAndFill(text, tipo) {
   updateTotals();
 }
 
+function caricaDatiDemo() {
+  // Bolletta luce demo (stile Octopus)
+  document.getElementById('unified-luce-periodo').value = '01/07/2026 - 31/07/2026';
+  document.getElementById('unified-luce-costo').value = '0,1680';
+  document.getElementById('unified-luce-consumo').value = '157';
+  document.getElementById('unified-luce-potenza').value = '3,00';
+  document.getElementById('unified-luce-tipo').value = 'bi';
+  document.getElementById('unified-luce-totale').value = '61,96';
+  document.getElementById('unified-luce-indirizzo').value = 'Via Brigate Garibaldi 112, 13019 Varallo (VC)';
+
+  // Bolletta gas demo (stile Octopus)
+  document.getElementById('unified-gas-periodo').value = '01/06/2026 - 30/06/2026';
+  document.getElementById('unified-gas-costo').value = '0,3450';
+  document.getElementById('unified-gas-consumo').value = '5';
+  document.getElementById('unified-gas-totale').value = '19,17';
+  document.getElementById('unified-gas-indirizzo').value = 'Via Brigate Garibaldi 112, 13019 Varallo (VC)';
+
+  document.getElementById('luce-status').innerHTML = '<span style="color:#00d4aa;">Dati demo caricati.</span>';
+  document.getElementById('gas-status').innerHTML = '<span style="color:#00d4aa;">Dati demo caricati.</span>';
+  updateTotals();
+}
+
 function updateTotals() {
   var luceEl = document.getElementById('unified-luce-totale');
   var gasEl = document.getElementById('unified-gas-totale');
@@ -1296,8 +1432,157 @@ function confirmUnifiedAndGo() {
   };
 
   localStorage.setItem('ecohybrid_bills', JSON.stringify(billData));
-  showScreen('screen-3');
-  initDashboard();
+
+  // Aggiungi allo storico
+  aggiungiAlloStorico(billData);
+
+  showScreen('screen-4');
+  renderStorico();
+}
+
+
+// ==================== STORICO BOLLETTE / RISPARMIO ====================
+function aggiungiAlloStorico(billData) {
+  var storicoRaw = localStorage.getItem('ecohybrid_storico');
+  var storico = [];
+  if (storicoRaw) {
+    try { storico = JSON.parse(storicoRaw); } catch(e) {}
+  }
+  // Genera label mese dal periodo luce o timestamp
+  var meseLabel = billData.luce.periodo || billData.gas.periodo || '';
+  if (!meseLabel) {
+    var d = new Date();
+    meseLabel = d.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+  }
+  // Se esiste gia una bolletta con lo stesso periodo, sostituisci
+  var esistente = -1;
+  for (var i = 0; i < storico.length; i++) {
+    if (storico[i].luce.periodo === billData.luce.periodo &&
+        storico[i].gas.periodo === billData.gas.periodo) {
+      esistente = i;
+      break;
+    }
+  }
+  var entry = {
+    id: Date.now(),
+    meseLabel: meseLabel,
+    luce: billData.luce,
+    gas: billData.gas,
+    totaleMese: billData.totaleMese,
+    totaleAnno: billData.totaleAnno,
+    timestamp: billData.timestamp
+  };
+  if (esistente >= 0) {
+    storico[esistente] = entry;
+  } else {
+    storico.push(entry);
+  }
+  localStorage.setItem('ecohybrid_storico', JSON.stringify(storico));
+}
+
+function renderStorico() {
+  var storicoRaw = localStorage.getItem('ecohybrid_storico');
+  var storico = [];
+  if (storicoRaw) {
+    try { storico = JSON.parse(storicoRaw); } catch(e) {}
+  }
+
+  var tbody = document.getElementById('storico-tabella-body');
+  var vuotoMsg = document.getElementById('storico-vuoto');
+  var tabella = document.getElementById('storico-tabella');
+  var cardBaseline = document.getElementById('card-baseline');
+
+  if (!tbody) return;
+
+  if (storico.length === 0) {
+    tbody.innerHTML = '';
+    if (vuotoMsg) vuotoMsg.style.display = 'block';
+    if (tabella) tabella.style.display = 'none';
+    if (cardBaseline) cardBaseline.style.display = 'none';
+    document.getElementById('storico-risparmio-totale').textContent = '0,00 EUR';
+    document.getElementById('storico-risparmio-pct').textContent = '0%';
+    document.getElementById('storico-risparmio-msg').innerHTML = 'Inserisci almeno due bollette per vedere il confronto reale.';
+    return;
+  }
+
+  if (vuotoMsg) vuotoMsg.style.display = 'none';
+  if (tabella) tabella.style.display = 'table';
+
+  var baseline = storico[0];
+  var htmlRows = '';
+  var risparmioTotale = 0;
+
+  for (var i = 0; i < storico.length; i++) {
+    var b = storico[i];
+    var vsBase = b.totaleMese - baseline.totaleMese;
+    var vsBaseStr = vsBase.toFixed(2).replace('.', ',') + ' EUR';
+    var color = vsBase < 0 ? '#00d4aa' : (vsBase > 0 ? '#ff4444' : '#a0a0c0');
+    var segno = vsBase < 0 ? '-' : (vsBase > 0 ? '+' : '');
+    var isBase = (i === 0) ? ' <span style="font-size:10px; color:#FF0088;">(BASE)</span>' : '';
+
+    htmlRows += '<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">' +
+      '<td style="padding:10px 4px; color:#fff;">' + b.meseLabel + isBase + '</td>' +
+      '<td style="padding:10px 4px; text-align:right; color:#a0a0c0;">' + (b.luce.totale ? b.luce.totale.toFixed(2).replace('.', ',') : '--') + '</td>' +
+      '<td style="padding:10px 4px; text-align:right; color:#a0a0c0;">' + (b.gas.totale ? b.gas.totale.toFixed(2).replace('.', ',') : '--') + '</td>' +
+      '<td style="padding:10px 4px; text-align:right; color:#fff; font-weight:700;">' + b.totaleMese.toFixed(2).replace('.', ',') + '</td>' +
+      '<td style="padding:10px 4px; text-align:right; color:' + color + '; font-weight:700;">' + segno + vsBaseStr + '</td>' +
+      '</tr>';
+
+    if (i > 0) {
+      risparmioTotale += (baseline.totaleMese - b.totaleMese);
+    }
+  }
+
+  tbody.innerHTML = htmlRows;
+
+  // Mostra baseline
+  if (cardBaseline) {
+    cardBaseline.style.display = 'block';
+    document.getElementById('baseline-mese').textContent = baseline.meseLabel;
+    document.getElementById('baseline-totale').textContent = baseline.totaleMese.toFixed(2).replace('.', ',') + ' EUR';
+  }
+
+  // Risparmio totale
+  var risparmioEl = document.getElementById('storico-risparmio-totale');
+  var pctEl = document.getElementById('storico-risparmio-pct');
+  var msgEl = document.getElementById('storico-risparmio-msg');
+
+  if (storico.length >= 2) {
+    var pct = (risparmioTotale / baseline.totaleMese) * 100;
+    risparmioEl.textContent = (risparmioTotale >= 0 ? '' : '-') + Math.abs(risparmioTotale).toFixed(2).replace('.', ',') + ' EUR';
+    risparmioEl.style.color = risparmioTotale >= 0 ? '#00d4aa' : '#ff4444';
+    pctEl.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+    pctEl.style.color = pct >= 0 ? '#00d4aa' : '#ff4444';
+    if (risparmioTotale > 0) {
+      msgEl.innerHTML = '<strong style="color:#00d4aa;">Ottimo!</strong> Hai risparmiato ' + risparmioTotale.toFixed(2).replace('.', ',') + ' EUR rispetto alla tua prima bolletta.';
+    } else if (risparmioTotale < 0) {
+      msgEl.innerHTML = '<strong style="color:#ff4444;">Attenzione.</strong> Hai speso ' + Math.abs(risparmioTotale).toFixed(2).replace('.', ',') + ' EUR in piu rispetto alla baseline. Verifica i consumi o i prezzi.';
+    } else {
+      msgEl.innerHTML = 'Nessuna variazione rispetto alla baseline.';
+    }
+  } else {
+    risparmioEl.textContent = '0,00 EUR';
+    risparmioEl.style.color = '#a0a0c0';
+    pctEl.textContent = '0%';
+    pctEl.style.color = '#a0a0c0';
+    msgEl.innerHTML = 'Hai inserito la prima bolletta. Inserisci quella del mese prossimo per vedere il confronto reale.';
+  }
+}
+
+function aggiungiBolletta() {
+  // Pulisci campi per nuova bolletta
+  var fields = ['unified-luce-periodo','unified-luce-costo','unified-luce-consumo','unified-luce-potenza','unified-luce-totale','unified-luce-indirizzo',
+                'unified-gas-periodo','unified-gas-costo','unified-gas-consumo','unified-gas-totale','unified-gas-indirizzo'];
+  for (var i = 0; i < fields.length; i++) {
+    var el = document.getElementById(fields[i]);
+    if (el) el.value = '';
+  }
+  document.getElementById('unified-luce-tipo').value = '';
+  document.getElementById('unified-totale-mese').textContent = '0 EUR';
+  document.getElementById('unified-totale-anno').textContent = '0 EUR';
+  document.getElementById('luce-status').textContent = '';
+  document.getElementById('gas-status').textContent = '';
+  showScreen('screen-bills-unified');
 }
 
 // ==================== DASHBOARD ====================
@@ -1434,6 +1719,7 @@ function goToBillsFromDashboard() {
 function resetAllData() {
   if (confirm('Sei sicuro? Questo cancellera tutti i dati e ti riportera alla schermata iniziale.')) {
     localStorage.removeItem('ecohybrid_bills');
+    localStorage.removeItem('ecohybrid_storico');
     localStorage.removeItem('ecohybrid_ha_url');
     localStorage.removeItem('ecohybrid_ha_token');
     location.reload();
@@ -1618,6 +1904,10 @@ window.onload = function() {
 
   if (document.getElementById('screen-3').classList.contains('active')) {
     initDashboard();
+  }
+
+  if (document.getElementById('screen-4').classList.contains('active')) {
+    renderStorico();
   }
 };
 </script>
