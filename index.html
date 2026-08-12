@@ -156,8 +156,8 @@
   .summary-label { font-size: 12px; color: #a0a0c0; margin-top: 4px; }
   ::-webkit-scrollbar { width: 0; background: transparent; }
 </style>
-<script src="js/tesseract/tesseract.min.js"></script>
-<script src="js/pdfjs/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -825,7 +825,7 @@ function processPDF(file, tipo, statusEl) {
   }
 
   try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdfjs/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   } catch (e) {
     statusEl.innerHTML = '<span style="color:#ffaa00;">Impossibile inizializzare PDF. Inserisci i dati manualmente.</span>';
     return;
@@ -927,7 +927,7 @@ function renderPDFPagesAndOCR(pages, tipo, statusEl) {
 
     page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
       canvas.toBlob(function(blob) {
-        Tesseract.recognize(blob, 'eng', {
+        Tesseract.recognize(blob, 'ita', {
           logger: function(m) {
             if (m.status === 'recognizing text') {
               statusEl.textContent = 'Pagina ' + (processed + 1) + '/' + total + ': ' + Math.round(m.progress * 100) + '%';
@@ -959,7 +959,7 @@ function doOCR(file, tipo, statusEl) {
     return;
   }
 
-  Tesseract.recognize(file, 'eng', {
+  Tesseract.recognize(file, 'ita', {
     logger: function(m) {
       if (m.status === 'recognizing text') {
         statusEl.textContent = 'Analisi in corso: ' + Math.round(m.progress * 100) + '%';
@@ -993,158 +993,150 @@ function parsePastedText(tipo) {
 }
 
 function parseAndFill(text, tipo) {
-  var costo = null, consumo = null, potenza = null, totale = null;
-  var lines = text.split('\n');
-  var lowerText = text.toLowerCase();
+  var t = text;
+  var isOctopus = /octopus\s*energy/i.test(t);
 
-  // ========== LUCE ==========
+  if (isOctopus) {
+    if (tipo === 'luce') {
+      var m = t.match(/PERIODO\s*DI\s*RIFERIMENTO:\s*dal\s*(\d{2}\/\d{2}\/\d{4})\s*al\s*(\d{2}\/\d{2}\/\d{4})/i);
+      if (m) document.getElementById('unified-luce-periodo').value = m[1] + ' - ' + m[2];
+
+      m = t.match(/CONSUMO\s*FATTURATO:\s*(\d+)\s*kWh/i);
+      if (m) document.getElementById('unified-luce-consumo').value = m[1];
+
+      m = t.match(/POTENZA\s*IMPEGNATA:\s*(\d+[.,]?\d*)\s*kW/i);
+      if (m) document.getElementById('unified-luce-potenza').value = m[1].replace(',', '.');
+
+      var mPun = t.match(/PUN\s*\([^)]*\):\s*(\d+[.,]\d+)\s*€\/kWh/i);
+      var mSpread = t.match(/Spread:\s*(\d+[.,]\d+)\s*€\/kWh/i);
+      if (mPun && mSpread) {
+        var pun = parseFloat(mPun[1].replace(',', '.'));
+        var spread = parseFloat(mSpread[1].replace(',', '.'));
+        document.getElementById('unified-luce-costo').value = (pun + spread).toFixed(4);
+      } else {
+        m = t.match(/\|\s*(\d+)\s*kWh\s*x\s*\|\s*(\d+[.,]\d+)\s*€\/kWh/i);
+        if (m) document.getElementById('unified-luce-costo').value = m[2].replace(',', '.');
+      }
+
+      m = t.match(/TOTALEBOLLETTA[^\d]*(\d{1,3}[.,]\d{2})\s*€/i);
+      if (m) document.getElementById('unified-luce-totale').value = m[1].replace(',', '.');
+
+      m = t.match(/INDIRIZZO\s*DI\s*FORNITURA:\s*([^\n]+)/i);
+      if (m) document.getElementById('unified-luce-indirizzo').value = m[1].trim();
+
+      if (/Flex/i.test(t) || /multioraria/i.test(t)) {
+        document.getElementById('unified-luce-tipo').value = 'bi';
+      }
+
+    } else {
+      m = t.match(/PERIODO\s*DI\s*RIFERIMENTO:\s*dal\s*(\d{2}\/\d{2}\/\d{4})\s*al\s*(\d{2}\/\d{2}\/\d{4})/i);
+      if (m) document.getElementById('unified-gas-periodo').value = m[1] + ' - ' + m[2];
+
+      m = t.match(/CONSUMO\s*FATTURATO:\s*(\d+)\s*Smc/i);
+      if (m) document.getElementById('unified-gas-consumo').value = m[1];
+
+      m = t.match(/PREZZO\s*FISSO:\s*(\d+[.,]\d+)\s*€\/Smc/i);
+      if (m) {
+        document.getElementById('unified-gas-costo').value = m[1].replace(',', '.');
+      } else {
+        m = t.match(/\|\s*(\d+)\s*Smc\s*x\s*\|\s*(\d+[.,]\d+)\s*€\/Smc/i);
+        if (m) document.getElementById('unified-gas-costo').value = m[2].replace(',', '.');
+      }
+
+      m = t.match(/TOTALEBOLLETTA[^\d]*(\d{1,3}[.,]\d{2})\s*€/i);
+      if (m) document.getElementById('unified-gas-totale').value = m[1].replace(',', '.');
+
+      m = t.match(/INDIRIZZO\s*DI\s*FORNITURA:\s*([^\n]+)/i);
+      if (m) document.getElementById('unified-gas-indirizzo').value = m[1].trim();
+    }
+    updateTotals();
+    return;
+  }
+
+  var costo = null, consumo = null, potenza = null, totale = null;
   if (tipo === 'luce') {
-    // COSTO kWh: cerca pattern specifici con contesto
     var costoPatterns = [
       /(?:prezzo\s*unitario|costo\s*energia|costo\s*kw|prezzo\s*kw)[^\d]{0,30}(\d[.,]\d{3,4})/i,
       /(\d[.,]\d{3,4})[^\d]{0,20}(?:€|eur)?\s*\/?\s*kwh/i,
-      /(?:€|eur)\s*\/?\s*kwh[^\d]{0,20}(\d[.,]\d{3,4})/i,
-      /kw[h]?\s*(?:€|eur)?\s*[:=]?\s*(\d[.,]\d{3,4})/i
+      /(?:€|eur)\s*\/?\s*kwh[^\d]{0,20}(\d[.,]\d{3,4})/i
     ];
     for (var p = 0; p < costoPatterns.length && !costo; p++) {
-      var m = text.match(costoPatterns[p]);
-      if (m) {
-        var val = parseFloat(m[1].replace(',', '.'));
-        if (val >= 0.05 && val <= 0.60) costo = m[1].replace(',', '.');
-      }
+      var m = t.match(costoPatterns[p]);
+      if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 0.05 && val <= 0.60) costo = m[1].replace(',', '.'); }
     }
-
-    // CONSUMO kWh: cerca numeri vicini a "consumo" o "kWh"
     var consumoPatterns = [
       /consumo\s*(?:totale|fatturato|energia)[^\d]{0,30}(\d{2,4}(?:[.,]\d+)?)\s*kwh/i,
-      /(\d{2,4}(?:[.,]\d+)?)\s*kwh[^\d]{0,30}consumo/i,
-      /(?:totale|fatturato)[^\d]{0,30}(\d{2,4})\s*kwh/i
+      /(\d{2,4}(?:[.,]\d+)?)\s*kwh[^\d]{0,30}consumo/i
     ];
     for (var p = 0; p < consumoPatterns.length && !consumo; p++) {
-      var m = text.match(consumoPatterns[p]);
-      if (m) {
-        var val = parseFloat(m[1].replace(',', '.'));
-        if (val >= 10 && val <= 9999) consumo = m[1].replace(',', '.');
-      }
+      var m = t.match(consumoPatterns[p]);
+      if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 10 && val <= 9999) consumo = m[1].replace(',', '.'); }
     }
-    // Fallback: cerca "kWh" vicino a numeri di 2-4 cifre, ma con filtro range
-    if (!consumo) {
-      var m = text.match(/(\d{2,4})\s*kwh/i);
-      if (m) {
-        var val = parseFloat(m[1]);
-        if (val >= 10 && val <= 9999) consumo = m[1];
-      }
-    }
-
-    // POTENZA kW: cerca numeri con 1-2 decimali vicini a kW
+    if (!consumo) { var mc2 = t.match(/(\d{3,4})\s*kWh/i); if (mc2) consumo = mc2[1]; }
     var potenzaPatterns = [
       /potenza\s*(?:disponibile|contrattuale|impegnata)[^\d]{0,20}(\d[.,]\d{1,2})\s*k[w]?/i,
-      /(\d[.,]\d{1,2})\s*k[w]?[^\d]{0,20}potenza/i,
-      /(?:impegno|potenza)[^\d]{0,20}(\d[.,]\d{1,2})/i
+      /(\d[.,]\d{1,2})\s*k[w]?[^\d]{0,20}potenza/i
     ];
     for (var p = 0; p < potenzaPatterns.length && !potenza; p++) {
-      var m = text.match(potenzaPatterns[p]);
-      if (m) {
-        var val = parseFloat(m[1].replace(',', '.'));
-        if (val >= 1.0 && val <= 10.0) potenza = m[1].replace(',', '.');
-      }
+      var m = t.match(potenzaPatterns[p]);
+      if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 1.0 && val <= 10.0) potenza = m[1].replace(',', '.'); }
     }
-
-    // TOTALE: cerca "totale" o "importo" vicino a numeri con 2 decimali
-    var totalePatterns = [
-      /(?:totale\s*a\s*pagare|importo\s*totale|totale\s*fattura|totale\s*documento)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i,
-      /(?:da\s*pagare|importo\s*da\s*pagare)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i
-    ];
-    for (var p = 0; p < totalePatterns.length && !totale; p++) {
-      var m = text.match(totalePatterns[p]);
-      if (m) {
-        var val = parseFloat(m[1].replace(',', '.'));
-        if (val >= 5 && val <= 800) totale = m[1].replace(',', '.');
-      }
-    }
-    // Fallback: ultimo numero con 2 decimali e simbolo euro (piu probabile sia il totale)
-    if (!totale) {
-      var allEuros = text.match(/(\d{1,3}[.,]\d{2})\s*€/g);
-      if (allEuros && allEuros.length > 0) {
-        // Prendi l'ultimo match (spesso il totale e in fondo)
-        var last = allEuros[allEuros.length - 1].match(/(\d{1,3}[.,]\d{2})/);
-        if (last) {
-          var val = parseFloat(last[1].replace(',', '.'));
-          if (val >= 5 && val <= 800) totale = last[1].replace(',', '.');
-        }
-      }
-    }
-
-    // Fill fields only if values are reasonable
-    if (costo) document.getElementById('unified-luce-costo').value = costo;
-    if (consumo) document.getElementById('unified-luce-consumo').value = consumo;
-    if (potenza) document.getElementById('unified-luce-potenza').value = potenza;
-    if (totale) document.getElementById('unified-luce-totale').value = totale;
-
-  // ========== GAS ==========
-  } else {
-    // COSTO Smc
-    var costoPatterns = [
-      /(?:prezzo\s*unitario|costo\s*gas|costo\s*smc)[^\d]{0,30}(\d[.,]\d{3,4})/i,
-      /(\d[.,]\d{3,4})[^\d]{0,20}(?:€|eur)?\s*\/?\s*smc/i,
-      /(?:€|eur)\s*\/?\s*smc[^\d]{0,20}(\d[.,]\d{3,4})/i
-    ];
-    for (var p = 0; p < costoPatterns.length && !costo; p++) {
-      var m = text.match(costoPatterns[p]);
-      if (m) {
-        var val = parseFloat(m[1].replace(',', '.'));
-        if (val >= 0.20 && val <= 2.00) costo = m[1].replace(',', '.');
-      }
-    }
-
-    // CONSUMO Smc
-    var consumoPatterns = [
-      /consumo\s*(?:totale|fatturato|gas)[^\d]{0,30}(\d{1,3}(?:[.,]\d+)?)\s*smc/i,
-      /(\d{1,3}(?:[.,]\d+)?)\s*smc[^\d]{0,30}consumo/i
-    ];
-    for (var p = 0; p < consumoPatterns.length && !consumo; p++) {
-      var m = text.match(consumoPatterns[p]);
-      if (m) {
-        var val = parseFloat(m[1].replace(',', '.'));
-        if (val >= 1 && val <= 500) consumo = m[1].replace(',', '.');
-      }
-    }
-    if (!consumo) {
-      var m = text.match(/(\d{1,3})\s*smc/i);
-      if (m) {
-        var val = parseFloat(m[1]);
-        if (val >= 1 && val <= 500) consumo = m[1];
-      }
-    }
-
-    // TOTALE gas
     var totalePatterns = [
       /(?:totale\s*a\s*pagare|importo\s*totale|totale\s*fattura)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i,
       /(?:da\s*pagare|importo\s*da\s*pagare)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i
     ];
     for (var p = 0; p < totalePatterns.length && !totale; p++) {
-      var m = text.match(totalePatterns[p]);
-      if (m) {
-        var val = parseFloat(m[1].replace(',', '.'));
-        if (val >= 5 && val <= 500) totale = m[1].replace(',', '.');
-      }
+      var m = t.match(totalePatterns[p]);
+      if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 5 && val <= 800) totale = m[1].replace(',', '.'); }
     }
     if (!totale) {
-      var allEuros = text.match(/(\d{1,3}[.,]\d{2})\s*€/g);
+      var allEuros = t.match(/(\d{1,3}[.,]\d{2})\s*€/g);
       if (allEuros && allEuros.length > 0) {
         var last = allEuros[allEuros.length - 1].match(/(\d{1,3}[.,]\d{2})/);
-        if (last) {
-          var val = parseFloat(last[1].replace(',', '.'));
-          if (val >= 5 && val <= 500) totale = last[1].replace(',', '.');
-        }
+        if (last) { var val = parseFloat(last[1].replace(',', '.')); if (val >= 5 && val <= 800) totale = last[1].replace(',', '.'); }
       }
     }
-
+    if (costo) document.getElementById('unified-luce-costo').value = costo;
+    if (consumo) document.getElementById('unified-luce-consumo').value = consumo;
+    if (potenza) document.getElementById('unified-luce-potenza').value = potenza;
+    if (totale) document.getElementById('unified-luce-totale').value = totale;
+  } else {
+    var costoPatterns = [
+      /(?:prezzo\s*unitario|costo\s*gas|costo\s*smc)[^\d]{0,30}(\d[.,]\d{3,4})/i,
+      /(\d[.,]\d{3,4})[^\d]{0,20}(?:€|eur)?\s*\/?\s*smc/i
+    ];
+    for (var p = 0; p < costoPatterns.length && !costo; p++) {
+      var m = t.match(costoPatterns[p]);
+      if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 0.20 && val <= 2.00) costo = m[1].replace(',', '.'); }
+    }
+    var consumoPatterns = [
+      /consumo\s*(?:totale|fatturato|gas)[^\d]{0,30}(\d{1,3}(?:[.,]\d+)?)\s*smc/i,
+      /(\d{1,3}(?:[.,]\d+)?)\s*smc[^\d]{0,30}consumo/i
+    ];
+    for (var p = 0; p < consumoPatterns.length && !consumo; p++) {
+      var m = t.match(consumoPatterns[p]);
+      if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 1 && val <= 500) consumo = m[1].replace(',', '.'); }
+    }
+    if (!consumo) { var mc2 = t.match(/(\d{1,3})\s*Smc/i); if (mc2) consumo = mc2[1]; }
+    var totalePatterns = [
+      /(?:totale\s*a\s*pagare|importo\s*totale|totale\s*fattura)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i,
+      /(?:da\s*pagare|importo\s*da\s*pagare)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i
+    ];
+    for (var p = 0; p < totalePatterns.length && !totale; p++) {
+      var m = t.match(totalePatterns[p]);
+      if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 5 && val <= 500) totale = m[1].replace(',', '.'); }
+    }
+    if (!totale) {
+      var allEuros = t.match(/(\d{1,3}[.,]\d{2})\s*€/g);
+      if (allEuros && allEuros.length > 0) {
+        var last = allEuros[allEuros.length - 1].match(/(\d{1,3}[.,]\d{2})/);
+        if (last) { var val = parseFloat(last[1].replace(',', '.')); if (val >= 5 && val <= 500) totale = last[1].replace(',', '.'); }
+      }
+    }
     if (costo) document.getElementById('unified-gas-costo').value = costo;
     if (consumo) document.getElementById('unified-gas-consumo').value = consumo;
     if (totale) document.getElementById('unified-gas-totale').value = totale;
   }
-
   updateTotals();
 }
 
