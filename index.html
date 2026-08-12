@@ -159,6 +159,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -454,15 +455,15 @@
       </div>
       <div class="input-group">
         <label>Costo kWh (EUR)</label>
-        <input type="text" id="unified-luce-costo" placeholder="es. 0,2927">
+        <input type="text" id="unified-luce-costo" placeholder="es. 0,2927" oninput="updateTotals()">
       </div>
       <div class="input-group">
         <label>Consumo kWh</label>
-        <input type="text" id="unified-luce-consumo" placeholder="es. 157">
+        <input type="text" id="unified-luce-consumo" placeholder="es. 157" oninput="updateTotals()">
       </div>
       <div class="input-group">
         <label>Potenza contrattuale (kW)</label>
-        <input type="text" id="unified-luce-potenza" placeholder="es. 3,00">
+        <input type="text" id="unified-luce-potenza" placeholder="es. 3,00" oninput="updateTotals()">
       </div>
       <div class="input-group">
         <label>Tipo contratto</label>
@@ -475,7 +476,7 @@
       </div>
       <div class="input-group">
         <label>Spesa totale (EUR)</label>
-        <input type="text" id="unified-luce-totale" placeholder="es. 61,96">
+        <input type="text" id="unified-luce-totale" placeholder="es. 61,96" oninput="updateTotals()">
       </div>
       <div class="input-group">
         <label>Indirizzo fornitura</label>
@@ -521,15 +522,19 @@
       </div>
       <div class="input-group">
         <label>Costo Smc (EUR)</label>
-        <input type="text" id="unified-gas-costo" placeholder="es. 0,9426">
+        <input type="text" id="unified-gas-costo" placeholder="es. 0,9426" oninput="updateTotals()">
       </div>
       <div class="input-group">
         <label>Consumo Smc</label>
-        <input type="text" id="unified-gas-consumo" placeholder="es. 5">
+        <input type="text" id="unified-gas-consumo" placeholder="es. 5" oninput="updateTotals()">
       </div>
       <div class="input-group">
         <label>Spesa totale (EUR)</label>
-        <input type="text" id="unified-gas-totale" placeholder="es. 19,17">
+        <input type="text" id="unified-gas-totale" placeholder="es. 19,17" oninput="updateTotals()">
+      </div>
+      <div class="input-group">
+        <label>Indirizzo fornitura</label>
+        <input type="text" id="unified-gas-indirizzo" placeholder="es. Via Roma 1, 20100 Milano">
       </div>
     </div>
   </div>
@@ -1078,19 +1083,25 @@ function parseAndFill(text, tipo) {
 
       // Totale: TOTALEBOLLETTA, poi TOTALE DA PAGARE, poi ultimo €
       var totale = null;
-      m = t.match(/TOTALEBOLLETTA[\s\S]{0,60}?(\d{1,3}[.,]\d{2})/i);
+      m = t.match(/TOTALEBOLLETTA[\s\S]{0,120}?(\d{1,3}[.,]\d{2})/i);
       if (m) totale = m[1].replace(',', '.');
       if (!totale) {
-        m = t.match(/TOTALE\s*DA\s*PAGARE[\s\S]{0,60}?(\d{1,3}[.,]\d{2})/i);
+        m = t.match(/TOTALE\s*DA\s*PAGARE[\s\S]{0,120}?(\d{1,3}[.,]\d{2})/i);
         if (m) totale = m[1].replace(',', '.');
       }
       if (!totale) {
-        var allEuros = t.match(/(\d{1,3}[.,]\d{2})\s*€/g);
+        m = t.match(/IMPORTO\s*TOTALE[\s\S]{0,120}?(\d{1,3}[.,]\d{2})/i);
+        if (m) totale = m[1].replace(',', '.');
+      }
+      if (!totale) {
+        var allEuros = t.match(/(\d{1,3}[.,]\d{2})\s*(?:€|EUR|euro)/gi);
         if (allEuros && allEuros.length > 0) {
-          var last = allEuros[allEuros.length - 1].match(/(\d{1,3}[.,]\d{2})/);
-          if (last) {
-            var val = parseFloat(last[1].replace(',', '.'));
-            if (val >= 5 && val <= 500) totale = last[1].replace(',', '.');
+          for (var ei = allEuros.length - 1; ei >= 0; ei--) {
+            var last = allEuros[ei].match(/(\d{1,3}[.,]\d{2})/);
+            if (last) {
+              var val = parseFloat(last[1].replace(',', '.'));
+              if (val >= 5 && val <= 500) { totale = last[1].replace(',', '.'); break; }
+            }
           }
         }
       }
@@ -1194,13 +1205,45 @@ function parseAndFill(text, tipo) {
 }
 
 function updateTotals() {
-  var luceTotale = parseFloat(document.getElementById('unified-luce-totale').value.replace(',', '.')) || 0;
-  var gasTotale = parseFloat(document.getElementById('unified-gas-totale').value.replace(',', '.')) || 0;
+  var luceEl = document.getElementById('unified-luce-totale');
+  var gasEl = document.getElementById('unified-gas-totale');
+  var luceTotale = luceEl && luceEl.value ? parseFloat(luceEl.value.replace(',', '.')) || 0 : 0;
+  var gasTotale = gasEl && gasEl.value ? parseFloat(gasEl.value.replace(',', '.')) || 0 : 0;
   var totaleMese = luceTotale + gasTotale;
   var totaleAnno = totaleMese * 12;
 
   document.getElementById('unified-totale-mese').textContent = totaleMese.toFixed(2) + ' EUR';
   document.getElementById('unified-totale-anno').textContent = totaleAnno.toFixed(2) + ' EUR';
+}
+
+function restoreBillFields() {
+  var saved = localStorage.getItem('ecohybrid_bills');
+  if (!saved) return;
+  try {
+    var b = JSON.parse(saved);
+    if (b.luce) {
+      if (b.luce.periodo) document.getElementById('unified-luce-periodo').value = b.luce.periodo;
+      if (b.luce.costo) document.getElementById('unified-luce-costo').value = b.luce.costo.toString().replace('.', ',');
+      if (b.luce.consumo) document.getElementById('unified-luce-consumo').value = b.luce.consumo.toString().replace('.', ',');
+      if (b.luce.potenza) document.getElementById('unified-luce-potenza').value = b.luce.potenza.toString().replace('.', ',');
+      if (b.luce.tipo) document.getElementById('unified-luce-tipo').value = b.luce.tipo;
+      if (b.luce.totale) document.getElementById('unified-luce-totale').value = b.luce.totale.toString().replace('.', ',');
+      if (b.luce.indirizzo) document.getElementById('unified-luce-indirizzo').value = b.luce.indirizzo;
+    }
+    if (b.gas) {
+      if (b.gas.periodo) document.getElementById('unified-gas-periodo').value = b.gas.periodo;
+      if (b.gas.costo) document.getElementById('unified-gas-costo').value = b.gas.costo.toString().replace('.', ',');
+      if (b.gas.consumo) document.getElementById('unified-gas-consumo').value = b.gas.consumo.toString().replace('.', ',');
+      if (b.gas.totale) document.getElementById('unified-gas-totale').value = b.gas.totale.toString().replace('.', ',');
+      if (b.gas.indirizzo) {
+        var elAddr = document.getElementById('unified-gas-indirizzo');
+        if (elAddr) elAddr.value = b.gas.indirizzo;
+      }
+    }
+    updateTotals();
+  } catch (e) {
+    console.log('Errore restore bollette:', e);
+  }
 }
 
 function confirmUnifiedAndGo() {
@@ -1223,6 +1266,9 @@ function confirmUnifiedAndGo() {
   var gasCosto = parseFloat(document.getElementById('unified-gas-costo').value.replace(',', '.')) || 0;
   var gasConsumo = parseFloat(document.getElementById('unified-gas-consumo').value.replace(',', '.')) || 0;
   var gasTot = parseFloat(gasTotale.replace(',', '.')) || 0;
+  var gasIndirizzo = '';
+  var elGasAddr2 = document.getElementById('unified-gas-indirizzo');
+  if (elGasAddr2) gasIndirizzo = elGasAddr2.value;
 
   var totaleMese = luceTot + gasTot;
   var totaleAnno = totaleMese * 12;
@@ -1241,7 +1287,8 @@ function confirmUnifiedAndGo() {
       periodo: document.getElementById('unified-gas-periodo').value,
       costo: gasCosto,
       consumo: gasConsumo,
-      totale: gasTot
+      totale: gasTot,
+      indirizzo: gasIndirizzo
     },
     totaleMese: totaleMese,
     totaleAnno: totaleAnno,
@@ -1381,6 +1428,7 @@ function rimandaSuggerimento() {
 
 function goToBillsFromDashboard() {
   showScreen('screen-bills-unified');
+  setTimeout(restoreBillFields, 50);
 }
 
 function resetAllData() {
@@ -1562,6 +1610,11 @@ window.onload = function() {
 
   var savedHA = localStorage.getItem('ecohybrid_ha_url');
   if (savedHA) document.getElementById('ha-url').value = savedHA;
+
+  // Se siamo sulla schermata bollette, ripristina i campi
+  if (document.getElementById('screen-bills-unified').classList.contains('active')) {
+    restoreBillFields();
+  }
 
   if (document.getElementById('screen-3').classList.contains('active')) {
     initDashboard();
