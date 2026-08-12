@@ -370,6 +370,7 @@
     <div class="card-title">Bolletta luce</div>
     <div class="upload-row">
       <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Scatta foto</div>
+        <input type="file" id="file-luce" accept="image/*,.pdf" style="display:none" onchange="handleFile(this, 'luce')">
       <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Carica PDF/Foto</div>
     </div>
     <div id="luce-uploaded" class="uploaded-label">Bolletta luce allegata</div>
@@ -396,6 +397,7 @@
     <div class="card-title">Bolletta gas</div>
     <div class="upload-row">
       <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Scatta foto</div>
+        <input type="file" id="file-gas" accept="image/*,.pdf" style="display:none" onchange="handleFile(this, 'gas')">
       <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Carica PDF/Foto</div>
     </div>
     <div id="gas-uploaded" class="uploaded-label">Bolletta gas allegata</div>
@@ -634,32 +636,6 @@
       <div class="metric-value" id="dash-umid" style="color:#00d4aa;">--</div>
       <div class="metric-unit">% umidita'</div>
     </div>
-  </div>
-
-  <div class="metric-grid" id="meteo-box" style="display:none;">
-    <div class="metric-box">
-      <div class="metric-value" id="dash-temp-est">--</div>
-      <div class="metric-unit">C esterna (live)</div>
-    </div>
-    <div class="metric-box">
-      <div class="metric-value" id="dash-setpoint" style="color:#FF0088;">--</div>
-      <div class="metric-unit">Setpoint calc.</div>
-    </div>
-  </div>
-
-  <div class="card" id="card-comfort" style="display:none;">
-    <div class="card-title">Comfort adattivo (ASHRAE 55)</div>
-    <p style="font-size:13px; color:#a0a0c0; line-height:1.5;" id="comfort-testo"></p>
-  </div>
-
-  <div class="card" id="card-switch" style="display:none;">
-    <div class="card-title">Switch dinamico gas / elettrico</div>
-    <p style="font-size:13px; color:#a0a0c0; line-height:1.5;" id="switch-testo"></p>
-  </div>
-
-  <div class="card" id="card-recircolo" style="display:none;">
-    <div class="card-title">Recircolo calore invernale</div>
-    <p style="font-size:13px; color:#a0a0c0; line-height:1.5;" id="recircolo-testo"></p>
   </div>
 
   <div class="card">
@@ -950,16 +926,11 @@ function showStimaRisparmio(bills) {
   var sottotitolo = document.getElementById('risparmio-sottotitolo');
 
   if (bills.totaleAnno && bills.totaleAnno > 0) {
-    // Stima conservativa basata su evidenze documentate:
-    // f_comfort=0.92 (-8% estate, ASHRAE 55), f_switch=0.95 (-5% quando COP>3), f_recircolo=0.95 (-5% inverno)
     var f_comfort = 0.92; var f_switch = 0.95; var f_recircolo = 0.95;
     var risparmioStimato = bills.totaleAnno * (1 - (f_comfort * f_switch * f_recircolo));
     var risparmioPct = ((1 - (f_comfort * f_switch * f_recircolo)) * 100).toFixed(1);
     if (titolo) titolo.textContent = 'Risparmio stimato (annuo)';
-    if (valore) {
-      valore.textContent = risparmioStimato.toFixed(2) + ' EUR';
-      valore.style.color = '#00d4aa';
-    }
+    if (valore) { valore.textContent = risparmioStimato.toFixed(2) + ' EUR'; valore.style.color = '#00d4aa'; }
     if (sottotitolo) sottotitolo.textContent = 'Stima conservativa ' + risparmioPct + '%. Dati reali dopo 30 giorni.';
   } else {
     if (titolo) titolo.textContent = 'Risparmio';
@@ -1054,7 +1025,7 @@ var MERCATO = {
   PUN_F0: 0.189, PUN_F3: 0.152, PSV: 0.664, perditeRete: 1.10
 };
 
-// COP medi conservativi da datasheet produttori (Midea, Daikin, Mitsubishi)
+// COP medi conservativi da datasheet produttori
 function getCOP(tempEst) {
   if (tempEst >= 15) return 4.0;
   if (tempEst >= 10) return 3.5;
@@ -1122,11 +1093,14 @@ function fetchMeteoCoords(lat, lon) {
         tempEst: tempEst, umidita: umidita, apparente: cur.apparent_temperature,
         timestamp: new Date().toISOString()
       }));
+      // Mostra in dashboard se esistono gli elementi
       var meteoBox = document.getElementById('meteo-box');
       if (meteoBox) meteoBox.style.display = 'grid';
-      document.getElementById('dash-temp-est').textContent = tempEst + 'C';
+      var elTemp = document.getElementById('dash-temp-est');
+      if (elTemp) elTemp.textContent = tempEst + 'C';
       var comfort = calcolaComfortAdattivo(tempEst, umidita);
-      document.getElementById('dash-setpoint').textContent = comfort.setpoint + 'C';
+      var elSet = document.getElementById('dash-setpoint');
+      if (elSet) elSet.textContent = comfort.setpoint + 'C';
       var cardComfort = document.getElementById('card-comfort');
       if (cardComfort) { cardComfort.style.display = 'block'; document.getElementById('comfort-testo').textContent = comfort.spiegazione; }
       var sw = calcolaSwitchDinamico(tempEst);
