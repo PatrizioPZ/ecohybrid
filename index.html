@@ -158,6 +158,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<base target="_blank">
 </head>
 <body>
 
@@ -998,15 +999,19 @@ function parseAndFill(text, tipo) {
 
   if (isOctopus) {
     if (tipo === 'luce') {
+      // Periodo
       var m = t.match(/PERIODO\s*DI\s*RIFERIMENTO:\s*dal\s*(\d{2}\/\d{2}\/\d{4})\s*al\s*(\d{2}\/\d{2}\/\d{4})/i);
       if (m) document.getElementById('unified-luce-periodo').value = m[1] + ' - ' + m[2];
 
-      m = t.match(/CONSUMO\s*FATTURATO:\s*(\d+)\s*kWh/i);
+      // Consumo
+      m = t.match(/CONSUMO\s*FATTURATO\s*[:=]?\s*(\d+)\s*kWh/i);
       if (m) document.getElementById('unified-luce-consumo').value = m[1];
 
-      m = t.match(/POTENZA\s*IMPEGNATA:\s*(\d+[.,]?\d*)\s*kW/i);
+      // Potenza
+      m = t.match(/POTENZA\s*IMPEGNATA\s*[:=]?\s*(\d+[.,]?\d*)\s*kW/i);
       if (m) document.getElementById('unified-luce-potenza').value = m[1].replace(',', '.');
 
+      // Costo: PUN + spread (Flex) oppure prezzo fisso
       var mPun = t.match(/PUN\s*\([^)]*\):\s*(\d+[.,]\d+)\s*€\/kWh/i);
       var mSpread = t.match(/Spread:\s*(\d+[.,]\d+)\s*€\/kWh/i);
       if (mPun && mSpread) {
@@ -1018,41 +1023,89 @@ function parseAndFill(text, tipo) {
         if (m) document.getElementById('unified-luce-costo').value = m[2].replace(',', '.');
       }
 
-      m = t.match(/TOTALEBOLLETTA[^\d]*(\d{1,3}[.,]\d{2})\s*€/i);
+      // Totale BOLLETTA (senza canone RAI)
+      m = t.match(/TOTALEBOLLETTA[\s\S]{0,30}?(\d{1,3}[.,]\d{2})\s*€/i);
       if (m) document.getElementById('unified-luce-totale').value = m[1].replace(',', '.');
 
+      // Indirizzo
       m = t.match(/INDIRIZZO\s*DI\s*FORNITURA:\s*([^\n]+)/i);
       if (m) document.getElementById('unified-luce-indirizzo').value = m[1].trim();
 
+      // Tipo contratto
       if (/Flex/i.test(t) || /multioraria/i.test(t)) {
         document.getElementById('unified-luce-tipo').value = 'bi';
       }
 
-    } else {
-      m = t.match(/PERIODO\s*DI\s*RIFERIMENTO:\s*dal\s*(\d{2}\/\d{2}\/\d{4})\s*al\s*(\d{2}\/\d{2}\/\d{4})/i);
+    } else { // GAS
+      // Periodo
+      var m = t.match(/PERIODO\s*DI\s*RIFERIMENTO:\s*dal\s*(\d{2}\/\d{2}\/\d{4})\s*al\s*(\d{2}\/\d{2}\/\d{4})/i);
       if (m) document.getElementById('unified-gas-periodo').value = m[1] + ' - ' + m[2];
 
-      m = t.match(/CONSUMO\s*FATTURATO:\s*(\d+)\s*Smc/i);
+      // Consumo: CONSUMO FATTURATO o qualsiasi numero + Smc
+      m = t.match(/CONSUMO\s*FATTURATO\s*[:=]?\s*(\d+)\s*Smc/i);
+      if (!m) {
+        var allSmc = t.match(/(\d+)\s*Smc/gi);
+        if (allSmc) {
+          for (var i = 0; i < allSmc.length; i++) {
+            var val = parseInt(allSmc[i].match(/(\d+)/)[1]);
+            if (val >= 1 && val <= 500) { m = [null, val.toString()]; break; }
+          }
+        }
+      }
       if (m) document.getElementById('unified-gas-consumo').value = m[1];
 
-      m = t.match(/PREZZO\s*FISSO:\s*(\d+[.,]\d+)\s*€\/Smc/i);
-      if (m) {
-        document.getElementById('unified-gas-costo').value = m[1].replace(',', '.');
+      // Costo: PREZZO FISSO, poi tabella, poi qualsiasi €/Smc
+      var costo = null;
+      var mCosto = t.match(/PREZZO\s*FISSO\s*[:=]?\s*(\d+[.,]\d+)\s*€?\s*\/?\s*Smc/i);
+      if (mCosto) {
+        costo = mCosto[1].replace(',', '.');
       } else {
-        m = t.match(/\|\s*(\d+)\s*Smc\s*x\s*\|\s*(\d+[.,]\d+)\s*€\/Smc/i);
-        if (m) document.getElementById('unified-gas-costo').value = m[2].replace(',', '.');
+        // Tabella scontrino
+        mCosto = t.match(/\|\s*(\d+)\s*Smc\s*x\s*\|\s*(\d+[.,]\d+)\s*€?\s*\/?\s*Smc/i);
+        if (mCosto) costo = mCosto[2].replace(',', '.');
       }
+      if (!costo) {
+        // Ultimo fallback: cerca qualsiasi €/Smc
+        var allPrices = t.match(/(\d+[.,]\d+)\s*€?\s*\/?\s*Smc/gi);
+        if (allPrices) {
+          for (var i = 0; i < allPrices.length; i++) {
+            var val = parseFloat(allPrices[i].match(/(\d+[.,]\d+)/)[1].replace(',', '.'));
+            if (val >= 0.20 && val <= 2.00) { costo = val.toString(); break; }
+          }
+        }
+      }
+      if (costo) document.getElementById('unified-gas-costo').value = costo;
 
-      m = t.match(/TOTALEBOLLETTA[^\d]*(\d{1,3}[.,]\d{2})\s*€/i);
-      if (m) document.getElementById('unified-gas-totale').value = m[1].replace(',', '.');
+      // Totale: TOTALEBOLLETTA, poi TOTALE DA PAGARE, poi ultimo €
+      var totale = null;
+      m = t.match(/TOTALEBOLLETTA[\s\S]{0,30}?(\d{1,3}[.,]\d{2})\s*€/i);
+      if (m) totale = m[1].replace(',', '.');
+      if (!totale) {
+        m = t.match(/TOTALE\s*DA\s*PAGARE[\s\S]{0,30}?(\d{1,3}[.,]\d{2})\s*€/i);
+        if (m) totale = m[1].replace(',', '.');
+      }
+      if (!totale) {
+        var allEuros = t.match(/(\d{1,3}[.,]\d{2})\s*€/g);
+        if (allEuros && allEuros.length > 0) {
+          var last = allEuros[allEuros.length - 1].match(/(\d{1,3}[.,]\d{2})/);
+          if (last) {
+            var val = parseFloat(last[1].replace(',', '.'));
+            if (val >= 5 && val <= 500) totale = last[1].replace(',', '.');
+          }
+        }
+      }
+      if (totale) document.getElementById('unified-gas-totale').value = totale;
 
+      // Indirizzo
       m = t.match(/INDIRIZZO\s*DI\s*FORNITURA:\s*([^\n]+)/i);
       if (m) document.getElementById('unified-gas-indirizzo').value = m[1].trim();
     }
+
     updateTotals();
     return;
   }
 
+  // ========== GENERIC ==========
   var costo = null, consumo = null, potenza = null, totale = null;
   if (tipo === 'luce') {
     var costoPatterns = [
