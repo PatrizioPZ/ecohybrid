@@ -5,448 +5,158 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>EcoHybrid</title>
 <style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: #111144;
-    color: #ffffff;
-    min-height: 100vh;
-    overflow-x: hidden;
-    font-size: 15px;
-    line-height: 1.5;
+    background: #111144; color: #ffffff; min-height: 100vh;
+    overflow-x: hidden; font-size: 15px; line-height: 1.5;
   }
-  .screen {
-    display: none;
-    width: 100%;
-    min-height: 100vh;
-    padding: 20px 16px 100px;
-  }
-  .screen.active {
-    display: block;
-  }
-  .app-header {
-    text-align: center;
-    padding: 24px 0 16px;
-  }
-  .app-header h1 {
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
-  .app-header h1 span {
-    color: #FF0088;
-  }
-  .app-header p {
-    color: #a0a0c0;
-    font-size: 14px;
-    margin-top: 6px;
-  }
-  .divider {
-    height: 2px;
-    background: #FF0088;
-    width: 120px;
-    margin: 0 auto 24px;
-    border-radius: 2px;
-  }
+  .screen { display: none; width: 100%; min-height: 100vh; padding: 20px 16px 100px; }
+  .screen.active { display: block; }
+  .app-header { text-align: center; padding: 24px 0 16px; }
+  .app-header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .app-header p { color: #a0a0c0; font-size: 14px; margin-top: 6px; }
+  .divider { height: 2px; background: #FF0088; width: 120px; margin: 0 auto 24px; border-radius: 2px; }
   .card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px;
   }
   .card-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #a0a0c0;
-    margin-bottom: 16px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: #a0a0c0; margin-bottom: 16px;
   }
   .btn {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    text-align: center;
-    margin-bottom: 12px;
+    display: block; width: 100%; padding: 16px; border: none;
+    border-radius: 12px; font-size: 15px; font-weight: 700;
+    cursor: pointer; text-align: center; margin-bottom: 12px;
     transition: opacity 0.2s;
   }
-  .btn:active {
-    opacity: 0.8;
-  }
-  .btn-primary {
-    background: #FF0088;
-    color: #fff;
-  }
-  .btn-secondary {
-    background: rgba(255,255,255,0.10);
-    color: #fff;
-  }
-  .btn-green {
-    background: #00d4aa;
-    color: #111144;
-  }
-  .btn-outline {
-    background: transparent;
-    border: 2px solid rgba(255,255,255,0.25);
-    color: #fff;
-  }
-  .btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-  .btn-small {
-    display: inline-block;
-    width: auto;
-    padding: 10px 20px;
-    font-size: 13px;
-    margin-bottom: 0;
-  }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: #FF0088; color: #fff; }
+  .btn-secondary { background: rgba(255,255,255,0.10); color: #fff; }
+  .btn-green { background: #00d4aa; color: #111144; }
+  .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.25); color: #fff; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .path-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    cursor: pointer;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px; cursor: pointer;
     transition: border-color 0.2s;
   }
-  .path-card:hover, .path-card.selected {
-    border-color: #FF0088;
-  }
-  .path-card h3 {
-    font-size: 17px;
-    margin-bottom: 6px;
-  }
-  .path-card p {
-    font-size: 13px;
-    color: #a0a0c0;
-    line-height: 1.4;
-  }
+  .path-card:hover, .path-card.selected { border-color: #FF0088; }
+  .path-card h3 { font-size: 17px; margin-bottom: 6px; }
+  .path-card p { font-size: 13px; color: #a0a0c0; line-height: 1.4; }
   .path-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    margin-top: 10px;
+    display: inline-block; padding: 4px 10px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 10px;
   }
-  .badge-green {
-    background: #00d4aa;
-    color: #111144;
-  }
-  .badge-pink {
-    background: #FF0088;
-    color: #fff;
-  }
-  .badge-blue {
-    background: #4488ff;
-    color: #fff;
-  }
-  .input-group {
-    margin-bottom: 14px;
-  }
+  .badge-green { background: #00d4aa; color: #111144; }
+  .badge-pink { background: #FF0088; color: #fff; }
+  .input-group { margin-bottom: 14px; }
   .input-group label {
-    display: block;
-    font-size: 12px;
-    color: #a0a0c0;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    display: block; font-size: 12px; color: #a0a0c0;
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
   }
   .input-group input, .input-group select {
-    width: 100%;
-    padding: 14px;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 10px;
-    background: rgba(0,0,0,0.25);
-    color: #fff;
-    font-size: 15px;
-    outline: none;
+    width: 100%; padding: 14px; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; background: rgba(0,0,0,0.25); color: #fff;
+    font-size: 15px; outline: none;
   }
-  .input-group input:focus, .input-group select:focus {
-    border-color: #FF0088;
-  }
-  .input-group input::placeholder {
-    color: #666699;
-  }
-  .upload-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
+  .input-group input:focus, .input-group select:focus { border-color: #FF0088; }
+  .input-group input::placeholder { color: #666699; }
+  .upload-row { display: flex; gap: 10px; margin-bottom: 12px; }
   .upload-btn {
-    flex: 1;
-    padding: 14px;
-    border: 2px dashed rgba(255,255,255,0.25);
-    border-radius: 12px;
-    background: rgba(0,0,0,0.15);
-    color: #a0a0c0;
-    font-size: 13px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
+    flex: 1; padding: 14px; border: 2px dashed rgba(255,255,255,0.25);
+    border-radius: 12px; background: rgba(0,0,0,0.15); color: #a0a0c0;
+    font-size: 13px; text-align: center; cursor: pointer; transition: all 0.2s;
   }
-  .upload-btn:hover {
-    border-color: #FF0088;
-    color: #fff;
-  }
-  .uploaded-label {
-    font-size: 12px;
-    color: #00d4aa;
-    margin-bottom: 14px;
-    display: none;
-  }
-  .uploaded-label.visible {
-    display: block;
-  }
-  .summary-value {
-    font-size: 32px;
-    font-weight: 800;
-    color: #00d4aa;
-  }
-  .summary-label {
-    font-size: 12px;
-    color: #a0a0c0;
-    margin-top: 4px;
-  }
+  .upload-btn:hover { border-color: #FF0088; color: #fff; }
+  .ocr-status { font-size: 12px; color: #a0a0c0; margin-top: 8px; font-style: italic; }
   .wizard-step {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    display: none;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 16px; margin-bottom: 12px; display: none;
   }
-  .wizard-step.active {
-    display: block;
-    border-color: rgba(255,255,255,0.20);
-  }
-  .wizard-step.completed {
-    border-color: #00d4aa;
-    opacity: 0.7;
-  }
-  .step-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
+  .wizard-step.active { display: block; border-color: rgba(255,255,255,0.20); }
+  .wizard-step.completed { border-color: #00d4aa; opacity: 0.7; }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .step-number {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #FF0088;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
-    flex-shrink: 0;
+    width: 32px; height: 32px; border-radius: 50%; background: #FF0088;
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
   }
-  .step-number.done {
-    background: #00d4aa;
-  }
-  .step-title {
-    font-size: 15px;
-    font-weight: 700;
-  }
+  .step-number.done { background: #00d4aa; }
+  .step-title { font-size: 15px; font-weight: 700; }
   .step-desc {
-    font-size: 13px;
-    color: #a0a0c0;
-    line-height: 1.5;
-    margin-bottom: 12px;
+    font-size: 13px; color: #a0a0c0; line-height: 1.5; margin-bottom: 12px;
   }
-  .step-desc strong {
-    color: #fff;
-  }
+  .step-desc strong { color: #fff; }
   .step-desc code {
-    background: rgba(255,255,255,0.10);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 12px;
+    background: rgba(255,255,255,0.10); padding: 2px 6px;
+    border-radius: 4px; font-size: 12px;
   }
-  .metric-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   .metric-box {
-    background: rgba(0,0,0,0.25);
-    border-radius: 12px;
-    padding: 16px;
-    text-align: center;
+    background: rgba(0,0,0,0.25); border-radius: 12px; padding: 16px; text-align: center;
   }
-  .metric-value {
-    font-size: 28px;
-    font-weight: 800;
-  }
-  .metric-unit {
-    font-size: 12px;
-    color: #a0a0c0;
-  }
-  .status-spento {
-    color: #ff4444;
-    font-weight: 700;
-  }
-  .status-acceso {
-    color: #00d4aa;
-    font-weight: 700;
-  }
+  .metric-value { font-size: 28px; font-weight: 800; }
+  .metric-unit { font-size: 12px; color: #a0a0c0; }
+  .status-spento { color: #ff4444; font-weight: 700; }
+  .status-acceso { color: #00d4aa; font-weight: 700; }
   .suggestion-box {
-    background: rgba(255,0,136,0.10);
-    border-left: 3px solid #FF0088;
-    border-radius: 0 10px 10px 0;
-    padding: 14px;
-    margin-bottom: 14px;
-    font-size: 14px;
-    line-height: 1.5;
+    background: rgba(255,0,136,0.10); border-left: 3px solid #FF0088;
+    border-radius: 0 10px 10px 0; padding: 14px; margin-bottom: 14px;
+    font-size: 14px; line-height: 1.5;
   }
-  .compat-category {
-    margin-bottom: 20px;
-  }
+  .compat-category { margin-bottom: 20px; }
   .compat-category h4 {
-    font-size: 13px;
-    color: #a0a0c0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
+    font-size: 13px; color: #a0a0c0; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px;
   }
-  .compat-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+  .compat-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .compat-item {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 13px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 8px 14px; font-size: 13px;
   }
-  .compat-item.native {
-    border-color: #00d4aa;
-  }
-  .compat-item.tuya {
-    border-color: #4488ff;
-  }
-  .compat-item.ir {
-    border-color: #ffaa00;
-  }
-  .confirm-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 16px;
-  }
-  .confirm-table td {
-    padding: 10px 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    font-size: 14px;
-  }
-  .confirm-table td:first-child {
-    color: #a0a0c0;
-    width: 45%;
-  }
-  .confirm-table td input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 6px;
-    background: rgba(0,0,0,0.25);
-    color: #fff;
-    font-size: 14px;
-  }
-  .confirm-table td input.missing {
-    border-color: #ffaa00;
-    background: rgba(255,170,0,0.08);
-  }
+  .compat-item.native { border-color: #00d4aa; }
+  .compat-item.tuya { border-color: #4488ff; }
+  .compat-item.ir { border-color: #ffaa00; }
   .nav-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(17,17,68,0.95);
-    backdrop-filter: blur(10px);
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(17,17,68,0.95); backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255,255,255,0.08);
-    padding: 12px 16px 20px;
-    display: flex;
-    gap: 10px;
-    z-index: 100;
+    padding: 12px 16px 20px; display: flex; gap: 10px; z-index: 100;
   }
-  .nav-bar .btn {
-    margin-bottom: 0;
-    flex: 1;
-  }
+  .nav-bar .btn { margin-bottom: 0; flex: 1; }
   .progress-bar {
-    height: 4px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 2px;
-    margin-bottom: 20px;
-    overflow: hidden;
+    height: 4px; background: rgba(255,255,255,0.1);
+    border-radius: 2px; margin-bottom: 20px; overflow: hidden;
   }
-  .progress-fill {
-    height: 100%;
-    background: #FF0088;
-    transition: width 0.3s;
-  }
-  .hidden {
-    display: none !important;
-  }
+  .progress-fill { height: 100%; background: #FF0088; transition: width 0.3s; }
+  .hidden { display: none !important; }
   .info-box {
-    background: rgba(0,212,170,0.08);
-    border-left: 3px solid #00d4aa;
-    border-radius: 0 10px 10px 0;
-    padding: 12px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: #a0a0c0;
-    line-height: 1.5;
+    background: rgba(0,212,170,0.08); border-left: 3px solid #00d4aa;
+    border-radius: 0 10px 10px 0; padding: 12px; margin-bottom: 16px;
+    font-size: 13px; color: #a0a0c0; line-height: 1.5;
   }
   .warning-box {
-    background: rgba(255,170,0,0.08);
-    border-left: 3px solid #ffaa00;
-    border-radius: 0 10px 10px 0;
-    padding: 12px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: #a0a0c0;
-    line-height: 1.5;
+    background: rgba(255,170,0,0.08); border-left: 3px solid #ffaa00;
+    border-radius: 0 10px 10px 0; padding: 12px; margin-bottom: 16px;
+    font-size: 13px; color: #a0a0c0; line-height: 1.5;
   }
   .error-box {
-    background: rgba(255,68,68,0.08);
-    border-left: 3px solid #ff4444;
-    border-radius: 0 10px 10px 0;
-    padding: 12px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: #a0a0c0;
-    line-height: 1.5;
+    background: rgba(255,68,68,0.08); border-left: 3px solid #ff4444;
+    border-radius: 0 10px 10px 0; padding: 12px; margin-bottom: 16px;
+    font-size: 13px; color: #a0a0c0; line-height: 1.5;
   }
-  .ocr-status {
-    font-size: 12px;
-    color: #a0a0c0;
-    margin-top: 8px;
-    font-style: italic;
+  .success-box {
+    background: rgba(0,212,170,0.08); border-left: 3px solid #00d4aa;
+    border-radius: 0 10px 10px 0; padding: 12px; margin-bottom: 16px;
+    font-size: 13px; color: #a0a0c0; line-height: 1.5;
   }
-  ::-webkit-scrollbar {
-    width: 0;
-    background: transparent;
-  }
+  .summary-value { font-size: 32px; font-weight: 800; color: #00d4aa; }
+  .summary-label { font-size: 12px; color: #a0a0c0; margin-top: 4px; }
+  ::-webkit-scrollbar { width: 0; background: transparent; }
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <base target="_blank">
 </head>
@@ -459,36 +169,31 @@
     <p>Ottimizzazione energetica intelligente</p>
   </div>
   <div class="divider"></div>
-
   <div class="card">
     <div class="card-title">Scegli il tuo percorso</div>
-
     <div class="path-card" onclick="selectPath('ha')">
       <h3>Ho gia Home Assistant configurato</h3>
       <p>Il mio clima e gia collegato a Home Assistant. Inserisco indirizzo e token per connettere EcoHybrid.</p>
       <span class="path-badge badge-green">Piu veloce</span>
     </div>
-
     <div class="path-card" onclick="selectPath('generic')">
       <h3>Ho un climatizzatore generico</h3>
       <p>Midea, Comfee, Gree, LG, Panasonic, o qualsiasi marca. Serve un PC x86 (Mini PC ~50 EUR o PC vecchio riciclato).</p>
       <span class="path-badge badge-pink">Richiede hardware</span>
     </div>
-
     <p style="text-align:center; margin-top:16px; font-size:13px;">
       <a href="#" onclick="showScreen('screen-compat')" style="color:#FF0088; text-decoration:none;">Non so se il mio condizionatore e compatibile</a>
     </p>
   </div>
 </div>
 
-<!-- ==================== SCREEN COMPAT: LISTA MARCHE ==================== -->
+<!-- ==================== SCREEN COMPAT ==================== -->
 <div id="screen-compat" class="screen">
   <div class="app-header">
     <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
     <p>Compatibilita condizionatori</p>
   </div>
   <div class="divider"></div>
-
   <div class="card">
     <div class="card-title">Controllo completo via WiFi / App nativa</div>
     <p style="font-size:13px; color:#a0a0c0; line-height:1.5; margin-bottom:16px;">
@@ -507,7 +212,7 @@
       </div>
     </div>
     <div class="compat-category">
-      <h4>Tuya / Smart Life (controllo completo via cloud)</h4>
+      <h4>Tuya / Smart Life</h4>
       <div class="compat-list">
         <span class="compat-item tuya">Midea</span>
         <span class="compat-item tuya">Comfee</span>
@@ -517,7 +222,7 @@
       </div>
     </div>
     <div class="compat-category">
-      <h4>IR universale (richiede Mini PC + SmartIR)</h4>
+      <h4>IR universale (richiede Mini PC)</h4>
       <div class="compat-list">
         <span class="compat-item ir">Qualsiasi marca con telecomando IR</span>
         <span class="compat-item ir">Modelli non-smart di tutte le marche sopra</span>
@@ -529,32 +234,28 @@
       Se non ha WiFi ma ha telecomando IR, e comunque compatibile con il percorso Mini PC.
     </div>
   </div>
-
   <div class="card">
     <p style="font-size:14px; margin-bottom:16px;">Il tuo condizionatore e in questa lista?</p>
     <button class="btn btn-primary" onclick="selectPath('ha')">Si, e WiFi nativo o Tuya</button>
     <button class="btn btn-secondary" onclick="selectPath('generic')">No, o non so / e con telecomando IR</button>
   </div>
-
   <div class="nav-bar">
     <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
   </div>
 </div>
 
-<!-- ==================== SCREEN 1A: CONFIGURA HOME ASSISTANT ==================== -->
+<!-- ==================== SCREEN 1A: CONFIGURA HA ==================== -->
 <div id="screen-1a" class="screen">
   <div class="app-header">
     <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
     <p>Collega Home Assistant</p>
   </div>
   <div class="divider"></div>
-
   <div class="card">
     <div class="card-title">Configurazione Home Assistant</div>
     <div class="info-box">
       EcoHybrid si collega al tuo Home Assistant esistente per leggere i dati del clima e inviare comandi di ottimizzazione.
     </div>
-
     <div class="input-group">
       <label>Indirizzo Home Assistant</label>
       <input type="text" id="ha-url" placeholder="es. http://homeassistant.local:8123" value="http://homeassistant.local:8123">
@@ -567,11 +268,9 @@
       <label>Entita clima (opzionale)</label>
       <input type="text" id="ha-entity" placeholder="es. climate.soggiorno (lascia vuoto per auto-discovery)">
     </div>
-
     <button class="btn btn-primary" id="btn-test-ha" onclick="testHAConnection()">Test connessione</button>
     <div id="ha-test-result" style="margin-top:12px;"></div>
   </div>
-
   <div class="card" id="card-ha-help" style="display:none;">
     <div class="card-title">Come ottenere il token</div>
     <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
@@ -582,14 +281,13 @@
       5. Incollala qui sopra
     </p>
   </div>
-
   <div class="nav-bar">
     <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
-    <button class="btn btn-primary" id="btn-continua-ha" onclick="goToBillsFromHA()" disabled>Avanti</button>
+    <button class="btn btn-primary" id="btn-continua-ha" onclick="goToBills()" disabled>Avanti</button>
   </div>
 </div>
 
-<!-- ==================== SCREEN WIZARD: 9 STEP MINI PC ==================== -->
+<!-- ==================== SCREEN WIZARD: 9 STEP ==================== -->
 <div id="screen-wizard" class="screen">
   <div style="text-align:center; margin-bottom:12px; padding-top:24px;">
     <h1 style="font-size:22px; font-weight:800;">Setup <span style="color:#FF0088">Mini PC</span></h1>
@@ -598,20 +296,16 @@
   <div class="progress-bar">
     <div class="progress-fill" id="wizard-progress" style="width:11%;"></div>
   </div>
-
-  <!-- Step 1 -->
   <div class="wizard-step active" id="wz-step-1">
     <div class="card-title">Step 1/9 — Verifica hardware</div>
     <div class="step-desc">
-      Ti serve un PC con processore <strong>Intel o AMD a 64 bit</strong>, minimo <strong>4 GB RAM</strong>, una <strong>porta USB</strong> e <strong>connessione internet</strong> (cavo Ethernet o WiFi).<br><br>
+      Ti serve un PC con processore <strong>Intel o AMD a 64 bit</strong>, minimo <strong>4 GB RAM</strong>, una <strong>porta USB</strong> e <strong>connessione internet</strong>.<br><br>
       Va bene un Mini PC nuovo (~50 EUR), un PC fisso vecchio, o un portatile non piu usato.
     </div>
     <div class="info-box">
       <strong style="color:#fff;">Consiglio:</strong> Dell OptiPlex Micro, Lenovo ThinkCentre Tiny, HP EliteDesk Mini, o qualsiasi PC con Intel Core i3/i5 o AMD equivalente.
     </div>
   </div>
-
-  <!-- Step 2 -->
   <div class="wizard-step" id="wz-step-2">
     <div class="card-title">Step 2/9 — Prepara chiavetta USB</div>
     <div class="step-desc">
@@ -619,8 +313,6 @@
       <strong>Attenzione:</strong> verra formattata completamente. Se contiene dati importanti, copiali altrove prima di procedere.
     </div>
   </div>
-
-  <!-- Step 3 -->
   <div class="wizard-step" id="wz-step-3">
     <div class="card-title">Step 3/9 — Scarica Home Assistant OS</div>
     <div class="step-desc">
@@ -632,8 +324,6 @@
       Non estrarre il file .img.xz. Lo userai cosi com'e nel prossimo passaggio.
     </div>
   </div>
-
-  <!-- Step 4 -->
   <div class="wizard-step" id="wz-step-4">
     <div class="card-title">Step 4/9 — Flash della chiavetta</div>
     <div class="step-desc">
@@ -648,8 +338,6 @@
       Non togliere la chiavetta finche Etcher non dice "Completato".
     </div>
   </div>
-
-  <!-- Step 5 -->
   <div class="wizard-step" id="wz-step-5">
     <div class="card-title">Step 5/9 — Boot dal Mini PC</div>
     <div class="step-desc">
@@ -664,8 +352,6 @@
       Dell: F12 | Lenovo: F12 | HP: Esc o F9 | Generico: F12, Esc, o F2
     </div>
   </div>
-
-  <!-- Step 6 -->
   <div class="wizard-step" id="wz-step-6">
     <div class="card-title">Step 6/9 — Primo avvio Home Assistant</div>
     <div class="step-desc">
@@ -678,8 +364,6 @@
       Il primo avvio puo richiedere 10-20 minuti. Non spegnere il Mini PC durante l'installazione.
     </div>
   </div>
-
-  <!-- Step 7 -->
   <div class="wizard-step" id="wz-step-7">
     <div class="card-title">Step 7/9 — Configura rete e WiFi</div>
     <div class="step-desc">
@@ -689,8 +373,6 @@
       Assicurati che il Mini PC e il tuo smartphone siano sulla <strong>stessa rete</strong>.
     </div>
   </div>
-
-  <!-- Step 8 -->
   <div class="wizard-step" id="wz-step-8">
     <div class="card-title">Step 8/9 — Aggiungi il clima a Home Assistant</div>
     <div class="step-desc">
@@ -704,8 +386,6 @@
       Dopo l'integrazione, il clima apparira come entita <code>climate.nome</code> in Home Assistant.
     </div>
   </div>
-
-  <!-- Step 9 -->
   <div class="wizard-step" id="wz-step-9">
     <div class="card-title">Step 9/9 — Verifica e collega EcoHybrid</div>
     <div class="step-desc">
@@ -718,47 +398,76 @@
       Se vedi temperatura e stato del clima, la configurazione e corretta.
     </div>
   </div>
-
   <div class="nav-bar">
     <button class="btn btn-secondary" id="wz-btn-back" onclick="wizardBack()">Indietro</button>
     <button class="btn btn-primary" id="wz-btn-next" onclick="wizardNext()">Avanti</button>
   </div>
 </div>
 
-<!-- ==================== SCREEN BILLS: CARICA BOLLETTE ==================== -->
-<div id="screen-bills" class="screen">
+<!-- ==================== SCREEN BILLS UNIFIED ==================== -->
+<div id="screen-bills-unified" class="screen">
   <div class="app-header">
     <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Analisi bollette</p>
+    <p>Carica e verifica le tue bollette</p>
   </div>
   <div class="divider"></div>
 
-  <!-- Edge warning banner -->
-  <div id="edge-banner" class="warning-box" style="display:none; margin-bottom:16px;">
-    <strong style="color:#fff;">Stai usando Microsoft Edge.</strong><br>
-    Edge blocca l analisi automatica delle bollette per privacy. Puoi comunque procedere: carica il file e inserisci i dati manualmente nel passaggio successivo. Oppure usa Google Chrome per l analisi automatica.
+  <div id="edge-banner-unified" class="warning-box" style="display:none; margin-bottom:16px;">
+    <strong style="color:#fff;">Browser Edge rilevato.</strong><br>
+    Le librerie di analisi automatica potrebbero essere bloccate. Se l analisi non parte, inserisci i dati manualmente.
   </div>
 
   <!-- BOLLETTA LUCE -->
   <div class="card">
     <div class="card-title">Bolletta luce</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="showPDFAnalyzer('luce')" style="border-color:#FF0088; color:#fff;">
-        <div style="font-size:18px; margin-bottom:4px;">ANALIZZA PDF</div>
-        Analisi bolletta luce
+      <div class="upload-btn" onclick="document.getElementById('file-luce-pdf').click()" style="border-color:#FF0088; color:#fff;">
+        <div style="font-size:18px; margin-bottom:4px;">CARICA PDF</div>
+        Bolletta digitale dal portale
       </div>
-      <input type="file" id="file-luce-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'luce', 'pdf')">
-      <div class="upload-btn" onclick="triggerFile('file-luce-img')">
-        <div style="font-size:18px; margin-bottom:4px;">SCANSIONE OCR</div>
+      <input type="file" id="file-luce-pdf" accept=".pdf" style="display:none" onchange="analyzeBillFile(this, 'luce')">
+      <div class="upload-btn" onclick="document.getElementById('file-luce-img').click()">
+        <div style="font-size:18px; margin-bottom:4px;">CARICA FOTO</div>
         Foto o scansione cartacea
       </div>
-      <input type="file" id="file-luce-img" accept="image/*" style="display:none" onchange="handleFile(this, 'luce', 'image')">
+      <input type="file" id="file-luce-img" accept="image/*" style="display:none" onchange="analyzeBillFile(this, 'luce')">
     </div>
     <div id="luce-status" class="ocr-status"></div>
-    <div id="luce-uploaded" class="uploaded-label">File luce caricato</div>
-    <div id="luce-edge-warning" class="warning-box" style="display:none; margin-top:10px;">
-      <strong style="color:#fff;">Browser Edge rilevato.</strong><br>
-      Edge blocca l'OCR per privacy. Usa Chrome o disattiva Tracking Prevention per questo sito (clicca l'icona scudo nella barra indirizzi).
+
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);">
+      <div class="input-group">
+        <label>Periodo fatturazione</label>
+        <input type="text" id="unified-luce-periodo" placeholder="es. 01/05/2026 - 31/07/2026">
+      </div>
+      <div class="input-group">
+        <label>Costo kWh (EUR)</label>
+        <input type="text" id="unified-luce-costo" placeholder="es. 0,2927">
+      </div>
+      <div class="input-group">
+        <label>Consumo kWh</label>
+        <input type="text" id="unified-luce-consumo" placeholder="es. 157">
+      </div>
+      <div class="input-group">
+        <label>Potenza contrattuale (kW)</label>
+        <input type="text" id="unified-luce-potenza" placeholder="es. 3,00">
+      </div>
+      <div class="input-group">
+        <label>Tipo contratto</label>
+        <select id="unified-luce-tipo">
+          <option value="">Seleziona...</option>
+          <option value="mono">Monoraria (F0)</option>
+          <option value="bi">Bioraria (F1-F2-F3)</option>
+          <option value="tri">Trifaria</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Spesa totale (EUR)</label>
+        <input type="text" id="unified-luce-totale" placeholder="es. 61,96">
+      </div>
+      <div class="input-group">
+        <label>Indirizzo fornitura</label>
+        <input type="text" id="unified-luce-indirizzo" placeholder="es. Via Roma 1, 20100 Milano">
+      </div>
     </div>
   </div>
 
@@ -766,95 +475,61 @@
   <div class="card">
     <div class="card-title">Bolletta gas</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="showPDFAnalyzer('gas')" style="border-color:#FF0088; color:#fff;">
-        <div style="font-size:18px; margin-bottom:4px;">ANALIZZA PDF</div>
-        Analisi bolletta gas
+      <div class="upload-btn" onclick="document.getElementById('file-gas-pdf').click()" style="border-color:#FF0088; color:#fff;">
+        <div style="font-size:18px; margin-bottom:4px;">CARICA PDF</div>
+        Bolletta digitale dal portale
       </div>
-      <input type="file" id="file-gas-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'gas', 'pdf')">
-      <div class="upload-btn" onclick="triggerFile('file-gas-img')">
-        <div style="font-size:18px; margin-bottom:4px;">SCANSIONE OCR</div>
+      <input type="file" id="file-gas-pdf" accept=".pdf" style="display:none" onchange="analyzeBillFile(this, 'gas')">
+      <div class="upload-btn" onclick="document.getElementById('file-gas-img').click()">
+        <div style="font-size:18px; margin-bottom:4px;">CARICA FOTO</div>
         Foto o scansione cartacea
       </div>
-      <input type="file" id="file-gas-img" accept="image/*" style="display:none" onchange="handleFile(this, 'gas', 'image')">
+      <input type="file" id="file-gas-img" accept="image/*" style="display:none" onchange="analyzeBillFile(this, 'gas')">
     </div>
     <div id="gas-status" class="ocr-status"></div>
-    <div id="gas-uploaded" class="uploaded-label">File gas caricato</div>
-    <div id="gas-edge-warning" class="warning-box" style="display:none; margin-top:10px;">
-      <strong style="color:#fff;">Browser Edge rilevato.</strong><br>
-      Edge blocca l'OCR per privacy. Usa Chrome o disattiva Tracking Prevention per questo sito.
+
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);">
+      <div class="input-group">
+        <label>Periodo fatturazione</label>
+        <input type="text" id="unified-gas-periodo" placeholder="es. 01/05/2026 - 31/07/2026">
+      </div>
+      <div class="input-group">
+        <label>Costo Smc (EUR)</label>
+        <input type="text" id="unified-gas-costo" placeholder="es. 0,9426">
+      </div>
+      <div class="input-group">
+        <label>Consumo Smc</label>
+        <input type="text" id="unified-gas-consumo" placeholder="es. 5">
+      </div>
+      <div class="input-group">
+        <label>Spesa totale (EUR)</label>
+        <input type="text" id="unified-gas-totale" placeholder="es. 19,17">
+      </div>
     </div>
   </div>
 
-  <!-- RIEPILOGO SPESA -->
+  <!-- RIEPILOGO -->
   <div class="card">
     <div class="card-title">Totale spese mensili</div>
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <div class="summary-value" id="totale-mese">0 EUR</div>
+        <div class="summary-value" id="unified-totale-mese">0 EUR</div>
         <div class="summary-label">Luce + Gas</div>
       </div>
       <div style="text-align:right;">
-        <div class="summary-value" id="totale-anno" style="font-size:22px;">0 EUR</div>
+        <div class="summary-value" id="unified-totale-anno" style="font-size:22px;">0 EUR</div>
         <div class="summary-label">Stimato annuo</div>
       </div>
     </div>
   </div>
 
-  <div style="text-align:center; margin-bottom:16px;">
-    <button class="btn btn-outline btn-small" onclick="skipFilesAndGo()" style="width:auto; display:inline-block;">Non ho la bolletta, inserisco i dati manualmente</button>
+  <div class="warning-box" id="unified-warning" style="display:none;">
+    Inserisci almeno la spesa totale di luce o gas per procedere.
   </div>
 
   <div class="nav-bar">
-    <button class="btn btn-secondary" onclick="goBackFromBills()">Indietro</button>
-    <button class="btn btn-primary" id="btn-continua-bollette" onclick="goToConfirm()" disabled>Avanti: verifica dati</button>
-  </div>
-</div>
-
-<!-- ==================== SCREEN CONFIRM: VERIFICA DATI ESTRATTI ==================== -->
-<div id="screen-confirm" class="screen">
-  <div class="app-header">
-    <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Verifica i dati estratti</p>
-  </div>
-  <div class="divider"></div>
-
-  <div class="card">
-    <div class="card-title">Dati bolletta luce</div>
-    <table class="confirm-table">
-      <tr><td>Periodo fatturazione</td><td><input type="text" id="cf-luce-periodo" placeholder="es. 01/05/2026 - 31/07/2026"></td></tr>
-      <tr><td>Costo kWh (EUR)</td><td><input type="text" id="cf-luce-costo" placeholder="es. 0,2927"></td></tr>
-      <tr><td>Consumo kWh</td><td><input type="text" id="cf-luce-consumo" placeholder="es. 157"></td></tr>
-      <tr><td>Potenza contrattuale (kW)</td><td><input type="text" id="cf-luce-potenza" placeholder="es. 3,00"></td></tr>
-      <tr><td>Tipo contratto</td><td>
-        <select id="cf-luce-tipo">
-          <option value="">Seleziona...</option>
-          <option value="mono">Monoraria (F0)</option>
-          <option value="bi">Bioraria (F1-F2-F3)</option>
-          <option value="tri">Trifaria (F1-F2-F3)</option>
-        </select>
-      </td></tr>
-      <tr><td>Spesa totale (EUR)</td><td><input type="text" id="cf-luce-totale" placeholder="es. 61,96"></td></tr>
-      <tr><td>Indirizzo fornitura</td><td><input type="text" id="cf-luce-indirizzo" placeholder="es. Via Roma 1, 20100 Milano"></td></tr>
-    </table>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Dati bolletta gas</div>
-    <table class="confirm-table">
-      <tr><td>Periodo fatturazione</td><td><input type="text" id="cf-gas-periodo" placeholder="es. 01/05/2026 - 31/07/2026"></td></tr>
-      <tr><td>Costo Smc (EUR)</td><td><input type="text" id="cf-gas-costo" placeholder="es. 0,9426"></td></tr>
-      <tr><td>Consumo Smc</td><td><input type="text" id="cf-gas-consumo" placeholder="es. 5"></td></tr>
-      <tr><td>Spesa totale (EUR)</td><td><input type="text" id="cf-gas-totale" placeholder="es. 19,17"></td></tr>
-    </table>
-  </div>
-
-  <div class="warning-box" id="confirm-warning" style="display:none;">
-    Alcuni dati sono mancanti o sembrano anomali. Verifica e completa i campi evidenziati prima di proseguire.
-  </div>
-
-  <div class="nav-bar">
-    <button class="btn btn-secondary" onclick="showScreen('screen-bills')">Indietro</button>
-    <button class="btn btn-primary" id="btn-confirm-dati" onclick="confirmDataAndGo()">Conferma e vai alla dashboard</button>
+    <button class="btn btn-secondary" onclick="goBackUnified()">Indietro</button>
+    <button class="btn btn-primary" id="btn-confirm-unified" onclick="confirmUnifiedAndGo()">Conferma e vai alla dashboard</button>
   </div>
 </div>
 
@@ -866,7 +541,6 @@
   </div>
   <div class="divider"></div>
 
-  <!-- Stato connessione -->
   <div id="connection-status" class="card" style="display:none;">
     <div style="display:flex; align-items:center; gap:12px;">
       <div style="width:12px; height:12px; border-radius:50%; background:#ff4444;" id="status-dot"></div>
@@ -877,7 +551,6 @@
     </div>
   </div>
 
-  <!-- Meteo -->
   <div class="metric-grid" id="meteo-box" style="display:none;">
     <div class="metric-box">
       <div class="metric-value" id="dash-temp-est">--</div>
@@ -889,14 +562,12 @@
     </div>
   </div>
 
-  <!-- Stato clima -->
   <div class="card">
     <div class="card-title">Stato climatizzatore</div>
     <div id="clima-stato" class="status-spento">SPENTO</div>
     <p style="color:#a0a0c0; font-size:13px; margin-top:6px;" id="clima-dettagli">Target: -- | Modalita: --</p>
   </div>
 
-  <!-- Comfort -->
   <div class="card" id="card-comfort" style="display:none;">
     <div class="card-title">Comfort adattivo (ASHRAE 55)</div>
     <div class="suggestion-box" id="comfort-testo">
@@ -904,7 +575,6 @@
     </div>
   </div>
 
-  <!-- Switch dinamico -->
   <div class="card" id="card-switch" style="display:none;">
     <div class="card-title">Switch gas / elettrico</div>
     <div class="suggestion-box" id="switch-testo">
@@ -912,7 +582,6 @@
     </div>
   </div>
 
-  <!-- Recircolo -->
   <div class="card" id="card-recircolo" style="display:none;">
     <div class="card-title">Recircolo calore invernale</div>
     <div class="suggestion-box" id="recircolo-testo">
@@ -920,14 +589,12 @@
     </div>
   </div>
 
-  <!-- Risparmio -->
   <div class="card" id="card-risparmio">
     <div class="card-title" id="risparmio-titolo">Risparmio stimato</div>
     <div class="summary-value" id="risparmio-valore" style="font-size:28px;">--</div>
     <div class="summary-label" id="risparmio-sottotitolo">Inserisci bollette per calcolare</div>
   </div>
 
-  <!-- Suggerimento -->
   <div class="card" id="card-suggerimento" style="display:none;">
     <div class="card-title">Suggerimento</div>
     <div class="suggestion-box" id="suggerimento-testo">
@@ -937,7 +604,6 @@
     <button class="btn btn-secondary" onclick="rimandaSuggerimento()">Non ora</button>
   </div>
 
-  <!-- Apprendimento -->
   <div class="card" id="card-apprendimento" style="display:none;">
     <div class="card-title">Fase di apprendimento</div>
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
@@ -949,7 +615,6 @@
     </p>
   </div>
 
-  <!-- Navigation buttons from dashboard -->
   <div class="card">
     <div class="card-title">Gestione dati</div>
     <button class="btn btn-secondary" onclick="goToBillsFromDashboard()">Modifica bollette</button>
@@ -1002,9 +667,7 @@ function selectPath(path) {
   }
 }
 
-
-
-function goBackFromBills() {
+function goBackUnified() {
   if (selectedPath === 'ha') {
     showScreen('screen-1a');
   } else {
@@ -1055,12 +718,12 @@ function testHAConnection() {
   });
 }
 
-function goToBillsFromHA() {
+function goToBills() {
   if (!haConnected) {
     showToast('Testa la connessione prima di proseguire.');
     return;
   }
-  showScreen('screen-bills');
+  showScreen('screen-bills-unified');
 }
 
 // ==================== WIZARD 9 STEP ====================
@@ -1086,7 +749,7 @@ function updateWizardUI() {
   if (btnNext) {
     if (wizardStep === totalWizardSteps) {
       btnNext.textContent = 'Vai alle bollette';
-      btnNext.onclick = function() { showScreen('screen-bills'); };
+      btnNext.onclick = function() { showScreen('screen-bills-unified'); };
     } else {
       btnNext.textContent = 'Avanti';
       btnNext.onclick = wizardNext;
@@ -1110,44 +773,29 @@ function wizardBack() {
   }
 }
 
-// ==================== FILE UPLOAD ====================
-function triggerFile(id) {
-  document.getElementById(id).click();
-}
-
-
-
-function handleFile(input, tipo, format) {
+// ==================== UNIFIED BILLS: ANALISI + VERIFICA ====================
+function analyzeBillFile(input, tipo) {
   var file = input.files[0];
   if (!file) return;
 
   var statusEl = document.getElementById(tipo + '-status');
-  var uploadedEl = document.getElementById(tipo + '-uploaded');
-
-  uploadedEl.classList.add('visible');
-  // Abilita sempre il bottone avanti: i dati verranno inseriti manualmente se l analisi fallisce
-  checkBillsComplete();
-
-  if (format === 'pdf') {
-    statusEl.textContent = 'PDF caricato. Analisi pagine in corso...';
-    // Delay per permettere all UI di aggiornarsi
-    setTimeout(function() {
-      processPDF(file, tipo, statusEl);
-    }, 100);
-    return;
+  var isEdge = navigator.userAgent.indexOf('Edg') > -1 || navigator.userAgent.indexOf('Edge') > -1;
+  if (isEdge) {
+    document.getElementById('edge-banner-unified').style.display = 'block';
   }
 
-  // Image: try OCR
-  statusEl.textContent = 'Immagine caricata. Avvio analisi...';
-  setTimeout(function() {
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    statusEl.textContent = 'PDF caricato. Analisi in corso...';
+    processPDF(file, tipo, statusEl);
+  } else {
+    statusEl.textContent = 'Immagine caricata. Avvio OCR...';
     doOCR(file, tipo, statusEl);
-  }, 100);
+  }
 }
 
 function processPDF(file, tipo, statusEl) {
-  // Verifica che pdf.js sia caricato
   if (typeof pdfjsLib === 'undefined') {
-    statusEl.innerHTML = '<span style="color:#ffaa00;">Libreria PDF non disponibile. Inserisci i dati manualmente nel passaggio successivo.</span>';
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Libreria PDF non caricata. Inserisci i dati manualmente.</span>';
     return;
   }
 
@@ -1164,7 +812,7 @@ function processPDF(file, tipo, statusEl) {
     pdfjsLib.getDocument({ data: typedarray }).promise
       .then(function(pdf) {
         var numPages = pdf.numPages;
-        statusEl.textContent = 'PDF: ' + numPages + ' pagine. Estrazione testo...';
+        statusEl.textContent = 'PDF: ' + numPages + ' pagina/e. Estrazione testo...';
         var allText = '';
         var textPromises = [];
 
@@ -1176,7 +824,7 @@ function processPDF(file, tipo, statusEl) {
                 for (var j = 0; j < textContent.items.length; j++) {
                   pageText += textContent.items[j].str + ' ';
                 }
-                return { pageNum: page.pageNumber, text: pageText, page: page };
+                return { text: pageText, page: page };
               });
             })
           );
@@ -1184,24 +832,21 @@ function processPDF(file, tipo, statusEl) {
 
         Promise.all(textPromises).then(function(results) {
           var hasRealText = false;
+          var pagesForOCR = [];
           for (var k = 0; k < results.length; k++) {
             allText += results[k].text + '\n';
             if (results[k].text.trim().length > 50) hasRealText = true;
+            else pagesForOCR.push(results[k].page);
           }
 
           if (hasRealText) {
             statusEl.innerHTML = '<span style="color:#00d4aa;">Testo estratto da PDF digitale.</span>';
-            if (tipo === 'luce') parseBollettaLuce(allText);
-            else parseBollettaGas(allText);
-            checkBillsComplete();
+            parseAndFill(allText, tipo);
+          } else if (pagesForOCR.length > 0 && typeof Tesseract !== 'undefined') {
+            statusEl.textContent = 'PDF senza testo. Avvio OCR pagine...';
+            renderPDFPagesAndOCR(pagesForOCR, tipo, statusEl);
           } else {
-            // PDF e una scansione: prova OCR pagine
-            statusEl.textContent = 'PDF senza testo selezionabile. Avvio OCR pagine...';
-            if (typeof Tesseract === 'undefined') {
-              statusEl.innerHTML = '<span style="color:#ffaa00;">OCR non disponibile. Inserisci i dati manualmente.</span>';
-              return;
-            }
-            renderPDFPagesAndOCR(results, tipo, statusEl);
+            statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci i dati manualmente.</span>';
           }
         }).catch(function(err) {
           statusEl.innerHTML = '<span style="color:#ffaa00;">Errore estrazione testo. Inserisci i dati manualmente.</span>';
@@ -1217,9 +862,9 @@ function processPDF(file, tipo, statusEl) {
   reader.readAsArrayBuffer(file);
 }
 
-function renderPDFPagesAndOCR(results, tipo, statusEl) {
+function renderPDFPagesAndOCR(pages, tipo, statusEl) {
   if (typeof Tesseract === 'undefined') {
-    statusEl.innerHTML = '<span style="color:#ffaa00;">OCR non disponibile su questo browser. Inserisci i dati manualmente.</span>';
+    statusEl.innerHTML = '<span style="color:#ffaa00;">OCR non disponibile. Inserisci i dati manualmente.</span>';
     return;
   }
 
@@ -1227,22 +872,20 @@ function renderPDFPagesAndOCR(results, tipo, statusEl) {
   var ctx = canvas.getContext('2d');
   var allOCRText = '';
   var processed = 0;
-  var total = results.length;
+  var total = pages.length;
 
   function processNext() {
     if (processed >= total) {
       if (allOCRText.trim().length > 0) {
         statusEl.innerHTML = '<span style="color:#00d4aa;">Analisi completata su ' + total + ' pagine.</span>';
-        if (tipo === 'luce') parseBollettaLuce(allOCRText);
-        else parseBollettaGas(allOCRText);
+        parseAndFill(allOCRText, tipo);
       } else {
         statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci i dati manualmente.</span>';
       }
-      checkBillsComplete();
       return;
     }
 
-    var page = results[processed].page;
+    var page = pages[processed];
     var viewport = page.getViewport({ scale: 2.0 });
     canvas.width = viewport.width;
     canvas.height = viewport.height;
@@ -1279,7 +922,7 @@ function renderPDFPagesAndOCR(results, tipo, statusEl) {
 
 function doOCR(file, tipo, statusEl) {
   if (typeof Tesseract === 'undefined') {
-    statusEl.innerHTML = '<span style="color:#ffaa00;">Analisi automatica non disponibile su questo browser. Inserisci i dati manualmente nel passaggio successivo.</span>';
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Analisi automatica non disponibile. Inserisci i dati manualmente.</span>';
     return;
   }
 
@@ -1294,147 +937,95 @@ function doOCR(file, tipo, statusEl) {
     var text = result.data.text;
     if (text.trim().length > 20) {
       statusEl.innerHTML = '<span style="color:#00d4aa;">Analisi completata. Dati estratti.</span>';
-      if (tipo === 'luce') parseBollettaLuce(text);
-      else parseBollettaGas(text);
+      parseAndFill(text, tipo);
     } else {
-      statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci i dati manualmente.</span>';
+      statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci manualmente.</span>';
     }
-    checkBillsComplete();
   })
   .catch(function(err) {
-    statusEl.innerHTML = '<span style="color:#ffaa00;">Analisi non riuscita. Inserisci i dati manualmente nel passaggio successivo.</span>';
-    checkBillsComplete();
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Analisi non riuscita. Inserisci i dati manualmente.</span>';
   });
 }
 
-// ==================== PARSER BOLLETTE ====================
-var extractedData = {
-  luce: {},
-  gas: {}
-};
-
-function parseBollettaLuce(text) {
-  var lines = text.split("\n");
+function parseAndFill(text, tipo) {
   var costo = null, consumo = null, potenza = null, totale = null;
+  var lines = text.split('\n');
+
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i].toLowerCase();
-    if (!costo && (/€\/kwh|eur\/kwh|prezzo.*unitario|costo.*energia/i.test(line))) {
-      var m = lines[i].match(/(\d+[.,]\d{3,4})/);
-      if (m) costo = m[1].replace(',', '.');
-    }
-    if (!consumo && (/consumo.*totale|totale.*consumo|kwh.*consumo/i.test(line))) {
-      var m2 = lines[i].match(/(\d{2,4})[.,]?(\d*)/);
-      if (m2) consumo = m2[1];
-    }
-    if (!potenza && (/potenza.*disponibile|potenza.*contrattuale|\bkW\b/i.test(line))) {
-      var m3 = lines[i].match(/(\d+[.,]\d?)/);
-      if (m3) potenza = m3[1].replace(',', '.');
-    }
-    if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
-      var m4 = lines[i].match(/(\d+[.,]\d{2})/);
-      if (m4) totale = m4[1].replace(',', '.');
-    }
-  }
-  if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*kWh/i); if (mc) costo = mc[1].replace(',', '.'); }
-  if (!consumo) { var mc2 = text.match(/(\d{3,4})\s*kWh/i); if (mc2) consumo = mc2[1]; }
-  if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
-
-  extractedData.luce = { costo: costo, consumo: consumo, potenza: potenza, totale: totale };
-}
-
-function parseBollettaGas(text) {
-  var lines = text.split("\n");
-  var costo = null, consumo = null, totale = null;
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].toLowerCase();
-    if (!costo && (/€\/smc|eur\/smc|prezzo.*gas|costo.*gas/i.test(line))) {
-      var m = lines[i].match(/(\d+[.,]\d{3,4})/);
-      if (m) costo = m[1].replace(',', '.');
-    }
-    if (!consumo && (/consumo.*totale|totale.*consumo|smc.*consumo/i.test(line))) {
-      var m2 = lines[i].match(/(\d{1,3})[.,]?(\d*)/);
-      if (m2) consumo = m2[1];
-    }
-    if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
-      var m3 = lines[i].match(/(\d+[.,]\d{2})/);
-      if (m3) totale = m3[1].replace(',', '.');
+    if (tipo === 'luce') {
+      if (!costo && (/€\/kwh|eur\/kwh|prezzo.*unitario|costo.*energia/i.test(line))) {
+        var m = lines[i].match(/(\d+[.,]\d{3,4})/);
+        if (m) costo = m[1].replace(',', '.');
+      }
+      if (!consumo && (/consumo.*totale|totale.*consumo|kwh.*consumo/i.test(line))) {
+        var m2 = lines[i].match(/(\d{2,4})[.,]?(\d*)/);
+        if (m2) consumo = m2[1];
+      }
+      if (!potenza && (/potenza.*disponibile|potenza.*contrattuale|kW/i.test(line))) {
+        var m3 = lines[i].match(/(\d+[.,]\d?)/);
+        if (m3) potenza = m3[1].replace(',', '.');
+      }
+      if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
+        var m4 = lines[i].match(/(\d+[.,]\d{2})/);
+        if (m4) totale = m4[1].replace(',', '.');
+      }
+    } else {
+      if (!costo && (/€\/smc|eur\/smc|prezzo.*gas|costo.*gas/i.test(line))) {
+        var mg = lines[i].match(/(\d+[.,]\d{3,4})/);
+        if (mg) costo = mg[1].replace(',', '.');
+      }
+      if (!consumo && (/consumo.*totale|totale.*consumo|smc.*consumo/i.test(line))) {
+        var mg2 = lines[i].match(/(\d{1,3})[.,]?(\d*)/);
+        if (mg2) consumo = mg2[1];
+      }
+      if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
+        var mg3 = lines[i].match(/(\d+[.,]\d{2})/);
+        if (mg3) totale = mg3[1].replace(',', '.');
+      }
     }
   }
-  if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*Smc/i); if (mc) costo = mc[1].replace(',', '.'); }
-  if (!consumo) { var mc2 = text.match(/(\d{1,3})\s*Smc/i); if (mc2) consumo = mc2[1]; }
-  if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
 
-  extractedData.gas = { costo: costo, consumo: consumo, totale: totale };
-  localStorage.setItem('ecohybrid_extracted', JSON.stringify(extractedData));
+  // Fallback regex on full text
+  if (tipo === 'luce') {
+    if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*kWh/i); if (mc) costo = mc[1].replace(',', '.'); }
+    if (!consumo) { var mc2 = text.match(/(\d{3,4})\s*kWh/i); if (mc2) consumo = mc2[1]; }
+    if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
+  } else {
+    if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*Smc/i); if (mc) costo = mc[1].replace(',', '.'); }
+    if (!consumo) { var mc2 = text.match(/(\d{1,3})\s*Smc/i); if (mc2) consumo = mc2[1]; }
+    if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
+  }
+
+  // Fill the unified form fields
+  if (tipo === 'luce') {
+    if (costo) document.getElementById('unified-luce-costo').value = costo;
+    if (consumo) document.getElementById('unified-luce-consumo').value = consumo;
+    if (potenza) document.getElementById('unified-luce-potenza').value = potenza;
+    if (totale) document.getElementById('unified-luce-totale').value = totale;
+  } else {
+    if (costo) document.getElementById('unified-gas-costo').value = costo;
+    if (consumo) document.getElementById('unified-gas-consumo').value = consumo;
+    if (totale) document.getElementById('unified-gas-totale').value = totale;
+  }
+
+  updateTotals();
 }
 
-function checkBillsComplete() {
-  // Abilita se almeno un file e stato caricato (luce o gas)
-  // I dati verranno verificati e corretti nella pagina successiva
-  var luceFile = document.getElementById('luce-uploaded').classList.contains('visible');
-  var gasFile = document.getElementById('gas-uploaded').classList.contains('visible');
-  var btn = document.getElementById('btn-continua-bollette');
-  if (btn) btn.disabled = !(luceFile || gasFile);
-}
-
-function saveBillData() {
-  var luceTotale = parseFloat(document.getElementById('cf-luce-totale').value.replace(',', '.')) || 0;
-  var gasTotale = parseFloat(document.getElementById('cf-gas-totale').value.replace(',', '.')) || 0;
+function updateTotals() {
+  var luceTotale = parseFloat(document.getElementById('unified-luce-totale').value.replace(',', '.')) || 0;
+  var gasTotale = parseFloat(document.getElementById('unified-gas-totale').value.replace(',', '.')) || 0;
   var totaleMese = luceTotale + gasTotale;
   var totaleAnno = totaleMese * 12;
 
-  document.getElementById('totale-mese').textContent = totaleMese.toFixed(2) + ' EUR';
-  document.getElementById('totale-anno').textContent = totaleAnno.toFixed(2) + ' EUR';
-
-  var billData = {
-    luce: {
-      periodo: document.getElementById('cf-luce-periodo').value,
-      costo: parseFloat(document.getElementById('cf-luce-costo').value.replace(',', '.')) || 0,
-      consumo: parseFloat(document.getElementById('cf-luce-consumo').value.replace(',', '.')) || 0,
-      potenza: parseFloat(document.getElementById('cf-luce-potenza').value.replace(',', '.')) || 0,
-      tipo: document.getElementById('cf-luce-tipo').value,
-      totale: luceTotale,
-      indirizzo: document.getElementById('cf-luce-indirizzo').value
-    },
-    gas: {
-      periodo: document.getElementById('cf-gas-periodo').value,
-      costo: parseFloat(document.getElementById('cf-gas-costo').value.replace(',', '.')) || 0,
-      consumo: parseFloat(document.getElementById('cf-gas-consumo').value.replace(',', '.')) || 0,
-      totale: gasTotale
-    },
-    totaleMese: totaleMese,
-    totaleAnno: totaleAnno,
-    timestamp: new Date().toISOString()
-  };
-  localStorage.setItem('ecohybrid_bills', JSON.stringify(billData));
+  document.getElementById('unified-totale-mese').textContent = totaleMese.toFixed(2) + ' EUR';
+  document.getElementById('unified-totale-anno').textContent = totaleAnno.toFixed(2) + ' EUR';
 }
 
-// ==================== CONFERMA DATI ====================
-function skipFilesAndGo() {
-  extractedData.luce = {};
-  extractedData.gas = {};
-  showScreen('screen-confirm');
-}
-
-function goToConfirm() {
-  // Pre-compila i campi con i dati estratti
-  if (extractedData.luce.costo) document.getElementById('cf-luce-costo').value = extractedData.luce.costo;
-  if (extractedData.luce.consumo) document.getElementById('cf-luce-consumo').value = extractedData.luce.consumo;
-  if (extractedData.luce.potenza) document.getElementById('cf-luce-potenza').value = extractedData.luce.potenza;
-  if (extractedData.luce.totale) document.getElementById('cf-luce-totale').value = extractedData.luce.totale;
-
-  if (extractedData.gas.costo) document.getElementById('cf-gas-costo').value = extractedData.gas.costo;
-  if (extractedData.gas.consumo) document.getElementById('cf-gas-consumo').value = extractedData.gas.consumo;
-  if (extractedData.gas.totale) document.getElementById('cf-gas-totale').value = extractedData.gas.totale;
-
-  showScreen('screen-confirm');
-}
-
-function confirmDataAndGo() {
-  // Verifica campi obbligatori
-  var luceTotale = document.getElementById('cf-luce-totale').value.trim();
-  var gasTotale = document.getElementById('cf-gas-totale').value.trim();
-  var warning = document.getElementById('confirm-warning');
+function confirmUnifiedAndGo() {
+  var luceTotale = document.getElementById('unified-luce-totale').value.trim();
+  var gasTotale = document.getElementById('unified-gas-totale').value.trim();
+  var warning = document.getElementById('unified-warning');
 
   if (!luceTotale && !gasTotale) {
     warning.style.display = 'block';
@@ -1442,9 +1033,41 @@ function confirmDataAndGo() {
     return;
   }
 
-  saveBillData();
-  // Clear extracted data after successful confirmation
-  localStorage.removeItem('ecohybrid_extracted');
+  // Save all data
+  var luceCosto = parseFloat(document.getElementById('unified-luce-costo').value.replace(',', '.')) || 0;
+  var luceConsumo = parseFloat(document.getElementById('unified-luce-consumo').value.replace(',', '.')) || 0;
+  var lucePotenza = parseFloat(document.getElementById('unified-luce-potenza').value.replace(',', '.')) || 0;
+  var luceTot = parseFloat(luceTotale.replace(',', '.')) || 0;
+
+  var gasCosto = parseFloat(document.getElementById('unified-gas-costo').value.replace(',', '.')) || 0;
+  var gasConsumo = parseFloat(document.getElementById('unified-gas-consumo').value.replace(',', '.')) || 0;
+  var gasTot = parseFloat(gasTotale.replace(',', '.')) || 0;
+
+  var totaleMese = luceTot + gasTot;
+  var totaleAnno = totaleMese * 12;
+
+  var billData = {
+    luce: {
+      periodo: document.getElementById('unified-luce-periodo').value,
+      costo: luceCosto,
+      consumo: luceConsumo,
+      potenza: lucePotenza,
+      tipo: document.getElementById('unified-luce-tipo').value,
+      totale: luceTot,
+      indirizzo: document.getElementById('unified-luce-indirizzo').value
+    },
+    gas: {
+      periodo: document.getElementById('unified-gas-periodo').value,
+      costo: gasCosto,
+      consumo: gasConsumo,
+      totale: gasTot
+    },
+    totaleMese: totaleMese,
+    totaleAnno: totaleAnno,
+    timestamp: new Date().toISOString()
+  };
+
+  localStorage.setItem('ecohybrid_bills', JSON.stringify(billData));
   showScreen('screen-3');
   initDashboard();
 }
@@ -1575,7 +1198,20 @@ function rimandaSuggerimento() {
   showToast('Suggerimento rimandato a domani');
 }
 
-// ==================== ALGORITMI ECOHYBRID ====================
+function goToBillsFromDashboard() {
+  showScreen('screen-bills-unified');
+}
+
+function resetAllData() {
+  if (confirm('Sei sicuro? Questo cancellera tutti i dati e ti riportera alla schermata iniziale.')) {
+    localStorage.removeItem('ecohybrid_bills');
+    localStorage.removeItem('ecohybrid_ha_url');
+    localStorage.removeItem('ecohybrid_ha_token');
+    location.reload();
+  }
+}
+
+// ==================== ALGORITMI ====================
 var MERCATO = {
   PUN_F0: 0.189,
   PUN_F3: 0.152,
@@ -1724,266 +1360,11 @@ function showToast(msg) {
   setTimeout(function() { toast.remove(); }, 2500);
 }
 
-// ==================== EMBEDDED PDF ANALYZER ====================
-var pdfAnalyzerTipo = '';
-
-function showPDFAnalyzer(tipo) {
-  pdfAnalyzerTipo = tipo;
-  document.getElementById('pdf-analyzer-subtitle').textContent = 'Analisi bolletta ' + tipo;
-  // Reset state
-  document.getElementById('pdf-upload-card').style.display = 'block';
-  document.getElementById('pdf-result-card').classList.add('hidden');
-  document.getElementById('btn-pdf-save').classList.add('hidden');
-  document.getElementById('btn-pdf-save').disabled = true;
-  document.getElementById('pdf-embedded-status').textContent = '';
-  // Clear inputs
-  var inputs = document.querySelectorAll('#pdf-result-card input, #pdf-result-card select');
-  for (var i = 0; i < inputs.length; i++) {
-    inputs[i].value = '';
-  }
-  showScreen('screen-pdf-analyzer');
-}
-
-function closePDFAnalyzer() {
-  showScreen('screen-bills');
-}
-
-function handleEmbeddedPDF(input) {
-  var file = input.files[0];
-  if (!file) return;
-
-  var statusEl = document.getElementById('pdf-embedded-status');
-  statusEl.textContent = 'Analisi PDF in corso...';
-
-  if (typeof pdfjsLib === 'undefined') {
-    statusEl.innerHTML = '<span style="color:#ffaa00;">Libreria PDF non caricata. Verifica connessione.</span>';
-    showPDFManualEntry();
-    return;
-  }
-
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var typedarray = new Uint8Array(e.target.result);
-    pdfjsLib.getDocument({ data: typedarray }).promise
-      .then(function(pdf) {
-        var numPages = pdf.numPages;
-        statusEl.textContent = 'PDF: ' + numPages + ' pagina/e. Estrazione testo...';
-        var allText = '';
-        var pagePromises = [];
-
-        for (var i = 1; i <= numPages; i++) {
-          pagePromises.push(
-            pdf.getPage(i).then(function(page) {
-              return page.getTextContent().then(function(tc) {
-                var txt = '';
-                for (var j = 0; j < tc.items.length; j++) {
-                  txt += tc.items[j].str + ' ';
-                }
-                return { text: txt, page: page };
-              });
-            })
-          );
-        }
-
-        Promise.all(pagePromises).then(function(results) {
-          var hasText = false;
-          var pagesForOCR = [];
-          for (var k = 0; k < results.length; k++) {
-            allText += results[k].text + '\n';
-            if (results[k].text.trim().length > 50) hasText = true;
-            else pagesForOCR.push(results[k].page);
-          }
-
-          if (hasText) {
-            statusEl.innerHTML = '<span style="color:#00d4aa;">Testo estratto da PDF digitale.</span>';
-            parsePDFAndShow(allText);
-          } else if (pagesForOCR.length > 0 && typeof Tesseract !== 'undefined') {
-            statusEl.textContent = 'PDF senza testo. Avvio OCR su ' + pagesForOCR.length + ' pagina/e...';
-            doEmbeddedOCR(pagesForOCR, statusEl);
-          } else {
-            statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci manualmente.</span>';
-            showPDFManualEntry();
-          }
-        });
-      })
-      .catch(function(err) {
-        statusEl.innerHTML = '<span style="color:#ffaa00;">Errore lettura PDF. Inserisci manualmente.</span>';
-        showPDFManualEntry();
-      });
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function doEmbeddedOCR(pages, statusEl) {
-  var canvas = document.createElement('canvas');
-  var ctx = canvas.getContext('2d');
-  var allText = '';
-  var idx = 0;
-
-  function next() {
-    if (idx >= pages.length) {
-      if (allText.trim().length > 0) {
-        statusEl.innerHTML = '<span style="color:#00d4aa;">Analisi completata.</span>';
-        parsePDFAndShow(allText);
-      } else {
-        statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci manualmente.</span>';
-        showPDFManualEntry();
-      }
-      return;
-    }
-    var page = pages[idx];
-    var vp = page.getViewport({ scale: 2.0 });
-    canvas.width = vp.width;
-    canvas.height = vp.height;
-    statusEl.textContent = 'Analisi pagina ' + (idx + 1) + '/' + pages.length + '...';
-    page.render({ canvasContext: ctx, viewport: vp }).promise.then(function() {
-      canvas.toBlob(function(blob) {
-        Tesseract.recognize(blob, 'ita', {
-          logger: function(m) {
-            if (m.status === 'recognizing text') {
-              statusEl.textContent = 'Pagina ' + (idx + 1) + ': ' + Math.round(m.progress * 100) + '%';
-            }
-          }
-        }).then(function(r) {
-          allText += r.data.text + '\n';
-          idx++;
-          next();
-        }).catch(function() {
-          idx++;
-          next();
-        });
-      }, 'image/png');
-    }).catch(function() {
-      idx++;
-      next();
-    });
-  }
-  next();
-}
-
-function parsePDFAndShow(text) {
-  var costo = null, consumo = null, potenza = null, totale = null;
-  var lines = text.split('\n');
-
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].toLowerCase();
-    if (pdfAnalyzerTipo === 'luce') {
-      if (!costo && (/€\/kwh|eur\/kwh|costo.*energia/i.test(line))) {
-        var m = lines[i].match(/(\d+[.,]\d{3,4})/);
-        if (m) costo = m[1].replace(',', '.');
-      }
-      if (!consumo && (/consumo.*totale|kwh/i.test(line))) {
-        var m2 = lines[i].match(/(\d{2,4})\s*kwh/i);
-        if (m2) consumo = m2[1];
-      }
-      if (!potenza && (/potenza.*contrattuale|kW/i.test(line))) {
-        var m3 = lines[i].match(/(\d+[.,]\d?)/);
-        if (m3) potenza = m3[1].replace(',', '.');
-      }
-      if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
-        var m4 = lines[i].match(/(\d+[.,]\d{2})/);
-        if (m4) totale = m4[1].replace(',', '.');
-      }
-    } else {
-      if (!costo && (/€\/smc|eur\/smc|costo.*gas/i.test(line))) {
-        var mg = lines[i].match(/(\d+[.,]\d{3,4})/);
-        if (mg) costo = mg[1].replace(',', '.');
-      }
-      if (!consumo && (/consumo.*totale|smc/i.test(line))) {
-        var mg2 = lines[i].match(/(\d{1,3})\s*smc/i);
-        if (mg2) consumo = mg2[1];
-      }
-      if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
-        var mg3 = lines[i].match(/(\d+[.,]\d{2})/);
-        if (mg3) totale = mg3[1].replace(',', '.');
-      }
-    }
-  }
-
-  // Fallback regex on full text
-  if (pdfAnalyzerTipo === 'luce') {
-    if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*kWh/i); if (mc) costo = mc[1].replace(',', '.'); }
-    if (!consumo) { var mc2 = text.match(/(\d{3,4})\s*kWh/i); if (mc2) consumo = mc2[1]; }
-    if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
-  } else {
-    if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*Smc/i); if (mc) costo = mc[1].replace(',', '.'); }
-    if (!consumo) { var mc2 = text.match(/(\d{1,3})\s*Smc/i); if (mc2) consumo = mc2[1]; }
-    if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
-  }
-
-  if (costo) document.getElementById('pdf-res-costo').value = costo;
-  if (consumo) document.getElementById('pdf-res-consumo').value = consumo;
-  if (potenza) document.getElementById('pdf-res-potenza').value = potenza;
-  if (totale) document.getElementById('pdf-res-totale').value = totale;
-
-  var msg = document.getElementById('pdf-result-message');
-  if (costo || consumo || totale) {
-    msg.innerHTML = '<div class="success-box"><strong style="color:#fff;">Dati rilevati automaticamente.</strong><br>Verifica e correggi prima di salvare.</div>';
-  } else {
-    msg.innerHTML = '<div class="warning-box"><strong style="color:#fff;">Nessun dato automatico rilevato.</strong><br>Inserisci i dati manualmente.</div>';
-  }
-
-  showPDFManualEntry();
-}
-
-function showPDFManualEntry() {
-  document.getElementById('pdf-upload-card').style.display = 'none';
-  document.getElementById('pdf-result-card').classList.remove('hidden');
-  document.getElementById('btn-pdf-save').classList.remove('hidden');
-  document.getElementById('btn-pdf-save').disabled = false;
-}
-
-function savePDFResult() {
-  var data = {
-    tipo: pdfAnalyzerTipo,
-    costo: document.getElementById('pdf-res-costo').value,
-    consumo: document.getElementById('pdf-res-consumo').value,
-    potenza: document.getElementById('pdf-res-potenza').value,
-    tipoContratto: document.getElementById('pdf-res-tipo').value,
-    totale: document.getElementById('pdf-res-totale').value,
-    indirizzo: document.getElementById('pdf-res-indirizzo').value,
-    timestamp: new Date().toISOString()
-  };
-
-  // Store for the bills screen
-  if (pdfAnalyzerTipo === 'luce') {
-    extractedData.luce = {
-      costo: data.costo,
-      consumo: data.consumo,
-      potenza: data.potenza,
-      totale: data.totale
-    };
-    var statusEl = document.getElementById('luce-status');
-    var uploadedEl = document.getElementById('luce-uploaded');
-    if (uploadedEl) uploadedEl.classList.add('visible');
-    if (statusEl) statusEl.innerHTML = '<span style="color:#00d4aa;">Dati importati da analisi PDF. Verifica nel passaggio successivo.</span>';
-  } else {
-    extractedData.gas = {
-      costo: data.costo,
-      consumo: data.consumo,
-      totale: data.totale
-    };
-    var statusEl = document.getElementById('gas-status');
-    var uploadedEl = document.getElementById('gas-uploaded');
-    if (uploadedEl) uploadedEl.classList.add('visible');
-    if (statusEl) statusEl.innerHTML = '<span style="color:#00d4aa;">Dati importati da analisi PDF. Verifica nel passaggio successivo.</span>';
-  }
-
-  // Persist extracted data so it survives navigation
-  localStorage.setItem('ecohybrid_extracted', JSON.stringify(extractedData));
-
-  checkBillsComplete();
-  showScreen('screen-bills');
-}
-
 // ==================== INIT ====================
 window.onload = function() {
-  // Show Edge banner if needed
   var isEdge = navigator.userAgent.indexOf("Edg") > -1 || navigator.userAgent.indexOf("Edge") > -1;
   if (isEdge) {
-    var edgeBanner = document.getElementById("edge-banner");
+    var edgeBanner = document.getElementById("edge-banner-unified");
     if (edgeBanner) edgeBanner.style.display = "block";
   }
 
@@ -1992,8 +1373,8 @@ window.onload = function() {
     try {
       var b = JSON.parse(savedBills);
       if (b.totaleMese) {
-        document.getElementById('totale-mese').textContent = b.totaleMese.toFixed(2) + ' EUR';
-        document.getElementById('totale-anno').textContent = b.totaleAnno.toFixed(2) + ' EUR';
+        document.getElementById('unified-totale-mese').textContent = b.totaleMese.toFixed(2) + ' EUR';
+        document.getElementById('unified-totale-anno').textContent = b.totaleAnno.toFixed(2) + ' EUR';
       }
     } catch (e) {}
   }
@@ -2004,93 +1385,7 @@ window.onload = function() {
   if (document.getElementById('screen-3').classList.contains('active')) {
     initDashboard();
   }
-
-  // Restore extracted data if coming back to bills
-  var savedExtracted = localStorage.getItem('ecohybrid_extracted');
-  if (savedExtracted) {
-    try {
-      var ex = JSON.parse(savedExtracted);
-      if (ex.luce) extractedData.luce = ex.luce;
-      if (ex.gas) extractedData.gas = ex.gas;
-    } catch (e) {}
-  }
 };
-
-function goToBillsFromDashboard() {
-  showScreen('screen-bills');
-  // Restore visual state
-  if (extractedData.luce && extractedData.luce.totale) {
-    var el = document.getElementById('luce-uploaded');
-    var st = document.getElementById('luce-status');
-    if (el) el.classList.add('visible');
-    if (st) st.innerHTML = '<span style="color:#00d4aa;">Dati importati da analisi PDF. Verifica nel passaggio successivo.</span>';
-  }
-  if (extractedData.gas && extractedData.gas.totale) {
-    var el = document.getElementById('gas-uploaded');
-    var st = document.getElementById('gas-status');
-    if (el) el.classList.add('visible');
-    if (st) st.innerHTML = '<span style="color:#00d4aa;">Dati importati da analisi PDF. Verifica nel passaggio successivo.</span>';
-  }
-  checkBillsComplete();
-}
-
-function resetAllData() {
-  if (confirm('Sei sicuro? Questo cancellera tutti i dati e ti riportera alla schermata iniziale.')) {
-    localStorage.removeItem('ecohybrid_bills');
-    localStorage.removeItem('ecohybrid_extracted');
-    localStorage.removeItem('ecohybrid_ha_url');
-    localStorage.removeItem('ecohybrid_ha_token');
-    extractedData = { luce: {}, gas: {} };
-    location.reload();
-  }
-}
 </script>
-
-<!-- ==================== SCREEN PDF ANALYZER: EMBEDDED ==================== -->
-<div id="screen-pdf-analyzer" class="screen">
-  <div class="app-header">
-    <h1>EcoHybrid <span style="color:#FF0088">PDF Analyzer</span></h1>
-    <p id="pdf-analyzer-subtitle">Analisi bolletta</p>
-  </div>
-  <div class="divider"></div>
-
-  <div class="card" id="pdf-upload-card">
-    <div class="card-title">Carica bolletta PDF</div>
-    <div class="upload-area" onclick="document.getElementById('pdf-embedded-input').click()">
-      <div style="font-size:36px; margin-bottom:12px;">[ PDF ]</div>
-      <p><strong style="color:#fff;">Clicca per selezionare il PDF</strong><br>
-      Oppure trascina il file qui</p>
-      <input type="file" id="pdf-embedded-input" accept=".pdf" style="display:none" onchange="handleEmbeddedPDF(this)">
-    </div>
-    <div id="pdf-embedded-status" class="status-text"></div>
-  </div>
-
-  <div class="card hidden" id="pdf-result-card">
-    <div class="card-title">Dati estratti - Verifica e correggi</div>
-    <div id="pdf-result-message"></div>
-    <table class="confirm-table">
-      <tr><td>Periodo fatturazione</td><td><input type="text" id="pdf-res-periodo" placeholder="es. 01/05/2026 - 31/07/2026"></td></tr>
-      <tr><td>Costo unitario (EUR)</td><td><input type="text" id="pdf-res-costo" placeholder="es. 0,2927"></td></tr>
-      <tr><td>Consumo</td><td><input type="text" id="pdf-res-consumo" placeholder="es. 157 kWh o 5 Smc"></td></tr>
-      <tr><td>Potenza contrattuale (kW)</td><td><input type="text" id="pdf-res-potenza" placeholder="es. 3,00 (solo luce)"></td></tr>
-      <tr><td>Tipo contratto</td><td>
-        <select id="pdf-res-tipo">
-          <option value="">Seleziona...</option>
-          <option value="mono">Monoraria (F0)</option>
-          <option value="bi">Bioraria (F1-F2-F3)</option>
-          <option value="tri">Trifaria</option>
-        </select>
-      </td></tr>
-      <tr><td>Spesa totale (EUR)</td><td><input type="text" id="pdf-res-totale" placeholder="es. 61,96"></td></tr>
-      <tr><td>Indirizzo fornitura</td><td><input type="text" id="pdf-res-indirizzo" placeholder="es. Via Roma 1, 20100 Milano"></td></tr>
-    </table>
-  </div>
-
-  <div class="nav-bar">
-    <button class="btn btn-secondary" onclick="closePDFAnalyzer()">Indietro</button>
-    <button class="btn btn-primary hidden" id="btn-pdf-save" onclick="savePDFResult()" disabled>Salva e torna alle bollette</button>
-  </div>
-</div>
-
 </body>
 </html>
