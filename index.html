@@ -155,6 +155,50 @@
   .summary-value { font-size: 32px; font-weight: 800; color: #00d4aa; }
   .summary-label { font-size: 12px; color: #a0a0c0; margin-top: 4px; }
   ::-webkit-scrollbar { width: 0; background: transparent; }
+
+  /* CERCHIETTI DEVICE */
+  .device-section { margin-bottom: 20px; }
+  .device-name {
+    font-size: 14px; font-weight: 700; color: #fff;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .device-name .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #00d4aa;
+    display: inline-block;
+  }
+  .device-name .dot.offline { background: #ff4444; }
+  .circles-row {
+    display: flex; justify-content: space-around; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .circle-widget {
+    width: 90px; height: 90px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 3px solid; position: relative;
+  }
+  .circle-widget .circle-val {
+    font-size: 22px; font-weight: 800; line-height: 1;
+  }
+  .circle-widget .circle-unit {
+    font-size: 10px; color: #a0a0c0; margin-top: 2px;
+  }
+  .circle-widget .circle-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-top: 4px; font-weight: 700;
+  }
+  .circle-esterna { border-color: #4488ff; background: rgba(68,136,255,0.08); }
+  .circle-esterna .circle-val { color: #4488ff; }
+  .circle-esterna .circle-label { color: #4488ff; }
+  .circle-interna { border-color: #ffaa00; background: rgba(255,170,0,0.08); }
+  .circle-interna .circle-val { color: #ffaa00; }
+  .circle-interna .circle-label { color: #ffaa00; }
+  .circle-target { border-color: #00d4aa; background: rgba(0,212,170,0.08); }
+  .circle-target .circle-val { color: #00d4aa; }
+  .circle-target .circle-label { color: #00d4aa; }
+  .device-meta {
+    font-size: 11px; color: #a0a0c0; text-align: center;
+    margin-top: 4px;
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -728,6 +772,18 @@
     <p style="font-size:12px; color:#a0a0c0; margin-top:8px;">
       Questa e la tua bolletta di partenza. Ogni nuova bolletta viene confrontata con questa.
     </p>
+  </div>
+
+  <!-- DISPOSITIVI ECOHYBRID -->
+  <div class="card" id="card-dispositivi">
+    <div class="card-title">Dispositivi EcoHybrid</div>
+    <div id="device-list">
+      <!-- Popolato da JS -->
+    </div>
+    <div id="device-empty" style="text-align:center; padding:20px; color:#a0a0c0; font-size:13px;">
+      Nessun device collegato.<br>
+      <span style="font-size:11px;">Connetti Home Assistant o attendi la configurazione automatica.</span>
+    </div>
   </div>
 
   <!-- AZIONI -->
@@ -1547,6 +1603,9 @@ function renderStorico() {
   var pctEl = document.getElementById('storico-risparmio-pct');
   var msgEl = document.getElementById('storico-risparmio-msg');
 
+  // Render cerchietti device
+  renderDeviceCircles();
+
   if (storico.length >= 2) {
     var pct = (risparmioTotale / baseline.totaleMese) * 100;
     risparmioEl.textContent = (risparmioTotale >= 0 ? '' : '-') + Math.abs(risparmioTotale).toFixed(2).replace('.', ',') + ' EUR';
@@ -1567,6 +1626,94 @@ function renderStorico() {
     pctEl.style.color = '#a0a0c0';
     msgEl.innerHTML = 'Hai inserito la prima bolletta. Inserisci quella del mese prossimo per vedere il confronto reale.';
   }
+}
+
+function renderDeviceCircles() {
+  var container = document.getElementById('device-list');
+  var emptyMsg = document.getElementById('device-empty');
+  var card = document.getElementById('card-dispositivi');
+  if (!container) return;
+
+  // Leggi meteo
+  var meteoRaw = localStorage.getItem('ecohybrid_meteo');
+  var meteo = meteoRaw ? JSON.parse(meteoRaw) : null;
+  var tempEst = meteo ? meteo.tempEst : null;
+
+  // Leggi device connessi
+  var devicesRaw = localStorage.getItem('ecohybrid_devices');
+  var devices = [];
+  if (devicesRaw) {
+    try { devices = JSON.parse(devicesRaw); } catch(e) {}
+  }
+
+  // Se non ci sono device, mostra demo con dati meteo
+  if (devices.length === 0) {
+    // Device demo basato su meteo o default
+    var demoTempEst = tempEst !== null ? tempEst : 29;
+    var demoTempInt = 24.5;
+    var demoTarget = calcolaComfortAdattivo(demoTempEst, meteo ? meteo.umidita : 55);
+
+    container.innerHTML =
+      '<div class="device-section">' +
+        '<div class="device-name"><span class="dot"></span>Clima Soggiorno (demo)</div>' +
+        '<div class="circles-row">' +
+          '<div class="circle-widget circle-esterna">' +
+            '<div class="circle-val">' + demoTempEst.toFixed(1) + '</div>' +
+            '<div class="circle-unit">C</div>' +
+            '<div class="circle-label">Esterna</div>' +
+          '</div>' +
+          '<div class="circle-widget circle-interna">' +
+            '<div class="circle-val">' + demoTempInt.toFixed(1) + '</div>' +
+            '<div class="circle-unit">C</div>' +
+            '<div class="circle-label">Interna</div>' +
+          '</div>' +
+          '<div class="circle-widget circle-target">' +
+            '<div class="circle-val">' + demoTarget.setpoint.toFixed(1) + '</div>' +
+            '<div class="circle-unit">C</div>' +
+            '<div class="circle-label">Target</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="device-meta">Modalita: ' + demoTarget.modalita + ' | Umidita: ' + (meteo ? meteo.umidita : '--') + '%</div>' +
+      '</div>';
+    if (emptyMsg) emptyMsg.style.display = 'none';
+    if (card) card.style.display = 'block';
+    return;
+  }
+
+  // Render device reali
+  var htmlDev = '';
+  for (var i = 0; i < devices.length; i++) {
+    var d = devices[i];
+    var tEst = tempEst !== null ? tempEst : '--';
+    var tInt = d.tempInterna !== undefined ? d.tempInterna : '--';
+    var tTgt = d.target !== undefined ? d.target : '--';
+    var online = d.online !== false;
+    htmlDev +=
+      '<div class="device-section">' +
+        '<div class="device-name"><span class="dot ' + (online ? '' : 'offline') + '"></span>' + (d.name || 'Device ' + (i+1)) + '</div>' +
+        '<div class="circles-row">' +
+          '<div class="circle-widget circle-esterna">' +
+            '<div class="circle-val">' + (typeof tEst === 'number' ? tEst.toFixed(1) : tEst) + '</div>' +
+            '<div class="circle-unit">C</div>' +
+            '<div class="circle-label">Esterna</div>' +
+          '</div>' +
+          '<div class="circle-widget circle-interna">' +
+            '<div class="circle-val">' + (typeof tInt === 'number' ? tInt.toFixed(1) : tInt) + '</div>' +
+            '<div class="circle-unit">C</div>' +
+            '<div class="circle-label">Interna</div>' +
+          '</div>' +
+          '<div class="circle-widget circle-target">' +
+            '<div class="circle-val">' + (typeof tTgt === 'number' ? tTgt.toFixed(1) : tTgt) + '</div>' +
+            '<div class="circle-unit">C</div>' +
+            '<div class="circle-label">Target</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="device-meta">' + (d.modalita || 'Auto') + ' | ' + (online ? 'Online' : 'Offline') + '</div>' +
+      '</div>';
+  }
+  container.innerHTML = htmlDev;
+  if (emptyMsg) emptyMsg.style.display = 'none';
+  if (card) card.style.display = 'block';
 }
 
 function aggiungiBolletta() {
