@@ -358,6 +358,133 @@
   </div>
 </div>
 
+<!-- ==================== SCREEN WIZARD (Mini PC 9-step) ==================== -->
+<div class="screen" id="screen-wizard">
+  <div style="text-align:center; margin-bottom:20px;">
+    <h1 style="font-size:24px; font-weight:800; color:#FF0088;">Setup Mini PC</h1>
+    <p style="color:#a0a0c0; font-size:13px;">9 passaggi per configurare Home Assistant</p>
+  </div>
+  <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin-bottom:20px; overflow:hidden;">
+    <div id="wizard-progress" style="height:100%; background:#FF0088; width:11%; transition:width 0.3s;"></div>
+  </div>
+
+  <div class="wizard-step" id="w-step-1" style="display:block;">
+    <div class="card">
+      <div class="card-title">Step 1/9 — Verifica hardware</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Ti serve:<br>
+        - Mini PC (Intel N100, 4GB RAM, 128GB SSD) ~50 EUR<br>
+        - OPPURE PC vecchio riciclato (Dell OptiPlex 9020, 4GB RAM, USB)<br>
+        - Chiavetta USB 8GB+<br>
+        - Cavo HDMI, tastiera, mouse
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(2)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-2" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 2/9 — Prepara chiavetta USB</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Inserisci una chiavetta USB da almeno 8GB nel tuo PC.<br>
+        Verra formattata — svuotala prima se contiene dati importanti.
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(1)">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(3)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-3" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 3/9 — Scarica Home Assistant OS</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Vai su <strong>home-assistant.io/installation/generic-x86-64</strong><br>
+        Scarica l'immagine x86-64 (file .img.xz, ~1GB).
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(2)">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(4)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-4" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 4/9 — Flash della chiavetta</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Scarica <strong>balenaEtcher</strong> (gratuito).<br>
+        Inserisci la chiavetta, seleziona l'immagine HAOS, clicca "Flash".<br>
+        Attendi 5-10 minuti.
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(3)">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(5)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-5" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 5/9 — Boot dal Mini PC</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Collega tastiera, mouse, schermo (HDMI) al Mini PC.<br>
+        Inserisci la chiavetta USB.<br>
+        Accendi e premi <strong>F12</strong> (o Esc/F2) per selezionare USB come boot device.
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(4)">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(6)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-6" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 6/9 — Primo avvio Home Assistant</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Da browser sul PC collegato: <strong>homeassistant.local:8123</strong><br>
+        Segui il wizard iniziale, inserisci password e WiFi.
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(5)">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(7)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-7" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 7/9 — Aggiungi integrazione clima</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Impostazioni > Dispositivi e servizi > Aggiungi integrazione.<br>
+        - Per clima WiFi Tuya: aggiungi <strong>LocalTuya</strong><br>
+        - Per clima vecchio con controller IR: aggiungi <strong>SmartIR</strong>
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(6)">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(8)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-8" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 8/9 — Installa EcoHybrid PWA</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Apri EcoHybrid da browser sullo smartphone.<br>
+        Menu browser > Aggiungi a schermata Home.<br>
+        L'app e ora installata come PWA.
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(7)">Indietro</button>
+    <button class="btn btn-primary" onclick="wizardNext(9)">Avanti</button>
+  </div>
+
+  <div class="wizard-step" id="w-step-9" style="display:none;">
+    <div class="card">
+      <div class="card-title">Step 9/9 — Verifica</div>
+      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+        Apri EcoHybrid, vai alla dashboard.<br>
+        Verifica temperatura, umidita e stato clima in tempo reale.<br>
+        Se si, tutto e collegato correttamente.
+      </p>
+    </div>
+    <button class="btn btn-secondary" onclick="wizardNext(8)">Indietro</button>
+    <button class="btn btn-primary" onclick="showScreen('screen-1')">Vai alle bollette</button>
+  </div>
+</div>
+
 <!-- ==================== SCREEN 1: BOLLETTE ==================== -->
 <div id="screen-1" class="screen">
   <div class="app-header">
@@ -369,9 +496,8 @@
   <div class="card">
     <div class="card-title">Bolletta luce</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Scatta foto</div>
-        <input type="file" id="file-luce" accept="image/*,.pdf" style="display:none" onchange="handleFile(this, 'luce')">
-      <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Carica PDF/Foto</div>
+      <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Scatta foto</div><input type="file" id="file-luce" accept="image/*" style="display:none" onchange="handleFile(this, 'luce')">
+      <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Carica immagine</div>
     </div>
     <div id="luce-uploaded" class="uploaded-label">Bolletta luce allegata</div>
 
@@ -396,9 +522,8 @@
   <div class="card">
     <div class="card-title">Bolletta gas</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Scatta foto</div>
-        <input type="file" id="file-gas" accept="image/*,.pdf" style="display:none" onchange="handleFile(this, 'gas')">
-      <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Carica PDF/Foto</div>
+      <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Scatta foto</div><input type="file" id="file-gas" accept="image/*" style="display:none" onchange="handleFile(this, 'gas')">
+      <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Carica immagine</div>
     </div>
     <div id="gas-uploaded" class="uploaded-label">Bolletta gas allegata</div>
 
@@ -696,6 +821,13 @@ function selectPath(path) {
 function handleFile(input, tipo) {
   var file = input.files[0];
   if (!file) return;
+  if (file.type === 'application/pdf') {
+    showToast('PDF non supportato. Converti in JPG/PNG o inserisci dati manualmente.');
+    var card = document.getElementById('card-' + tipo);
+    if (card) card.style.display = 'block';
+    checkBillsComplete();
+    return;
+  }
   var label = document.getElementById(tipo + '-uploaded');
   if (label) label.classList.add('visible');
   showToast('Analisi ' + tipo + ' in corso con OCR...');
@@ -1018,6 +1150,16 @@ function showToast(msg) {
   }, 2500);
 }
 
+// ==================== WIZARD ====================
+var currentWizardStep = 1;
+function wizardNext(step) {
+  document.getElementById('w-step-' + currentWizardStep).style.display = 'none';
+  currentWizardStep = step;
+  document.getElementById('w-step-' + step).style.display = 'block';
+  var progress = document.getElementById('wizard-progress');
+  if (progress) progress.style.width = (step / 9 * 100) + '%';
+}
+
 // ==================== ALGORITMI ECOHYBRID ====================
 
 // Dati mercato GME/Terna — 11/08/2026
@@ -1093,7 +1235,7 @@ function fetchMeteoCoords(lat, lon) {
         tempEst: tempEst, umidita: umidita, apparente: cur.apparent_temperature,
         timestamp: new Date().toISOString()
       }));
-      // Mostra in dashboard se esistono gli elementi
+      // Mostra in dashboard
       var meteoBox = document.getElementById('meteo-box');
       if (meteoBox) meteoBox.style.display = 'grid';
       var elTemp = document.getElementById('dash-temp-est');
