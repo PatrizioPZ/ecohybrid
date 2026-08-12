@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EcoHybrid - Analisi Bolletta PDF</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #111144;
+    color: #ffffff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 20px 16px 100px;
+  }
+  .app-header {
+    text-align: center;
+    padding: 24px 0 16px;
+  }
+  .app-header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .app-header h1 span {
+    color: #FF0088;
+  }
+  .app-header p {
+    color: #a0a0c0;
+    font-size: 14px;
+    margin-top: 6px;
+  }
+  .divider {
+    height: 2px;
+    background: #FF0088;
+    width: 120px;
+    margin: 0 auto 24px;
+    border-radius: 2px;
+  }
+  .card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #a0a0c0;
+    margin-bottom: 16px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    margin-bottom: 12px;
+    transition: opacity 0.2s;
+  }
+  .btn:active {
+    opacity: 0.8;
+  }
+  .btn-primary {
+    background: #FF0088;
+    color: #fff;
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .upload-area {
+    border: 2px dashed rgba(255,255,255,0.25);
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+  .upload-area:hover {
+    border-color: #FF0088;
+  }
+  .upload-area .icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  .upload-area p {
+    color: #a0a0c0;
+    font-size: 14px;
+  }
+  .upload-area input {
+    display: none;
+  }
+  .status-text {
+    font-size: 13px;
+    color: #a0a0c0;
+    margin-top: 12px;
+    font-style: italic;
+    text-align: center;
+  }
+  .confirm-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+  .confirm-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px;
+  }
+  .confirm-table td:first-child {
+    color: #a0a0c0;
+    width: 45%;
+  }
+  .confirm-table td input, .confirm-table td select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.25);
+    color: #fff;
+    font-size: 14px;
+  }
+  .confirm-table td input::placeholder {
+    color: #666699;
+  }
+  .warning-box {
+    background: rgba(255,170,0,0.08);
+    border-left: 3px solid #ffaa00;
+    border-radius: 0 10px 10px 0;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #a0a0c0;
+    line-height: 1.5;
+  }
+  .error-box {
+    background: rgba(255,68,68,0.08);
+    border-left: 3px solid #ff4444;
+    border-radius: 0 10px 10px 0;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #a0a0c0;
+    line-height: 1.5;
+  }
+  .success-box {
+    background: rgba(0,212,170,0.08);
+    border-left: 3px solid #00d4aa;
+    border-radius: 0 10px 10px 0;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #a0a0c0;
+    line-height: 1.5;
+  }
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(17,17,68,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 12px 16px 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .nav-bar .btn {
+    margin-bottom: 0;
+    flex: 1;
+  }
+  .hidden {
+    display: none !important;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<base target="_blank">
+</head>
+<body>
+
+<div class="app-header">
+  <h1>EcoHybrid <span style="color:#FF0088">PDF Analyzer</span></h1>
+  <p>Analisi automatica bollette</p>
+</div>
+<div class="divider"></div>
+
+<!-- Edge warning -->
+<div id="edge-banner" class="warning-box" style="display:none;">
+  <strong style="color:#fff;">Browser Edge rilevato.</strong><br>
+  Edge potrebbe bloccare le librerie di analisi. Se l analisi non parte, usa Google Chrome.
+</div>
+
+<!-- Upload -->
+<div class="card" id="upload-card">
+  <div class="card-title">Carica bolletta PDF</div>
+  <div class="upload-area" onclick="document.getElementById('pdf-input').click()">
+    <div class="icon">[ PDF ]</div>
+    <p><strong style="color:#fff;">Clicca per selezionare il PDF</strong><br>
+    Oppure trascina il file qui</p>
+    <input type="file" id="pdf-input" accept=".pdf" onchange="handlePDF(this)">
+  </div>
+  <div id="upload-status" class="status-text"></div>
+</div>
+
+<!-- Results -->
+<div class="card hidden" id="result-card">
+  <div class="card-title">Dati estratti - Verifica e correggi</div>
+  <div id="result-message"></div>
+  <table class="confirm-table">
+    <tr><td>Periodo fatturazione</td><td><input type="text" id="res-periodo" placeholder="es. 01/05/2026 - 31/07/2026"></td></tr>
+    <tr><td>Costo unitario (EUR)</td><td><input type="text" id="res-costo" placeholder="es. 0,2927"></td></tr>
+    <tr><td>Consumo</td><td><input type="text" id="res-consumo" placeholder="es. 157 kWh o 5 Smc"></td></tr>
+    <tr><td>Potenza contrattuale (kW)</td><td><input type="text" id="res-potenza" placeholder="es. 3,00 (solo luce)"></td></tr>
+    <tr><td>Tipo contratto</td><td>
+      <select id="res-tipo">
+        <option value="">Seleziona...</option>
+        <option value="mono">Monoraria (F0)</option>
+        <option value="bi">Bioraria (F1-F2-F3)</option>
+        <option value="tri">Trifaria</option>
+      </select>
+    </td></tr>
+    <tr><td>Spesa totale (EUR)</td><td><input type="text" id="res-totale" placeholder="es. 61,96"></td></tr>
+    <tr><td>Indirizzo fornitura</td><td><input type="text" id="res-indirizzo" placeholder="es. Via Roma 1, 20100 Milano"></td></tr>
+  </table>
+</div>
+
+<div class="nav-bar">
+  <button class="btn btn-secondary" onclick="goBack()">Torna indietro</button>
+  <button class="btn btn-primary hidden" id="btn-save" onclick="saveAndReturn()" disabled>Salva e torna a EcoHybrid</button>
+</div>
+
+<script>
+// Detect Edge
+var isEdge = navigator.userAgent.indexOf("Edg") > -1 || navigator.userAgent.indexOf("Edge") > -1;
+if (isEdge) {
+  document.getElementById("edge-banner").style.display = "block";
+}
+
+// Get tipo from URL
+var urlParams = new URLSearchParams(window.location.search);
+var tipo = urlParams.get("tipo") || "luce"; // luce or gas
+
+function handlePDF(input) {
+  var file = input.files[0];
+  if (!file) return;
+
+  var statusEl = document.getElementById("upload-status");
+  statusEl.textContent = "Analisi PDF in corso...";
+
+  // Check libraries loaded
+  if (typeof pdfjsLib === "undefined") {
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Libreria PDF non caricata. Verifica connessione o prova Chrome.</span>';
+    showManualEntry();
+    return;
+  }
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var typedarray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument({ data: typedarray }).promise
+      .then(function(pdf) {
+        var numPages = pdf.numPages;
+        statusEl.textContent = "PDF: " + numPages + " pagina/e. Estrazione testo...";
+        var allText = "";
+        var pagePromises = [];
+
+        for (var i = 1; i <= numPages; i++) {
+          pagePromises.push(
+            pdf.getPage(i).then(function(page) {
+              return page.getTextContent().then(function(tc) {
+                var txt = "";
+                for (var j = 0; j < tc.items.length; j++) {
+                  txt += tc.items[j].str + " ";
+                }
+                return { text: txt, page: page };
+              });
+            })
+          );
+        }
+
+        Promise.all(pagePromises).then(function(results) {
+          var hasText = false;
+          var pagesForOCR = [];
+          for (var k = 0; k < results.length; k++) {
+            allText += results[k].text + "\n";
+            if (results[k].text.trim().length > 50) hasText = true;
+            else pagesForOCR.push(results[k].page);
+          }
+
+          if (hasText) {
+            statusEl.innerHTML = '<span style="color:#00d4aa;">Testo estratto da PDF digitale.</span>';
+            parseAndShow(allText);
+          } else if (pagesForOCR.length > 0 && typeof Tesseract !== "undefined") {
+            statusEl.textContent = "PDF senza testo. Avvio OCR su " + pagesForOCR.length + " pagina/e...";
+            doOCRPages(pagesForOCR, statusEl);
+          } else {
+            statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci manualmente.</span>';
+            showManualEntry();
+          }
+        });
+      })
+      .catch(function(err) {
+        statusEl.innerHTML = '<span style="color:#ffaa00;">Errore lettura PDF: ' + err.message + '</span>';
+        showManualEntry();
+      });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function doOCRPages(pages, statusEl) {
+  var canvas = document.createElement("canvas");
+  var ctx = canvas.getContext("2d");
+  var allText = "";
+  var idx = 0;
+
+  function next() {
+    if (idx >= pages.length) {
+      statusEl.innerHTML = '<span style="color:#00d4aa;">OCR completato.</span>';
+      parseAndShow(allText);
+      return;
+    }
+    var page = pages[idx];
+    var vp = page.getViewport({ scale: 2.0 });
+    canvas.width = vp.width;
+    canvas.height = vp.height;
+    statusEl.textContent = "OCR pagina " + (idx + 1) + "/" + pages.length + "...";
+    page.render({ canvasContext: ctx, viewport: vp }).promise.then(function() {
+      canvas.toBlob(function(blob) {
+        Tesseract.recognize(blob, "ita", {
+          logger: function(m) {
+            if (m.status === "recognizing text") {
+              statusEl.textContent = "Pagina " + (idx + 1) + ": " + Math.round(m.progress * 100) + "%";
+            }
+          }
+        }).then(function(r) {
+          allText += r.data.text + "\n";
+          idx++;
+          next();
+        }).catch(function() {
+          idx++;
+          next();
+        });
+      }, "image/png");
+    });
+  }
+  next();
+}
+
+function parseAndShow(text) {
+  var costo = null, consumo = null, potenza = null, totale = null;
+  var lines = text.split("\n");
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].toLowerCase();
+    if (tipo === "luce") {
+      if (!costo && (/€\/kwh|eur\/kwh|costo.*energia/i.test(line))) {
+        var m = lines[i].match(/(\d+[.,]\d{3,4})/);
+        if (m) costo = m[1].replace(",", ".");
+      }
+      if (!consumo && (/consumo.*totale|kwh/i.test(line))) {
+        var m2 = lines[i].match(/(\d{2,4})\s*kwh/i);
+        if (m2) consumo = m2[1];
+      }
+      if (!potenza && (/potenza.*contrattuale|\bkW\b/i.test(line))) {
+        var m3 = lines[i].match(/(\d+[.,]\d?)/);
+        if (m3) potenza = m3[1].replace(",", ".");
+      }
+      if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
+        var m4 = lines[i].match(/(\d+[.,]\d{2})/);
+        if (m4) totale = m4[1].replace(",", ".");
+      }
+    } else {
+      // gas
+      if (!costo && (/€\/smc|eur\/smc|costo.*gas/i.test(line))) {
+        var mg = lines[i].match(/(\d+[.,]\d{3,4})/);
+        if (mg) costo = mg[1].replace(",", ".");
+      }
+      if (!consumo && (/consumo.*totale|smc/i.test(line))) {
+        var mg2 = lines[i].match(/(\d{1,3})\s*smc/i);
+        if (mg2) consumo = mg2[1];
+      }
+      if (!totale && (/totale.*pagare|importo.*totale/i.test(line))) {
+        var mg3 = lines[i].match(/(\d+[.,]\d{2})/);
+        if (mg3) totale = mg3[1].replace(",", ".");
+      }
+    }
+  }
+
+  // Fallback regex on full text
+  if (tipo === "luce") {
+    if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*kWh/i); if (mc) costo = mc[1].replace(",", "."); }
+    if (!consumo) { var mc2 = text.match(/(\d{3,4})\s*kWh/i); if (mc2) consumo = mc2[1]; }
+    if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(",", "."); }
+  } else {
+    if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*Smc/i); if (mc) costo = mc[1].replace(",", "."); }
+    if (!consumo) { var mc2 = text.match(/(\d{1,3})\s*Smc/i); if (mc2) consumo = mc2[1]; }
+    if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(",", "."); }
+  }
+
+  // Pre-fill
+  if (costo) document.getElementById("res-costo").value = costo;
+  if (consumo) document.getElementById("res-consumo").value = consumo;
+  if (potenza) document.getElementById("res-potenza").value = potenza;
+  if (totale) document.getElementById("res-totale").value = totale;
+
+  var msg = document.getElementById("result-message");
+  if (costo || consumo || totale) {
+    msg.innerHTML = '<div class="success-box"><strong style="color:#fff;">Dati rilevati automaticamente.</strong><br>Verifica e correggi prima di salvare.</div>';
+  } else {
+    msg.innerHTML = '<div class="warning-box"><strong style="color:#fff;">Nessun dato automatico rilevato.</strong><br>Inserisci i dati manualmente.</div>';
+  }
+
+  showManualEntry();
+}
+
+function showManualEntry() {
+  document.getElementById("result-card").classList.remove("hidden");
+  document.getElementById("btn-save").classList.remove("hidden");
+  document.getElementById("btn-save").disabled = false;
+}
+
+function saveAndReturn() {
+  var data = {
+    tipo: tipo,
+    periodo: document.getElementById("res-periodo").value,
+    costo: document.getElementById("res-costo").value,
+    consumo: document.getElementById("res-consumo").value,
+    potenza: document.getElementById("res-potenza").value,
+    tipoContratto: document.getElementById("res-tipo").value,
+    totale: document.getElementById("res-totale").value,
+    indirizzo: document.getElementById("res-indirizzo").value,
+    timestamp: new Date().toISOString()
+  };
+  localStorage.setItem("ecohybrid_pdf_result", JSON.stringify(data));
+  window.location.href = "index.html";
+}
+
+function goBack() {
+  window.location.href = "index.html";
+}
+</script>
+</body>
+</html>
