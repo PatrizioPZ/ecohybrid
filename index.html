@@ -733,13 +733,19 @@
   </div>
   <div class="divider"></div>
 
+  <!-- Edge warning banner -->
+  <div id="edge-banner" class="warning-box" style="display:none; margin-bottom:16px;">
+    <strong style="color:#fff;">Stai usando Microsoft Edge.</strong><br>
+    Edge blocca l analisi automatica delle bollette per privacy. Puoi comunque procedere: carica il file e inserisci i dati manualmente nel passaggio successivo. Oppure usa Google Chrome per l analisi automatica.
+  </div>
+
   <!-- BOLLETTA LUCE -->
   <div class="card">
     <div class="card-title">Bolletta luce</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="triggerFile('file-luce-pdf')" style="border-color:#FF0088; color:#fff;">
-        <div style="font-size:18px; margin-bottom:4px;">CARICA FILE</div>
-        PDF dal portale — inserimento manuale
+      <div class="upload-btn" onclick="openPDFAnalyzer('luce')" style="border-color:#FF0088; color:#fff;">
+        <div style="font-size:18px; margin-bottom:4px;">ANALIZZA PDF</div>
+        Apri analisi bolletta luce
       </div>
       <input type="file" id="file-luce-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'luce', 'pdf')">
       <div class="upload-btn" onclick="triggerFile('file-luce-img')">
@@ -760,9 +766,9 @@
   <div class="card">
     <div class="card-title">Bolletta gas</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="triggerFile('file-gas-pdf')" style="border-color:#FF0088; color:#fff;">
-        <div style="font-size:18px; margin-bottom:4px;">CARICA FILE</div>
-        PDF dal portale — inserimento manuale
+      <div class="upload-btn" onclick="openPDFAnalyzer('gas')" style="border-color:#FF0088; color:#fff;">
+        <div style="font-size:18px; margin-bottom:4px;">ANALIZZA PDF</div>
+        Apri analisi bolletta gas
       </div>
       <input type="file" id="file-gas-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'gas', 'pdf')">
       <div class="upload-btn" onclick="triggerFile('file-gas-img')">
@@ -962,6 +968,11 @@ function showScreen(id) {
   var el = document.getElementById(id);
   if (el) el.classList.add('active');
   window.scrollTo(0, 0);
+
+  // Check for PDF analyzer result when showing bills screen
+  if (id === 'screen-bills') {
+    checkPDFResult();
+  }
 }
 
 function goBack() {
@@ -987,6 +998,37 @@ function selectPath(path) {
     updateWizardUI();
     showScreen('screen-wizard');
   }
+}
+
+function checkPDFResult() {
+  var result = localStorage.getItem('ecohybrid_pdf_result');
+  if (!result) return;
+  try {
+    var data = JSON.parse(result);
+    var statusEl = document.getElementById(data.tipo + '-status');
+    var uploadedEl = document.getElementById(data.tipo + '-uploaded');
+    if (uploadedEl) uploadedEl.classList.add('visible');
+    if (statusEl) statusEl.innerHTML = '<span style="color:#00d4aa;">Dati importati da analisi PDF. Verifica nel passaggio successivo.</span>';
+
+    // Pre-fill extracted data for confirm screen
+    if (data.tipo === 'luce') {
+      extractedData.luce = {
+        costo: data.costo,
+        consumo: data.consumo,
+        potenza: data.potenza,
+        totale: data.totale
+      };
+    } else {
+      extractedData.gas = {
+        costo: data.costo,
+        consumo: data.consumo,
+        totale: data.totale
+      };
+    }
+    checkBillsComplete();
+    // Clean up
+    localStorage.removeItem('ecohybrid_pdf_result');
+  } catch (e) {}
 }
 
 function goBackFromBills() {
@@ -1100,37 +1142,49 @@ function triggerFile(id) {
   document.getElementById(id).click();
 }
 
+function openPDFAnalyzer(tipo) {
+  window.location.href = "pdf-analyzer.html?tipo=" + tipo;
+}
+
 function handleFile(input, tipo, format) {
   var file = input.files[0];
   if (!file) return;
 
   var statusEl = document.getElementById(tipo + '-status');
   var uploadedEl = document.getElementById(tipo + '-uploaded');
-  var edgeWarning = document.getElementById(tipo + '-edge-warning');
-  var isEdge = navigator.userAgent.indexOf('Edg') > -1;
 
   uploadedEl.classList.add('visible');
+  // Abilita sempre il bottone avanti: i dati verranno inseriti manualmente se l analisi fallisce
+  checkBillsComplete();
 
   if (format === 'pdf') {
     statusEl.textContent = 'PDF caricato. Analisi pagine in corso...';
-    processPDF(file, tipo, statusEl);
+    // Delay per permettere all UI di aggiornarsi
+    setTimeout(function() {
+      processPDF(file, tipo, statusEl);
+    }, 100);
     return;
   }
 
   // Image: try OCR
-  statusEl.textContent = 'Immagine caricata. Avvio OCR...';
-
-  if (isEdge && edgeWarning) {
-    edgeWarning.style.display = 'block';
-  }
-
-  doOCR(file, tipo, statusEl);
+  statusEl.textContent = 'Immagine caricata. Avvio analisi...';
+  setTimeout(function() {
+    doOCR(file, tipo, statusEl);
+  }, 100);
 }
 
 function processPDF(file, tipo, statusEl) {
-  // Configura worker pdf.js
-  if (typeof pdfjsLib !== 'undefined') {
+  // Verifica che pdf.js sia caricato
+  if (typeof pdfjsLib === 'undefined') {
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Libreria PDF non disponibile. Inserisci i dati manualmente nel passaggio successivo.</span>';
+    return;
+  }
+
+  try {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  } catch (e) {
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Impossibile inizializzare PDF. Inserisci i dati manualmente.</span>';
+    return;
   }
 
   var reader = new FileReader();
@@ -1170,21 +1224,34 @@ function processPDF(file, tipo, statusEl) {
             else parseBollettaGas(allText);
             checkBillsComplete();
           } else {
-            // PDF è una scansione: renderizza pagine e fai OCR
+            // PDF e una scansione: prova OCR pagine
             statusEl.textContent = 'PDF senza testo selezionabile. Avvio OCR pagine...';
+            if (typeof Tesseract === 'undefined') {
+              statusEl.innerHTML = '<span style="color:#ffaa00;">OCR non disponibile. Inserisci i dati manualmente.</span>';
+              return;
+            }
             renderPDFPagesAndOCR(results, tipo, statusEl);
           }
+        }).catch(function(err) {
+          statusEl.innerHTML = '<span style="color:#ffaa00;">Errore estrazione testo. Inserisci i dati manualmente.</span>';
         });
       })
       .catch(function(err) {
-        statusEl.innerHTML = '<span style="color:#ff4444;">Errore lettura PDF: ' + err.message + '. Inserisci i dati manualmente.</span>';
-        checkBillsComplete();
+        statusEl.innerHTML = '<span style="color:#ffaa00;">Errore lettura PDF. Inserisci i dati manualmente.</span>';
       });
+  };
+  reader.onerror = function() {
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Errore lettura file. Inserisci i dati manualmente.</span>';
   };
   reader.readAsArrayBuffer(file);
 }
 
 function renderPDFPagesAndOCR(results, tipo, statusEl) {
+  if (typeof Tesseract === 'undefined') {
+    statusEl.innerHTML = '<span style="color:#ffaa00;">OCR non disponibile su questo browser. Inserisci i dati manualmente.</span>';
+    return;
+  }
+
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
   var allOCRText = '';
@@ -1193,9 +1260,13 @@ function renderPDFPagesAndOCR(results, tipo, statusEl) {
 
   function processNext() {
     if (processed >= total) {
-      statusEl.innerHTML = '<span style="color:#00d4aa;">OCR completato su ' + total + ' pagine.</span>';
-      if (tipo === 'luce') parseBollettaLuce(allOCRText);
-      else parseBollettaGas(allOCRText);
+      if (allOCRText.trim().length > 0) {
+        statusEl.innerHTML = '<span style="color:#00d4aa;">Analisi completata su ' + total + ' pagine.</span>';
+        if (tipo === 'luce') parseBollettaLuce(allOCRText);
+        else parseBollettaGas(allOCRText);
+      } else {
+        statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci i dati manualmente.</span>';
+      }
       checkBillsComplete();
       return;
     }
@@ -1205,14 +1276,14 @@ function renderPDFPagesAndOCR(results, tipo, statusEl) {
     canvas.width = viewport.width;
     canvas.height = viewport.height;
 
-    statusEl.textContent = 'OCR pagina ' + (processed + 1) + '/' + total + '...';
+    statusEl.textContent = 'Analisi pagina ' + (processed + 1) + '/' + total + '...';
 
     page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
       canvas.toBlob(function(blob) {
         Tesseract.recognize(blob, 'ita', {
           logger: function(m) {
             if (m.status === 'recognizing text') {
-              statusEl.textContent = 'OCR pagina ' + (processed + 1) + '/' + total + ': ' + Math.round(m.progress * 100) + '%';
+              statusEl.textContent = 'Pagina ' + (processed + 1) + '/' + total + ': ' + Math.round(m.progress * 100) + '%';
             }
           }
         })
@@ -1226,6 +1297,9 @@ function renderPDFPagesAndOCR(results, tipo, statusEl) {
           processNext();
         });
       }, 'image/png');
+    }).catch(function(err) {
+      processed++;
+      processNext();
     });
   }
 
@@ -1233,30 +1307,31 @@ function renderPDFPagesAndOCR(results, tipo, statusEl) {
 }
 
 function doOCR(file, tipo, statusEl) {
+  if (typeof Tesseract === 'undefined') {
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Analisi automatica non disponibile su questo browser. Inserisci i dati manualmente nel passaggio successivo.</span>';
+    return;
+  }
+
   Tesseract.recognize(file, 'ita', {
     logger: function(m) {
       if (m.status === 'recognizing text') {
-        statusEl.textContent = 'OCR in corso: ' + Math.round(m.progress * 100) + '%';
+        statusEl.textContent = 'Analisi in corso: ' + Math.round(m.progress * 100) + '%';
       }
     }
   })
   .then(function(result) {
     var text = result.data.text;
-    statusEl.innerHTML = '<span style="color:#00d4aa;">OCR completato. Dati estratti.</span>';
-    if (tipo === 'luce') parseBollettaLuce(text);
-    else parseBollettaGas(text);
+    if (text.trim().length > 20) {
+      statusEl.innerHTML = '<span style="color:#00d4aa;">Analisi completata. Dati estratti.</span>';
+      if (tipo === 'luce') parseBollettaLuce(text);
+      else parseBollettaGas(text);
+    } else {
+      statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci i dati manualmente.</span>';
+    }
     checkBillsComplete();
   })
   .catch(function(err) {
-    var isEdge = navigator.userAgent.indexOf('Edg') > -1;
-    var msg = 'OCR non riuscito.';
-    if (isEdge) {
-      msg += ' Edge blocca l'OCR per privacy. Usa Chrome o disattiva Tracking Prevention.';
-    } else {
-      msg += ' Inserisci i dati manualmente nel passaggio successivo.';
-    }
-    statusEl.innerHTML = '<span style="color:#ff4444;">' + msg + '</span>';
-    extractedData[tipo] = extractedData[tipo] || {};
+    statusEl.innerHTML = '<span style="color:#ffaa00;">Analisi non riuscita. Inserisci i dati manualmente nel passaggio successivo.</span>';
     checkBillsComplete();
   });
 }
@@ -1677,6 +1752,13 @@ function showToast(msg) {
 
 // ==================== INIT ====================
 window.onload = function() {
+  // Show Edge banner if needed
+  var isEdge = navigator.userAgent.indexOf("Edg") > -1 || navigator.userAgent.indexOf("Edge") > -1;
+  if (isEdge) {
+    var edgeBanner = document.getElementById("edge-banner");
+    if (edgeBanner) edgeBanner.style.display = "block";
+  }
+
   var savedBills = localStorage.getItem('ecohybrid_bills');
   if (savedBills) {
     try {
