@@ -447,6 +447,7 @@
   }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <base target="_blank">
 </head>
 <body>
@@ -738,7 +739,7 @@
     <div class="upload-row">
       <div class="upload-btn" onclick="triggerFile('file-luce-pdf')" style="border-color:#FF0088; color:#fff;">
         <div style="font-size:18px; margin-bottom:4px;">CARICA FILE</div>
-        Bolletta digitale dal portale — piu preciso
+        PDF dal portale — inserimento manuale
       </div>
       <input type="file" id="file-luce-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'luce', 'pdf')">
       <div class="upload-btn" onclick="triggerFile('file-luce-img')">
@@ -749,6 +750,10 @@
     </div>
     <div id="luce-status" class="ocr-status"></div>
     <div id="luce-uploaded" class="uploaded-label">File luce caricato</div>
+    <div id="luce-edge-warning" class="warning-box" style="display:none; margin-top:10px;">
+      <strong style="color:#fff;">Browser Edge rilevato.</strong><br>
+      Edge blocca l'OCR per privacy. Usa Chrome o disattiva Tracking Prevention per questo sito (clicca l'icona scudo nella barra indirizzi).
+    </div>
   </div>
 
   <!-- BOLLETTA GAS -->
@@ -757,7 +762,7 @@
     <div class="upload-row">
       <div class="upload-btn" onclick="triggerFile('file-gas-pdf')" style="border-color:#FF0088; color:#fff;">
         <div style="font-size:18px; margin-bottom:4px;">CARICA FILE</div>
-        Bolletta digitale dal portale — piu preciso
+        PDF dal portale — inserimento manuale
       </div>
       <input type="file" id="file-gas-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'gas', 'pdf')">
       <div class="upload-btn" onclick="triggerFile('file-gas-img')">
@@ -768,6 +773,10 @@
     </div>
     <div id="gas-status" class="ocr-status"></div>
     <div id="gas-uploaded" class="uploaded-label">File gas caricato</div>
+    <div id="gas-edge-warning" class="warning-box" style="display:none; margin-top:10px;">
+      <strong style="color:#fff;">Browser Edge rilevato.</strong><br>
+      Edge blocca l'OCR per privacy. Usa Chrome o disattiva Tracking Prevention per questo sito.
+    </div>
   </div>
 
   <!-- RIEPILOGO SPESA -->
@@ -783,6 +792,10 @@
         <div class="summary-label">Stimato annuo</div>
       </div>
     </div>
+  </div>
+
+  <div style="text-align:center; margin-bottom:16px;">
+    <button class="btn btn-outline btn-small" onclick="skipFilesAndGo()" style="width:auto; display:inline-block;">Non ho la bolletta, inserisco i dati manualmente</button>
   </div>
 
   <div class="nav-bar">
@@ -1093,26 +1106,130 @@ function handleFile(input, tipo, format) {
 
   var statusEl = document.getElementById(tipo + '-status');
   var uploadedEl = document.getElementById(tipo + '-uploaded');
+  var edgeWarning = document.getElementById(tipo + '-edge-warning');
+  var isEdge = navigator.userAgent.indexOf('Edg') > -1;
+
+  uploadedEl.classList.add('visible');
 
   if (format === 'pdf') {
-    statusEl.textContent = 'PDF caricato. Analisi in corso...';
-    uploadedEl.classList.add('visible');
-    // Per ora: simuliamo estrazione PDF (in futuro: pdf.js)
-    setTimeout(function() {
-      statusEl.textContent = 'PDF analizzato. Estrazione testo in corso...';
-      setTimeout(function() {
-        // Simula che il PDF sia una scansione
-        statusEl.innerHTML = 'Questo PDF e una scansione. Passo a OCR...<br><span style="font-size:11px;">Se il risultato non e soddisfacente, prova a caricare una foto piu nitida.</span>';
-        setTimeout(function() {
-          doOCR(file, tipo, statusEl);
-        }, 1500);
-      }, 1500);
-    }, 1000);
-  } else {
-    statusEl.textContent = 'Immagine caricata. Avvio OCR...';
-    uploadedEl.classList.add('visible');
-    doOCR(file, tipo, statusEl);
+    statusEl.textContent = 'PDF caricato. Analisi pagine in corso...';
+    processPDF(file, tipo, statusEl);
+    return;
   }
+
+  // Image: try OCR
+  statusEl.textContent = 'Immagine caricata. Avvio OCR...';
+
+  if (isEdge && edgeWarning) {
+    edgeWarning.style.display = 'block';
+  }
+
+  doOCR(file, tipo, statusEl);
+}
+
+function processPDF(file, tipo, statusEl) {
+  // Configura worker pdf.js
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var typedarray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument({ data: typedarray }).promise
+      .then(function(pdf) {
+        var numPages = pdf.numPages;
+        statusEl.textContent = 'PDF: ' + numPages + ' pagine. Estrazione testo...';
+        var allText = '';
+        var textPromises = [];
+
+        for (var i = 1; i <= numPages; i++) {
+          textPromises.push(
+            pdf.getPage(i).then(function(page) {
+              return page.getTextContent().then(function(textContent) {
+                var pageText = '';
+                for (var j = 0; j < textContent.items.length; j++) {
+                  pageText += textContent.items[j].str + ' ';
+                }
+                return { pageNum: page.pageNumber, text: pageText, page: page };
+              });
+            })
+          );
+        }
+
+        Promise.all(textPromises).then(function(results) {
+          var hasRealText = false;
+          for (var k = 0; k < results.length; k++) {
+            allText += results[k].text + '\n';
+            if (results[k].text.trim().length > 50) hasRealText = true;
+          }
+
+          if (hasRealText) {
+            statusEl.innerHTML = '<span style="color:#00d4aa;">Testo estratto da PDF digitale.</span>';
+            if (tipo === 'luce') parseBollettaLuce(allText);
+            else parseBollettaGas(allText);
+            checkBillsComplete();
+          } else {
+            // PDF è una scansione: renderizza pagine e fai OCR
+            statusEl.textContent = 'PDF senza testo selezionabile. Avvio OCR pagine...';
+            renderPDFPagesAndOCR(results, tipo, statusEl);
+          }
+        });
+      })
+      .catch(function(err) {
+        statusEl.innerHTML = '<span style="color:#ff4444;">Errore lettura PDF: ' + err.message + '. Inserisci i dati manualmente.</span>';
+        checkBillsComplete();
+      });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderPDFPagesAndOCR(results, tipo, statusEl) {
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+  var allOCRText = '';
+  var processed = 0;
+  var total = results.length;
+
+  function processNext() {
+    if (processed >= total) {
+      statusEl.innerHTML = '<span style="color:#00d4aa;">OCR completato su ' + total + ' pagine.</span>';
+      if (tipo === 'luce') parseBollettaLuce(allOCRText);
+      else parseBollettaGas(allOCRText);
+      checkBillsComplete();
+      return;
+    }
+
+    var page = results[processed].page;
+    var viewport = page.getViewport({ scale: 2.0 });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    statusEl.textContent = 'OCR pagina ' + (processed + 1) + '/' + total + '...';
+
+    page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
+      canvas.toBlob(function(blob) {
+        Tesseract.recognize(blob, 'ita', {
+          logger: function(m) {
+            if (m.status === 'recognizing text') {
+              statusEl.textContent = 'OCR pagina ' + (processed + 1) + '/' + total + ': ' + Math.round(m.progress * 100) + '%';
+            }
+          }
+        })
+        .then(function(result) {
+          allOCRText += result.data.text + '\n';
+          processed++;
+          processNext();
+        })
+        .catch(function(err) {
+          processed++;
+          processNext();
+        });
+      }, 'image/png');
+    });
+  }
+
+  processNext();
 }
 
 function doOCR(file, tipo, statusEl) {
@@ -1131,7 +1248,15 @@ function doOCR(file, tipo, statusEl) {
     checkBillsComplete();
   })
   .catch(function(err) {
-    statusEl.innerHTML = '<span style="color:#ff4444;">OCR non riuscito. Inserisci i dati manualmente nel passaggio successivo.</span>';
+    var isEdge = navigator.userAgent.indexOf('Edg') > -1;
+    var msg = 'OCR non riuscito.';
+    if (isEdge) {
+      msg += ' Edge blocca l'OCR per privacy. Usa Chrome o disattiva Tracking Prevention.';
+    } else {
+      msg += ' Inserisci i dati manualmente nel passaggio successivo.';
+    }
+    statusEl.innerHTML = '<span style="color:#ff4444;">' + msg + '</span>';
+    extractedData[tipo] = extractedData[tipo] || {};
     checkBillsComplete();
   });
 }
@@ -1197,10 +1322,12 @@ function parseBollettaGas(text) {
 }
 
 function checkBillsComplete() {
-  var luceOk = extractedData.luce.totale || extractedData.luce.costo;
-  var gasOk = extractedData.gas.totale || extractedData.gas.costo;
+  // Abilita se almeno un file e stato caricato (luce o gas)
+  // I dati verranno verificati e corretti nella pagina successiva
+  var luceFile = document.getElementById('luce-uploaded').classList.contains('visible');
+  var gasFile = document.getElementById('gas-uploaded').classList.contains('visible');
   var btn = document.getElementById('btn-continua-bollette');
-  if (btn) btn.disabled = !(luceOk || gasOk);
+  if (btn) btn.disabled = !(luceFile || gasFile);
 }
 
 function saveBillData() {
@@ -1236,6 +1363,12 @@ function saveBillData() {
 }
 
 // ==================== CONFERMA DATI ====================
+function skipFilesAndGo() {
+  extractedData.luce = {};
+  extractedData.gas = {};
+  showScreen('screen-confirm');
+}
+
 function goToConfirm() {
   // Pre-compila i campi con i dati estratti
   if (extractedData.luce.costo) document.getElementById('cf-luce-costo').value = extractedData.luce.costo;
