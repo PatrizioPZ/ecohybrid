@@ -1,0 +1,1 @@
+Italian language pack for Tesseract.js\nDownload from: https://github.com/naptha/tessdata\nPlace ita.traineddata.gz in this folder\n

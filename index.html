@@ -156,9 +156,8 @@
   .summary-label { font-size: 12px; color: #a0a0c0; margin-top: 4px; }
   ::-webkit-scrollbar { width: 0; background: transparent; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<base target="_blank">
+<script src="js/tesseract/tesseract.min.js"></script>
+<script src="js/pdfjs/pdf.min.js"></script>
 </head>
 <body>
 
@@ -434,6 +433,19 @@
     </div>
     <div id="luce-status" class="ocr-status"></div>
 
+    <!-- Paste text alternative -->
+    <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);">
+      <p style="font-size:12px; color:#a0a0c0; margin-bottom:8px;">Oppure incolla il testo della bolletta (seleziona tutto nel PDF, copia, incolla qui):</p>
+      <textarea id="paste-luce" rows="3" style="width:100%; padding:10px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; background:rgba(0,0,0,0.25); color:#fff; font-size:13px; resize:vertical;" placeholder="Incolla qui il testo della bolletta luce..."></textarea>
+      <button class="btn btn-secondary" style="margin-top:8px; padding:10px; font-size:13px;" onclick="parsePastedText('luce')">Analizza testo incollato</button>
+    </div>
+
+    <!-- Debug: show extracted text -->
+    <div id="debug-luce" style="display:none; margin-top:12px;">
+      <p style="font-size:11px; color:#a0a0c0; margin-bottom:4px;">Testo rilevato dal PDF (per debug):</p>
+      <pre id="debug-luce-text" style="background:rgba(0,0,0,0.4); padding:10px; border-radius:8px; font-size:11px; color:#8888aa; max-height:120px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;"></pre>
+    </div>
+
     <div style="margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);">
       <div class="input-group">
         <label>Periodo fatturazione</label>
@@ -487,6 +499,19 @@
       <input type="file" id="file-gas-img" accept="image/*" style="display:none" onchange="analyzeBillFile(this, 'gas')">
     </div>
     <div id="gas-status" class="ocr-status"></div>
+
+    <!-- Paste text alternative -->
+    <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);">
+      <p style="font-size:12px; color:#a0a0c0; margin-bottom:8px;">Oppure incolla il testo della bolletta (seleziona tutto nel PDF, copia, incolla qui):</p>
+      <textarea id="paste-gas" rows="3" style="width:100%; padding:10px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; background:rgba(0,0,0,0.25); color:#fff; font-size:13px; resize:vertical;" placeholder="Incolla qui il testo della bolletta gas..."></textarea>
+      <button class="btn btn-secondary" style="margin-top:8px; padding:10px; font-size:13px;" onclick="parsePastedText('gas')">Analizza testo incollato</button>
+    </div>
+
+    <!-- Debug: show extracted text -->
+    <div id="debug-gas" style="display:none; margin-top:12px;">
+      <p style="font-size:11px; color:#a0a0c0; margin-bottom:4px;">Testo rilevato dal PDF (per debug):</p>
+      <pre id="debug-gas-text" style="background:rgba(0,0,0,0.4); padding:10px; border-radius:8px; font-size:11px; color:#8888aa; max-height:120px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;"></pre>
+    </div>
 
     <div style="margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);">
       <div class="input-group">
@@ -800,7 +825,7 @@ function processPDF(file, tipo, statusEl) {
   }
 
   try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdfjs/pdf.worker.min.js';
   } catch (e) {
     statusEl.innerHTML = '<span style="color:#ffaa00;">Impossibile inizializzare PDF. Inserisci i dati manualmente.</span>';
     return;
@@ -839,6 +864,14 @@ function processPDF(file, tipo, statusEl) {
             else pagesForOCR.push(results[k].page);
           }
 
+          // Show debug text
+          var debugDiv = document.getElementById('debug-' + tipo);
+          var debugPre = document.getElementById('debug-' + tipo + '-text');
+          if (debugDiv && debugPre) {
+            debugDiv.style.display = 'block';
+            debugPre.textContent = allText.substring(0, 2000);
+          }
+
           if (hasRealText) {
             statusEl.innerHTML = '<span style="color:#00d4aa;">PDF letto.</span> <span style="font-size:11px; color:#a0a0c0;">Verifica i dati inseriti automaticamente e correggi se necessario.</span>';
             parseAndFill(allText, tipo);
@@ -846,7 +879,7 @@ function processPDF(file, tipo, statusEl) {
             statusEl.textContent = 'PDF senza testo. Avvio OCR pagine...';
             renderPDFPagesAndOCR(pagesForOCR, tipo, statusEl);
           } else {
-            statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci i dati manualmente.</span>';
+            statusEl.innerHTML = '<span style="color:#ffaa00;">Nessun testo rilevato. Inserisci i dati manualmente o incolla il testo qui sotto.</span>';
           }
         }).catch(function(err) {
           statusEl.innerHTML = '<span style="color:#ffaa00;">Errore estrazione testo. Inserisci i dati manualmente.</span>';
@@ -894,7 +927,7 @@ function renderPDFPagesAndOCR(pages, tipo, statusEl) {
 
     page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
       canvas.toBlob(function(blob) {
-        Tesseract.recognize(blob, 'ita', {
+        Tesseract.recognize(blob, 'eng', {
           logger: function(m) {
             if (m.status === 'recognizing text') {
               statusEl.textContent = 'Pagina ' + (processed + 1) + '/' + total + ': ' + Math.round(m.progress * 100) + '%';
@@ -926,7 +959,7 @@ function doOCR(file, tipo, statusEl) {
     return;
   }
 
-  Tesseract.recognize(file, 'ita', {
+  Tesseract.recognize(file, 'eng', {
     logger: function(m) {
       if (m.status === 'recognizing text') {
         statusEl.textContent = 'Analisi in corso: ' + Math.round(m.progress * 100) + '%';
@@ -945,6 +978,18 @@ function doOCR(file, tipo, statusEl) {
   .catch(function(err) {
     statusEl.innerHTML = '<span style="color:#ffaa00;">Analisi non riuscita. Inserisci i dati manualmente.</span>';
   });
+}
+
+function parsePastedText(tipo) {
+  var textarea = document.getElementById('paste-' + tipo);
+  var text = textarea.value;
+  if (!text.trim()) {
+    showToast('Incolla prima il testo della bolletta');
+    return;
+  }
+  var statusEl = document.getElementById(tipo + '-status');
+  statusEl.innerHTML = '<span style="color:#00d4aa;">Testo incollato analizzato.</span>';
+  parseAndFill(text, tipo);
 }
 
 function parseAndFill(text, tipo) {
