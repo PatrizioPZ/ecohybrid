@@ -17,12 +17,14 @@
     color: #ffffff;
     min-height: 100vh;
     overflow-x: hidden;
+    font-size: 15px;
+    line-height: 1.5;
   }
   .screen {
     display: none;
     width: 100%;
     min-height: 100vh;
-    padding: 20px 16px 40px;
+    padding: 20px 16px 100px;
   }
   .screen.active {
     display: block;
@@ -94,9 +96,21 @@
     background: #00d4aa;
     color: #111144;
   }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.25);
+    color: #fff;
+  }
   .btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+  .btn-small {
+    display: inline-block;
+    width: auto;
+    padding: 10px 20px;
+    font-size: 13px;
+    margin-bottom: 0;
   }
   .path-card {
     background: rgba(255,255,255,0.06);
@@ -136,6 +150,10 @@
     background: #FF0088;
     color: #fff;
   }
+  .badge-blue {
+    background: #4488ff;
+    color: #fff;
+  }
   .input-group {
     margin-bottom: 14px;
   }
@@ -147,7 +165,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .input-group input {
+  .input-group input, .input-group select {
     width: 100%;
     padding: 14px;
     border: 1px solid rgba(255,255,255,0.15);
@@ -157,8 +175,11 @@
     font-size: 15px;
     outline: none;
   }
-  .input-group input:focus {
+  .input-group input:focus, .input-group select:focus {
     border-color: #FF0088;
+  }
+  .input-group input::placeholder {
+    color: #666699;
   }
   .upload-row {
     display: flex;
@@ -167,14 +188,19 @@
   }
   .upload-btn {
     flex: 1;
-    padding: 12px;
-    border: 1px dashed rgba(255,255,255,0.25);
-    border-radius: 10px;
+    padding: 14px;
+    border: 2px dashed rgba(255,255,255,0.25);
+    border-radius: 12px;
     background: rgba(0,0,0,0.15);
     color: #a0a0c0;
     font-size: 13px;
     text-align: center;
     cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-btn:hover {
+    border-color: #FF0088;
+    color: #fff;
   }
   .uploaded-label {
     font-size: 12px;
@@ -201,19 +227,15 @@
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 12px;
-    opacity: 0.4;
-    pointer-events: none;
-    transition: all 0.3s;
+    display: none;
   }
   .wizard-step.active {
-    opacity: 1;
-    pointer-events: auto;
+    display: block;
     border-color: rgba(255,255,255,0.20);
   }
   .wizard-step.completed {
-    opacity: 0.7;
-    pointer-events: auto;
     border-color: #00d4aa;
+    opacity: 0.7;
   }
   .step-header {
     display: flex;
@@ -244,10 +266,17 @@
   .step-desc {
     font-size: 13px;
     color: #a0a0c0;
-    line-height: 1.4;
+    line-height: 1.5;
+    margin-bottom: 12px;
   }
-  .step-action {
-    margin-top: 12px;
+  .step-desc strong {
+    color: #fff;
+  }
+  .step-desc code {
+    background: rgba(255,255,255,0.10);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
   }
   .metric-grid {
     display: grid;
@@ -286,18 +315,131 @@
     font-size: 14px;
     line-height: 1.5;
   }
-  .debug-btn {
-    background: rgba(255,255,255,0.08);
+  .compat-category {
+    margin-bottom: 20px;
+  }
+  .compat-category h4 {
+    font-size: 13px;
     color: #a0a0c0;
-    font-size: 12px;
-    padding: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .compat-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .compat-item {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 8px;
-    text-align: center;
-    margin-top: 20px;
-    cursor: pointer;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .compat-item.native {
+    border-color: #00d4aa;
+  }
+  .compat-item.tuya {
+    border-color: #4488ff;
+  }
+  .compat-item.ir {
+    border-color: #ffaa00;
+  }
+  .confirm-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+  .confirm-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px;
+  }
+  .confirm-table td:first-child {
+    color: #a0a0c0;
+    width: 45%;
+  }
+  .confirm-table td input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    background: rgba(0,0,0,0.25);
+    color: #fff;
+    font-size: 14px;
+  }
+  .confirm-table td input.missing {
+    border-color: #ffaa00;
+    background: rgba(255,170,0,0.08);
+  }
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(17,17,68,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 12px 16px 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+  }
+  .nav-bar .btn {
+    margin-bottom: 0;
+    flex: 1;
+  }
+  .progress-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #FF0088;
+    transition: width 0.3s;
   }
   .hidden {
     display: none !important;
+  }
+  .info-box {
+    background: rgba(0,212,170,0.08);
+    border-left: 3px solid #00d4aa;
+    border-radius: 0 10px 10px 0;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #a0a0c0;
+    line-height: 1.5;
+  }
+  .warning-box {
+    background: rgba(255,170,0,0.08);
+    border-left: 3px solid #ffaa00;
+    border-radius: 0 10px 10px 0;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #a0a0c0;
+    line-height: 1.5;
+  }
+  .error-box {
+    background: rgba(255,68,68,0.08);
+    border-left: 3px solid #ff4444;
+    border-radius: 0 10px 10px 0;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #a0a0c0;
+    line-height: 1.5;
+  }
+  .ocr-status {
+    font-size: 12px;
+    color: #a0a0c0;
+    margin-top: 8px;
+    font-style: italic;
   }
   ::-webkit-scrollbar {
     width: 0;
@@ -320,227 +462,315 @@
   <div class="card">
     <div class="card-title">Scegli il tuo percorso</div>
 
-    <div class="path-card" onclick="selectPath('smartthings')">
-      <h3>Ho un climatizzatore compatibile</h3>
-      <p>Samsung, Matter, o qualsiasi clima smart con WiFi. Nessun hardware aggiuntivo.</p>
-      <span class="path-badge badge-green">Inizia ora</span>
+    <div class="path-card" onclick="selectPath('ha')">
+      <h3>Ho gia Home Assistant configurato</h3>
+      <p>Il mio clima e gia collegato a Home Assistant. Inserisco indirizzo e token per connettere EcoHybrid.</p>
+      <span class="path-badge badge-green">Piu veloce</span>
     </div>
 
-    <div class="path-card" onclick="selectPath('minipc')">
-      <h3>Ho un climatizzatore qualsiasi</h3>
-      <p>Midea, Comfee, Gree, LG, etc. Serve un Mini PC (~50 EUR) o un PC vecchio riciclato.</p>
+    <div class="path-card" onclick="selectPath('generic')">
+      <h3>Ho un climatizzatore generico</h3>
+      <p>Midea, Comfee, Gree, LG, Panasonic, o qualsiasi marca. Serve un PC x86 (Mini PC ~50 EUR o PC vecchio riciclato).</p>
       <span class="path-badge badge-pink">Richiede hardware</span>
     </div>
 
     <p style="text-align:center; margin-top:16px; font-size:13px;">
-      <a href="#" onclick="showScreen('screen-compat')" style="color:#FF0088; text-decoration:none;">Non so se il mio condizionatore e' compatibile</a>
+      <a href="#" onclick="showScreen('screen-compat')" style="color:#FF0088; text-decoration:none;">Non so se il mio condizionatore e compatibile</a>
     </p>
   </div>
 </div>
 
-<!-- ==================== SCREEN COMPAT ==================== -->
+<!-- ==================== SCREEN COMPAT: LISTA MARCHE ==================== -->
 <div id="screen-compat" class="screen">
   <div class="app-header">
     <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Compatibilita' condizionatori</p>
+    <p>Compatibilita condizionatori</p>
   </div>
   <div class="divider"></div>
 
   <div class="card">
-    <div class="card-title">Condizionatori compatibili</div>
-    <p style="font-size:14px; color:#a0a0c0; line-height:1.6; margin-bottom:16px;">
-      <strong style="color:#fff;">Senza hardware aggiuntivo:</strong><br>
-      Samsung WindFree, Samsung Smart, Matter Certified, SmartThings Hub<br><br>
-      <strong style="color:#fff;">Con Mini PC o controller IR (10-20 EUR):</strong><br>
-      Midea, Comfee, Gree, LG (non-smart), Panasonic, Haier, Hisense, Ariel Energia e qualsiasi clima con telecomando IR.
+    <div class="card-title">Controllo completo via WiFi / App nativa</div>
+    <p style="font-size:13px; color:#a0a0c0; line-height:1.5; margin-bottom:16px;">
+      Queste marche permettono controllo completo (modalita, temperatura, ventilazione, dry, eco) tramite app ufficiale o API cloud.
     </p>
-    <button class="btn btn-secondary" onclick="showScreen('screen-0')">Torna indietro</button>
-  </div>
-</div>
-
-<!-- ==================== SCREEN WIZARD (Mini PC 9-step) ==================== -->
-<div class="screen" id="screen-wizard">
-  <div style="text-align:center; margin-bottom:20px;">
-    <h1 style="font-size:24px; font-weight:800; color:#FF0088;">Setup Mini PC</h1>
-    <p style="color:#a0a0c0; font-size:13px;">9 passaggi per configurare Home Assistant</p>
-  </div>
-  <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin-bottom:20px; overflow:hidden;">
-    <div id="wizard-progress" style="height:100%; background:#FF0088; width:11%; transition:width 0.3s;"></div>
-  </div>
-
-  <div class="wizard-step" id="w-step-1" style="display:block;">
-    <div class="card">
-      <div class="card-title">Step 1/9 — Verifica hardware</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Ti serve:<br>
-        - Mini PC (Intel N100, 4GB RAM, 128GB SSD) ~50 EUR<br>
-        - OPPURE PC vecchio riciclato (Dell OptiPlex 9020, 4GB RAM, USB)<br>
-        - Chiavetta USB 8GB+<br>
-        - Cavo HDMI, tastiera, mouse
-      </p>
+    <div class="compat-category">
+      <h4>WiFi nativo con API ufficiale</h4>
+      <div class="compat-list">
+        <span class="compat-item native">Samsung SmartThings</span>
+        <span class="compat-item native">LG ThinQ</span>
+        <span class="compat-item native">Daikin Onecta</span>
+        <span class="compat-item native">Mitsubishi MelCloud</span>
+        <span class="compat-item native">Panasonic Comfort Cloud</span>
+        <span class="compat-item native">Haier hOn</span>
+        <span class="compat-item native">Toshiba Home AC</span>
+      </div>
     </div>
+    <div class="compat-category">
+      <h4>Tuya / Smart Life (controllo completo via cloud)</h4>
+      <div class="compat-list">
+        <span class="compat-item tuya">Midea</span>
+        <span class="compat-item tuya">Comfee</span>
+        <span class="compat-item tuya">TCL</span>
+        <span class="compat-item tuya">Ariston</span>
+        <span class="compat-item tuya">Altri brand Tuya</span>
+      </div>
+    </div>
+    <div class="compat-category">
+      <h4>IR universale (richiede Mini PC + SmartIR)</h4>
+      <div class="compat-list">
+        <span class="compat-item ir">Qualsiasi marca con telecomando IR</span>
+        <span class="compat-item ir">Modelli non-smart di tutte le marche sopra</span>
+      </div>
+    </div>
+    <div class="info-box">
+      <strong style="color:#fff;">Come capire se il tuo e compatibile:</strong><br>
+      Se il telecomando ha i pulsanti Modalita, Temperatura, Ventilazione, Dry e il condizionatore ha un adesivo WiFi o QR code, e compatibile.<br><br>
+      Se non ha WiFi ma ha telecomando IR, e comunque compatibile con il percorso Mini PC.
+    </div>
+  </div>
+
+  <div class="card">
+    <p style="font-size:14px; margin-bottom:16px;">Il tuo condizionatore e in questa lista?</p>
+    <button class="btn btn-primary" onclick="selectPath('ha')">Si, e WiFi nativo o Tuya</button>
+    <button class="btn btn-secondary" onclick="selectPath('generic')">No, o non so / e con telecomando IR</button>
+  </div>
+
+  <div class="nav-bar">
     <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(2)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-2" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 2/9 — Prepara chiavetta USB</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Inserisci una chiavetta USB da almeno 8GB nel tuo PC.<br>
-        Verra formattata — svuotala prima se contiene dati importanti.
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(1)">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(3)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-3" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 3/9 — Scarica Home Assistant OS</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Vai su <strong>home-assistant.io/installation/generic-x86-64</strong><br>
-        Scarica l'immagine x86-64 (file .img.xz, ~1GB).
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(2)">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(4)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-4" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 4/9 — Flash della chiavetta</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Scarica <strong>balenaEtcher</strong> (gratuito).<br>
-        Inserisci la chiavetta, seleziona l'immagine HAOS, clicca "Flash".<br>
-        Attendi 5-10 minuti.
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(3)">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(5)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-5" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 5/9 — Boot dal Mini PC</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Collega tastiera, mouse, schermo (HDMI) al Mini PC.<br>
-        Inserisci la chiavetta USB.<br>
-        Accendi e premi <strong>F12</strong> (o Esc/F2) per selezionare USB come boot device.
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(4)">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(6)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-6" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 6/9 — Primo avvio Home Assistant</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Da browser sul PC collegato: <strong>homeassistant.local:8123</strong><br>
-        Segui il wizard iniziale, inserisci password e WiFi.
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(5)">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(7)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-7" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 7/9 — Aggiungi integrazione clima</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Impostazioni > Dispositivi e servizi > Aggiungi integrazione.<br>
-        - Per clima WiFi Tuya: aggiungi <strong>LocalTuya</strong><br>
-        - Per clima vecchio con controller IR: aggiungi <strong>SmartIR</strong>
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(6)">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(8)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-8" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 8/9 — Installa EcoHybrid PWA</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Apri EcoHybrid da browser sullo smartphone.<br>
-        Menu browser > Aggiungi a schermata Home.<br>
-        L'app e ora installata come PWA.
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(7)">Indietro</button>
-    <button class="btn btn-primary" onclick="wizardNext(9)">Avanti</button>
-  </div>
-
-  <div class="wizard-step" id="w-step-9" style="display:none;">
-    <div class="card">
-      <div class="card-title">Step 9/9 — Verifica</div>
-      <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
-        Apri EcoHybrid, vai alla dashboard.<br>
-        Verifica temperatura, umidita e stato clima in tempo reale.<br>
-        Se si, tutto e collegato correttamente.
-      </p>
-    </div>
-    <button class="btn btn-secondary" onclick="wizardNext(8)">Indietro</button>
-    <button class="btn btn-primary" onclick="showScreen('screen-1')">Vai alle bollette</button>
   </div>
 </div>
 
-<!-- ==================== SCREEN 1: BOLLETTE ==================== -->
-<div id="screen-1" class="screen">
+<!-- ==================== SCREEN 1A: CONFIGURA HOME ASSISTANT ==================== -->
+<div id="screen-1a" class="screen">
   <div class="app-header">
     <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Inserisci le tue bollette</p>
+    <p>Collega Home Assistant</p>
   </div>
   <div class="divider"></div>
 
+  <div class="card">
+    <div class="card-title">Configurazione Home Assistant</div>
+    <div class="info-box">
+      EcoHybrid si collega al tuo Home Assistant esistente per leggere i dati del clima e inviare comandi di ottimizzazione.
+    </div>
+
+    <div class="input-group">
+      <label>Indirizzo Home Assistant</label>
+      <input type="text" id="ha-url" placeholder="es. http://homeassistant.local:8123" value="http://homeassistant.local:8123">
+    </div>
+    <div class="input-group">
+      <label>Long-Lived Access Token</label>
+      <input type="password" id="ha-token" placeholder="Incolla il token da Profilo > Token a lunga durata">
+    </div>
+    <div class="input-group">
+      <label>Entita clima (opzionale)</label>
+      <input type="text" id="ha-entity" placeholder="es. climate.soggiorno (lascia vuoto per auto-discovery)">
+    </div>
+
+    <button class="btn btn-primary" id="btn-test-ha" onclick="testHAConnection()">Test connessione</button>
+    <div id="ha-test-result" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="card" id="card-ha-help" style="display:none;">
+    <div class="card-title">Come ottenere il token</div>
+    <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
+      1. Apri Home Assistant nel browser<br>
+      2. Clicca sul tuo profilo (angolo in basso a sinistra)<br>
+      3. Scorri fino a "Token a lunga durata"<br>
+      4. Clicca "Crea token", dai un nome (es. EcoHybrid), copia la stringa<br>
+      5. Incollala qui sopra
+    </p>
+  </div>
+
+  <div class="nav-bar">
+    <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
+    <button class="btn btn-primary" id="btn-continua-ha" onclick="goToBillsFromHA()" disabled>Avanti</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN WIZARD: 9 STEP MINI PC ==================== -->
+<div id="screen-wizard" class="screen">
+  <div style="text-align:center; margin-bottom:12px; padding-top:24px;">
+    <h1 style="font-size:22px; font-weight:800;">Setup <span style="color:#FF0088">Mini PC</span></h1>
+    <p style="color:#a0a0c0; font-size:13px;">9 passaggi per Home Assistant</p>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="wizard-progress" style="width:11%;"></div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="wizard-step active" id="wz-step-1">
+    <div class="card-title">Step 1/9 — Verifica hardware</div>
+    <div class="step-desc">
+      Ti serve un PC con processore <strong>Intel o AMD a 64 bit</strong>, minimo <strong>4 GB RAM</strong>, una <strong>porta USB</strong> e <strong>connessione internet</strong> (cavo Ethernet o WiFi).<br><br>
+      Va bene un Mini PC nuovo (~50 EUR), un PC fisso vecchio, o un portatile non piu usato.
+    </div>
+    <div class="info-box">
+      <strong style="color:#fff;">Consiglio:</strong> Dell OptiPlex Micro, Lenovo ThinkCentre Tiny, HP EliteDesk Mini, o qualsiasi PC con Intel Core i3/i5 o AMD equivalente.
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="wizard-step" id="wz-step-2">
+    <div class="card-title">Step 2/9 — Prepara chiavetta USB</div>
+    <div class="step-desc">
+      Ti serve una <strong>chiavetta USB da almeno 8 GB</strong> (meglio 16 GB o 32 GB).<br><br>
+      <strong>Attenzione:</strong> verra formattata completamente. Se contiene dati importanti, copiali altrove prima di procedere.
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="wizard-step" id="wz-step-3">
+    <div class="card-title">Step 3/9 — Scarica Home Assistant OS</div>
+    <div class="step-desc">
+      Da un altro PC (non quello che stai preparando), vai su:<br><br>
+      <code>home-assistant.io/installation/generic-x86-64</code><br><br>
+      Scarica l'immagine <strong>Generic x86-64</strong>. E un file <strong>.img.xz</strong> di circa 1 GB.
+    </div>
+    <div class="info-box">
+      Non estrarre il file .img.xz. Lo userai cosi com'e nel prossimo passaggio.
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="wizard-step" id="wz-step-4">
+    <div class="card-title">Step 4/9 — Flash della chiavetta</div>
+    <div class="step-desc">
+      Scarica <strong>balenaEtcher</strong> (gratuito, balena.io/etcher) sul PC che stai usando ora.<br><br>
+      1. Inserisci la chiavetta USB<br>
+      2. Apri balenaEtcher<br>
+      3. Seleziona il file .img.xz scaricato<br>
+      4. Seleziona la chiavetta USB come destinazione<br>
+      5. Clicca <strong>Flash</strong> e attendi 5-15 minuti
+    </div>
+    <div class="warning-box">
+      Non togliere la chiavetta finche Etcher non dice "Completato".
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="wizard-step" id="wz-step-5">
+    <div class="card-title">Step 5/9 — Boot dal Mini PC</div>
+    <div class="step-desc">
+      1. Collega tastiera, mouse e schermo (HDMI/DisplayPort) al Mini PC<br>
+      2. Inserisci la chiavetta USB appena flashata<br>
+      3. Accendi il Mini PC<br>
+      4. All'avvio premi ripetutamente <strong>F12</strong> (o <strong>Esc</strong>, <strong>F2</strong>, <strong>Del</strong>) per aprire il menu di boot<br>
+      5. Seleziona la chiavetta USB come dispositivo di avvio
+    </div>
+    <div class="info-box">
+      Il tasto per il boot menu varia per marca:<br>
+      Dell: F12 | Lenovo: F12 | HP: Esc o F9 | Generico: F12, Esc, o F2
+    </div>
+  </div>
+
+  <!-- Step 6 -->
+  <div class="wizard-step" id="wz-step-6">
+    <div class="card-title">Step 6/9 — Primo avvio Home Assistant</div>
+    <div class="step-desc">
+      Home Assistant OS si installerà automaticamente sul disco del Mini PC.<br><br>
+      Al termine, da un browser qualsiasi nella stessa rete WiFi, vai su:<br><br>
+      <code>homeassistant.local:8123</code><br><br>
+      Segui il wizard iniziale: crea account, imposta nome casa, condividi dati diagnostici (opzionale).
+    </div>
+    <div class="warning-box">
+      Il primo avvio puo richiedere 10-20 minuti. Non spegnere il Mini PC durante l'installazione.
+    </div>
+  </div>
+
+  <!-- Step 7 -->
+  <div class="wizard-step" id="wz-step-7">
+    <div class="card-title">Step 7/9 — Configura rete e WiFi</div>
+    <div class="step-desc">
+      Se il Mini PC e collegato via cavo Ethernet, la rete funziona gia.<br><br>
+      Se vuoi usare il WiFi, in Home Assistant vai su:<br>
+      <strong>Impostazioni > Sistema > Rete</strong> e configura la rete wireless.<br><br>
+      Assicurati che il Mini PC e il tuo smartphone siano sulla <strong>stessa rete</strong>.
+    </div>
+  </div>
+
+  <!-- Step 8 -->
+  <div class="wizard-step" id="wz-step-8">
+    <div class="card-title">Step 8/9 — Aggiungi il clima a Home Assistant</div>
+    <div class="step-desc">
+      Vai su <strong>Impostazioni > Dispositivi e servizi > Aggiungi integrazione</strong>.<br><br>
+      <strong>Se il clima ha WiFi (Tuya, Smart Life, ecc.):</strong><br>
+      Cerca e installa <strong>LocalTuya</strong> o <strong>Tuya</strong>. Inserisci le credenziali dell'app.<br><br>
+      <strong>Se il clima ha solo telecomando IR:</strong><br>
+      Installa <strong>SmartIR</strong>. Ti servira un ricevitore/trasmittente IR collegato al Mini PC via USB.
+    </div>
+    <div class="info-box">
+      Dopo l'integrazione, il clima apparira come entita <code>climate.nome</code> in Home Assistant.
+    </div>
+  </div>
+
+  <!-- Step 9 -->
+  <div class="wizard-step" id="wz-step-9">
+    <div class="card-title">Step 9/9 — Verifica e collega EcoHybrid</div>
+    <div class="step-desc">
+      1. In Home Assistant, vai su <strong>Profilo > Token a lunga durata</strong><br>
+      2. Crea un token e copialo<br>
+      3. Torna qui su EcoHybrid e inserisci indirizzo + token<br>
+      4. Clicca "Test connessione"
+    </div>
+    <div class="info-box">
+      Se vedi temperatura e stato del clima, la configurazione e corretta.
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <button class="btn btn-secondary" id="wz-btn-back" onclick="wizardBack()">Indietro</button>
+    <button class="btn btn-primary" id="wz-btn-next" onclick="wizardNext()">Avanti</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN BILLS: CARICA BOLLETTE ==================== -->
+<div id="screen-bills" class="screen">
+  <div class="app-header">
+    <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
+    <p>Analisi bollette</p>
+  </div>
+  <div class="divider"></div>
+
+  <!-- BOLLETTA LUCE -->
   <div class="card">
     <div class="card-title">Bolletta luce</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Scatta foto</div><input type="file" id="file-luce" accept="image/*" style="display:none" onchange="handleFile(this, 'luce')">
-      <div class="upload-btn" onclick="document.getElementById('file-luce').click()">Carica immagine</div>
+      <div class="upload-btn" onclick="triggerFile('file-luce-pdf')" style="border-color:#FF0088; color:#fff;">
+        <div style="font-size:18px; margin-bottom:4px;">CARICA FILE</div>
+        Bolletta digitale dal portale — piu preciso
+      </div>
+      <input type="file" id="file-luce-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'luce', 'pdf')">
+      <div class="upload-btn" onclick="triggerFile('file-luce-img')">
+        <div style="font-size:18px; margin-bottom:4px;">SCANSIONE OCR</div>
+        Foto o scansione cartacea
+      </div>
+      <input type="file" id="file-luce-img" accept="image/*" style="display:none" onchange="handleFile(this, 'luce', 'image')">
     </div>
-    <div id="luce-uploaded" class="uploaded-label">Bolletta luce allegata</div>
-
-    <div class="input-group">
-      <label>Costo kWh (EUR)</label>
-      <input type="number" step="0.0001" id="luce-costo" placeholder="es. 0.2927" onchange="saveBillData()">
-    </div>
-    <div class="input-group">
-      <label>Consumo kWh/mese</label>
-      <input type="number" id="luce-consumo" placeholder="es. 157" onchange="saveBillData()">
-    </div>
-    <div class="input-group">
-      <label>Potenza contrattuale (kW)</label>
-      <input type="number" step="0.01" id="luce-potenza" placeholder="es. 3.00" onchange="saveBillData()">
-    </div>
-    <div class="input-group">
-      <label>Spesa totale luce (EUR)</label>
-      <input type="number" step="0.01" id="luce-totale" placeholder="es. 61.96" onchange="saveBillData()">
-    </div>
+    <div id="luce-status" class="ocr-status"></div>
+    <div id="luce-uploaded" class="uploaded-label">File luce caricato</div>
   </div>
 
+  <!-- BOLLETTA GAS -->
   <div class="card">
     <div class="card-title">Bolletta gas</div>
     <div class="upload-row">
-      <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Scatta foto</div><input type="file" id="file-gas" accept="image/*" style="display:none" onchange="handleFile(this, 'gas')">
-      <div class="upload-btn" onclick="document.getElementById('file-gas').click()">Carica immagine</div>
+      <div class="upload-btn" onclick="triggerFile('file-gas-pdf')" style="border-color:#FF0088; color:#fff;">
+        <div style="font-size:18px; margin-bottom:4px;">CARICA FILE</div>
+        Bolletta digitale dal portale — piu preciso
+      </div>
+      <input type="file" id="file-gas-pdf" accept=".pdf" style="display:none" onchange="handleFile(this, 'gas', 'pdf')">
+      <div class="upload-btn" onclick="triggerFile('file-gas-img')">
+        <div style="font-size:18px; margin-bottom:4px;">SCANSIONE OCR</div>
+        Foto o scansione cartacea
+      </div>
+      <input type="file" id="file-gas-img" accept="image/*" style="display:none" onchange="handleFile(this, 'gas', 'image')">
     </div>
-    <div id="gas-uploaded" class="uploaded-label">Bolletta gas allegata</div>
-
-    <div class="input-group">
-      <label>Costo Smc (EUR)</label>
-      <input type="number" step="0.0001" id="gas-costo" placeholder="es. 0.9426" onchange="saveBillData()">
-    </div>
-    <div class="input-group">
-      <label>Consumo Smc/mese</label>
-      <input type="number" id="gas-consumo" placeholder="es. 5" onchange="saveBillData()">
-    </div>
-    <div class="input-group">
-      <label>Spesa totale gas (EUR)</label>
-      <input type="number" step="0.01" id="gas-totale" placeholder="es. 19.17" onchange="saveBillData()">
-    </div>
+    <div id="gas-status" class="ocr-status"></div>
+    <div id="gas-uploaded" class="uploaded-label">File gas caricato</div>
   </div>
 
+  <!-- RIEPILOGO SPESA -->
   <div class="card">
     <div class="card-title">Totale spese mensili</div>
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -555,182 +785,58 @@
     </div>
   </div>
 
-  <button class="btn btn-primary" id="btn-continua-bollette" onclick="goToSetup()" disabled>Conferma e continua</button>
-  <button class="btn btn-secondary" onclick="skipBills()">Non ho la bolletta, uso stime</button>
+  <div class="nav-bar">
+    <button class="btn btn-secondary" onclick="goBackFromBills()">Indietro</button>
+    <button class="btn btn-primary" id="btn-continua-bollette" onclick="goToConfirm()" disabled>Avanti: verifica dati</button>
+  </div>
 </div>
 
-<!-- ==================== SCREEN 2A: SMARTTHINGS ==================== -->
-<div id="screen-2a" class="screen">
+<!-- ==================== SCREEN CONFIRM: VERIFICA DATI ESTRATTI ==================== -->
+<div id="screen-confirm" class="screen">
   <div class="app-header">
     <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Collega il tuo clima</p>
+    <p>Verifica i dati estratti</p>
   </div>
   <div class="divider"></div>
 
   <div class="card">
-    <div class="card-title">Dispositivo trovato</div>
-    <div style="text-align:center; padding: 20px 0;">
-      <div style="font-size:48px; margin-bottom:12px;">&#10052;</div>
-      <h3 style="margin-bottom:6px;">Climatizzatore Soggiorno</h3>
-      <p style="color:#a0a0c0; font-size:14px;">Samsung WindFree / WiFi</p>
-      <span style="display:inline-block; background:#00d4aa; color:#111144; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:700; margin-top:10px;">TROVATO</span>
-    </div>
+    <div class="card-title">Dati bolletta luce</div>
+    <table class="confirm-table">
+      <tr><td>Periodo fatturazione</td><td><input type="text" id="cf-luce-periodo" placeholder="es. 01/05/2026 - 31/07/2026"></td></tr>
+      <tr><td>Costo kWh (EUR)</td><td><input type="text" id="cf-luce-costo" placeholder="es. 0,2927"></td></tr>
+      <tr><td>Consumo kWh</td><td><input type="text" id="cf-luce-consumo" placeholder="es. 157"></td></tr>
+      <tr><td>Potenza contrattuale (kW)</td><td><input type="text" id="cf-luce-potenza" placeholder="es. 3,00"></td></tr>
+      <tr><td>Tipo contratto</td><td>
+        <select id="cf-luce-tipo">
+          <option value="">Seleziona...</option>
+          <option value="mono">Monoraria (F0)</option>
+          <option value="bi">Bioraria (F1-F2-F3)</option>
+          <option value="tri">Trifaria (F1-F2-F3)</option>
+        </select>
+      </td></tr>
+      <tr><td>Spesa totale (EUR)</td><td><input type="text" id="cf-luce-totale" placeholder="es. 61,96"></td></tr>
+      <tr><td>Indirizzo fornitura</td><td><input type="text" id="cf-luce-indirizzo" placeholder="es. Via Roma 1, 20100 Milano"></td></tr>
+    </table>
   </div>
-
-  <button class="btn btn-primary" onclick="connectAndGo()">Collega e inizia</button>
-  <button class="btn btn-secondary" onclick="skipToDashboard()">Salta (modalita' demo)</button>
-</div>
-
-<!-- ==================== SCREEN 2B: WIZARD MINI PC ==================== -->
-<div id="screen-2b" class="screen">
-  <div class="app-header">
-    <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Setup Mini PC - Home Assistant</p>
-  </div>
-  <div class="divider"></div>
 
   <div class="card">
-    <div class="card-title">Wizard configurazione</div>
-    <p style="font-size:13px; color:#a0a0c0; margin-bottom:16px;">
-      Completa ogni step in ordine. Il prossimo si sblocca dopo aver confermato il precedente.
-    </p>
-
-    <!-- Step 1 -->
-    <div class="wizard-step active" id="step-1">
-      <div class="step-header">
-        <div class="step-number" id="num-1">1</div>
-        <div class="step-title">Ricevi il Mini PC</div>
-      </div>
-      <div class="step-desc">
-        Controlla la scatola: Mini PC, alimentatore, cavo HDMI. Se usi un PC vecchio, verifica che abbia almeno 4GB RAM e porta USB.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(1)">Ho ricevuto tutto</button>
-      </div>
-    </div>
-
-    <!-- Step 2 -->
-    <div class="wizard-step" id="step-2">
-      <div class="step-header">
-        <div class="step-number" id="num-2">2</div>
-        <div class="step-title">Procurati chiavetta USB 8GB+</div>
-      </div>
-      <div class="step-desc">
-        Ti serve una chiavetta USB da almeno 8GB (meglio 16GB). Verra' formattata, quindi svuotala prima.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(2)">Ho la chiavetta pronta</button>
-      </div>
-    </div>
-
-    <!-- Step 3 -->
-    <div class="wizard-step" id="step-3">
-      <div class="step-header">
-        <div class="step-number" id="num-3">3</div>
-        <div class="step-title">Scarica Home Assistant OS</div>
-      </div>
-      <div class="step-desc">
-        Vai su <strong>home-assistant.io/installation/generic-x86-64</strong> e scarica l'immagine x86-64. E' un file .img.xz di circa 1GB.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(3)">Ho scaricato l'immagine</button>
-      </div>
-    </div>
-
-    <!-- Step 4 -->
-    <div class="wizard-step" id="step-4">
-      <div class="step-header">
-        <div class="step-number" id="num-4">4</div>
-        <div class="step-title">Flasha la chiavetta con balenaEtcher</div>
-      </div>
-      <div class="step-desc">
-        Scarica balenaEtcher (gratuito), inserisci la chiavetta, seleziona l'immagine Home Assistant e clicca "Flash". Attendi 5-10 minuti.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(4)">Chiavetta flashata</button>
-      </div>
-    </div>
-
-    <!-- Step 5 -->
-    <div class="wizard-step" id="step-5">
-      <div class="step-header">
-        <div class="step-number" id="num-5">5</div>
-        <div class="step-title">Inserisci USB e accendi il Mini PC</div>
-      </div>
-      <div class="step-desc">
-        Collega tastiera, mouse e schermo (HDMI) al Mini PC. Inserisci la chiavetta USB. Accendi e premi <strong>F12</strong> (o Esc/F2) all'avvio per selezionare la USB come boot device.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(5)">Mini PC avviato da USB</button>
-      </div>
-    </div>
-
-    <!-- Step 6 -->
-    <div class="wizard-step" id="step-6">
-      <div class="step-header">
-        <div class="step-number" id="num-6">6</div>
-        <div class="step-title">Collega al WiFi</div>
-      </div>
-      <div class="step-desc">
-        Da browser sul PC/TV collegato, vai su <strong>homeassistant.local:8123</strong>. Segui il wizard iniziale e inserisci la password del tuo WiFi quando richiesto.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(6)">Home Assistant online</button>
-      </div>
-    </div>
-
-    <!-- Step 7 -->
-    <div class="wizard-step" id="step-7">
-      <div class="step-header">
-        <div class="step-number" id="num-7">7</div>
-        <div class="step-title">Collega il clima a Home Assistant</div>
-      </div>
-      <div class="step-desc">
-        In Home Assistant vai su <strong>Impostazioni > Dispositivi e servizi > Aggiungi integrazione</strong>. Cerca e aggiungi <strong>LocalTuya</strong> (per clima WiFi) o <strong>SmartIR</strong> (per clima con controller IR).
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(7)">Clima collegato</button>
-      </div>
-    </div>
-
-    <!-- Step 8 -->
-    <div class="wizard-step" id="step-8">
-      <div class="step-header">
-        <div class="step-number" id="num-8">8</div>
-        <div class="step-title">Aggiungi EcoHybrid alla Home</div>
-      </div>
-      <div class="step-desc">
-        Apri EcoHybrid da browser sul tuo smartphone. Tocca il menu del browser e seleziona <strong>Aggiungi a schermata Home</strong>. Ora l'app e' installata come PWA.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-green" onclick="completeStep(8)">EcoHybrid aggiunto</button>
-      </div>
-    </div>
-
-    <!-- Step 9 -->
-    <div class="wizard-step" id="step-9">
-      <div class="step-header">
-        <div class="step-number" id="num-9">9</div>
-        <div class="step-title">Verifica funzionamento</div>
-      </div>
-      <div class="step-desc">
-        Apri EcoHybrid, vai alla dashboard e verifica che vedi temperatura, umidita' e stato del clima in tempo reale. Se si, tutto e' collegato correttamente.
-      </div>
-      <div class="step-action">
-        <button class="btn btn-primary" onclick="completeStep(9); showScreen('screen-3');">Vedi dati reali in app</button>
-      </div>
-    </div>
-
-    <!-- Completion message -->
-    <div id="wizard-complete" class="hidden" style="text-align:center; padding:20px;">
-      <div style="font-size:48px; margin-bottom:12px;">&#9989;</div>
-      <h3 style="margin-bottom:8px;">Configurazione completata!</h3>
-      <p style="color:#a0a0c0; font-size:14px;">Il tuo sistema EcoHybrid e' attivo. Vai alla dashboard per iniziare il monitoraggio.</p>
-      <button class="btn btn-primary" style="margin-top:16px;" onclick="showScreen('screen-3')">Vai alla dashboard</button>
-    </div>
+    <div class="card-title">Dati bolletta gas</div>
+    <table class="confirm-table">
+      <tr><td>Periodo fatturazione</td><td><input type="text" id="cf-gas-periodo" placeholder="es. 01/05/2026 - 31/07/2026"></td></tr>
+      <tr><td>Costo Smc (EUR)</td><td><input type="text" id="cf-gas-costo" placeholder="es. 0,9426"></td></tr>
+      <tr><td>Consumo Smc</td><td><input type="text" id="cf-gas-consumo" placeholder="es. 5"></td></tr>
+      <tr><td>Spesa totale (EUR)</td><td><input type="text" id="cf-gas-totale" placeholder="es. 19,17"></td></tr>
+    </table>
   </div>
 
-  <button class="btn btn-secondary" onclick="skipToDashboard()">Prova demo ora</button>
+  <div class="warning-box" id="confirm-warning" style="display:none;">
+    Alcuni dati sono mancanti o sembrano anomali. Verifica e completa i campi evidenziati prima di proseguire.
+  </div>
+
+  <div class="nav-bar">
+    <button class="btn btn-secondary" onclick="showScreen('screen-bills')">Indietro</button>
+    <button class="btn btn-primary" id="btn-confirm-dati" onclick="confirmDataAndGo()">Conferma e vai alla dashboard</button>
+  </div>
 </div>
 
 <!-- ==================== SCREEN 3: DASHBOARD ==================== -->
@@ -752,29 +858,57 @@
     </div>
   </div>
 
-  <div class="metric-grid">
+  <!-- Meteo -->
+  <div class="metric-grid" id="meteo-box" style="display:none;">
     <div class="metric-box">
-      <div class="metric-value" id="dash-temp">--</div>
-      <div class="metric-unit">C interna</div>
+      <div class="metric-value" id="dash-temp-est">--</div>
+      <div class="metric-unit">C esterna</div>
     </div>
     <div class="metric-box">
       <div class="metric-value" id="dash-umid" style="color:#00d4aa;">--</div>
-      <div class="metric-unit">% umidita'</div>
+      <div class="metric-unit">% umidita</div>
     </div>
   </div>
 
+  <!-- Stato clima -->
   <div class="card">
     <div class="card-title">Stato climatizzatore</div>
     <div id="clima-stato" class="status-spento">SPENTO</div>
-    <p style="color:#a0a0c0; font-size:13px; margin-top:6px;" id="clima-dettagli">Target: -- | Modalita': --</p>
+    <p style="color:#a0a0c0; font-size:13px; margin-top:6px;" id="clima-dettagli">Target: -- | Modalita: --</p>
   </div>
 
+  <!-- Comfort -->
+  <div class="card" id="card-comfort" style="display:none;">
+    <div class="card-title">Comfort adattivo (ASHRAE 55)</div>
+    <div class="suggestion-box" id="comfort-testo">
+      Carica i dati meteo per vedere il suggerimento comfort.
+    </div>
+  </div>
+
+  <!-- Switch dinamico -->
+  <div class="card" id="card-switch" style="display:none;">
+    <div class="card-title">Switch gas / elettrico</div>
+    <div class="suggestion-box" id="switch-testo">
+      Carica i dati meteo per vedere il confronto costi.
+    </div>
+  </div>
+
+  <!-- Recircolo -->
+  <div class="card" id="card-recircolo" style="display:none;">
+    <div class="card-title">Recircolo calore invernale</div>
+    <div class="suggestion-box" id="recircolo-testo">
+      Analisi in corso...
+    </div>
+  </div>
+
+  <!-- Risparmio -->
   <div class="card" id="card-risparmio">
     <div class="card-title" id="risparmio-titolo">Risparmio stimato</div>
     <div class="summary-value" id="risparmio-valore" style="font-size:28px;">--</div>
     <div class="summary-label" id="risparmio-sottotitolo">Inserisci bollette per calcolare</div>
   </div>
 
+  <!-- Suggerimento -->
   <div class="card" id="card-suggerimento" style="display:none;">
     <div class="card-title">Suggerimento</div>
     <div class="suggestion-box" id="suggerimento-testo">
@@ -784,6 +918,7 @@
     <button class="btn btn-secondary" onclick="rimandaSuggerimento()">Non ora</button>
   </div>
 
+  <!-- Apprendimento -->
   <div class="card" id="card-apprendimento" style="display:none;">
     <div class="card-title">Fase di apprendimento</div>
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
@@ -791,16 +926,22 @@
       <div style="font-size:13px; color:#a0a0c0;">giorni di raccolta dati</div>
     </div>
     <p style="font-size:13px; color:#a0a0c0; line-height:1.5;">
-      Sto imparando i pattern della tua casa. Il confronto reale tra consumo base e ottimizzato sara' disponibile tra <span id="giorni-mancanti">30</span> giorni.
+      Sto imparando i pattern della tua casa. Il confronto reale tra consumo base e ottimizzato sara disponibile tra <span id="giorni-mancanti">30</span> giorni.
     </p>
   </div>
 
-  <div class="debug-btn" onclick="simulaGiorno31()">[Debug] Simula giorno 31</div>
+  <div style="height:80px;"></div>
 </div>
 
 <script>
 // ==================== NAVIGAZIONE ====================
+var screenHistory = [];
+
 function showScreen(id) {
+  var current = document.querySelector('.screen.active');
+  if (current && current.id !== id) {
+    screenHistory.push(current.id);
+  }
   var screens = document.querySelectorAll('.screen');
   for (var i = 0; i < screens.length; i++) {
     screens[i].classList.remove('active');
@@ -810,45 +951,196 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 
+function goBack() {
+  var prev = screenHistory.pop();
+  if (prev) {
+    var screens = document.querySelectorAll('.screen');
+    for (var i = 0; i < screens.length; i++) {
+      screens[i].classList.remove('active');
+    }
+    document.getElementById(prev).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+}
+
 // ==================== PERCORSO ====================
 var selectedPath = '';
 function selectPath(path) {
   selectedPath = path;
-  showScreen('screen-1');
+  if (path === 'ha') {
+    showScreen('screen-1a');
+  } else if (path === 'generic') {
+    wizardStep = 1;
+    updateWizardUI();
+    showScreen('screen-wizard');
+  }
 }
 
-// ==================== BOLLETTE ====================
-function handleFile(input, tipo) {
-  var file = input.files[0];
-  if (!file) return;
-  if (file.type === 'application/pdf') {
-    showToast('PDF non supportato. Converti in JPG/PNG o inserisci dati manualmente.');
-    var card = document.getElementById('card-' + tipo);
-    if (card) card.style.display = 'block';
-    checkBillsComplete();
+function goBackFromBills() {
+  if (selectedPath === 'ha') {
+    showScreen('screen-1a');
+  } else {
+    showScreen('screen-wizard');
+  }
+}
+
+// ==================== HOME ASSISTANT ====================
+var haConnected = false;
+
+function testHAConnection() {
+  var url = document.getElementById('ha-url').value.trim();
+  var token = document.getElementById('ha-token').value.trim();
+  var resultDiv = document.getElementById('ha-test-result');
+
+  if (!url || !token) {
+    resultDiv.innerHTML = '<div class="error-box">Inserisci indirizzo e token.</div>';
     return;
   }
-  var label = document.getElementById(tipo + '-uploaded');
-  if (label) label.classList.add('visible');
-  showToast('Analisi ' + tipo + ' in corso con OCR...');
 
-  Tesseract.recognize(file, 'ita', { logger: function(m) {
-    if (m.status === 'recognizing text') {
-      showToast('OCR ' + tipo + ': ' + Math.round(m.progress * 100) + '%');
+  resultDiv.innerHTML = '<div class="info-box">Connessione in corso...</div>';
+
+  fetch(url + '/api/', {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
     }
-  }})
+  })
+  .then(function(r) {
+    if (r.ok) {
+      return r.json();
+    }
+    throw new Error('HTTP ' + r.status);
+  })
+  .then(function(data) {
+    haConnected = true;
+    localStorage.setItem('ecohybrid_ha_url', url);
+    localStorage.setItem('ecohybrid_ha_token', token);
+    resultDiv.innerHTML = '<div class="info-box" style="border-color:#00d4aa;"><strong style="color:#fff;">Connesso!</strong><br>Home Assistant rilevato: ' + (data.message || 'OK') + '</div>';
+    document.getElementById('btn-continua-ha').disabled = false;
+    document.getElementById('card-ha-help').style.display = 'none';
+  })
+  .catch(function(err) {
+    haConnected = false;
+    resultDiv.innerHTML = '<div class="error-box"><strong>Connessione fallita.</strong><br>' + err.message + '<br><br>Verifica che:<br>- Il Mini PC sia acceso e connesso alla rete<br>- L indirizzo sia corretto<br>- Il token sia valido e non scaduto</div>';
+    document.getElementById('card-ha-help').style.display = 'block';
+  });
+}
+
+function goToBillsFromHA() {
+  if (!haConnected) {
+    showToast('Testa la connessione prima di proseguire.');
+    return;
+  }
+  showScreen('screen-bills');
+}
+
+// ==================== WIZARD 9 STEP ====================
+var wizardStep = 1;
+var totalWizardSteps = 9;
+
+function updateWizardUI() {
+  for (var s = 1; s <= totalWizardSteps; s++) {
+    var el = document.getElementById('wz-step-' + s);
+    if (el) {
+      el.classList.remove('active');
+      if (s < wizardStep) el.classList.add('completed');
+      else el.classList.remove('completed');
+      if (s === wizardStep) el.classList.add('active');
+    }
+  }
+  var progress = document.getElementById('wizard-progress');
+  if (progress) progress.style.width = (wizardStep / totalWizardSteps * 100) + '%';
+
+  var btnBack = document.getElementById('wz-btn-back');
+  var btnNext = document.getElementById('wz-btn-next');
+  if (btnBack) btnBack.style.display = wizardStep === 1 ? 'none' : 'block';
+  if (btnNext) {
+    if (wizardStep === totalWizardSteps) {
+      btnNext.textContent = 'Vai alle bollette';
+      btnNext.onclick = function() { showScreen('screen-bills'); };
+    } else {
+      btnNext.textContent = 'Avanti';
+      btnNext.onclick = wizardNext;
+    }
+  }
+}
+
+function wizardNext() {
+  if (wizardStep < totalWizardSteps) {
+    wizardStep++;
+    updateWizardUI();
+  }
+}
+
+function wizardBack() {
+  if (wizardStep > 1) {
+    wizardStep--;
+    updateWizardUI();
+  } else {
+    showScreen('screen-0');
+  }
+}
+
+// ==================== FILE UPLOAD ====================
+function triggerFile(id) {
+  document.getElementById(id).click();
+}
+
+function handleFile(input, tipo, format) {
+  var file = input.files[0];
+  if (!file) return;
+
+  var statusEl = document.getElementById(tipo + '-status');
+  var uploadedEl = document.getElementById(tipo + '-uploaded');
+
+  if (format === 'pdf') {
+    statusEl.textContent = 'PDF caricato. Analisi in corso...';
+    uploadedEl.classList.add('visible');
+    // Per ora: simuliamo estrazione PDF (in futuro: pdf.js)
+    setTimeout(function() {
+      statusEl.textContent = 'PDF analizzato. Estrazione testo in corso...';
+      setTimeout(function() {
+        // Simula che il PDF sia una scansione
+        statusEl.innerHTML = 'Questo PDF e una scansione. Passo a OCR...<br><span style="font-size:11px;">Se il risultato non e soddisfacente, prova a caricare una foto piu nitida.</span>';
+        setTimeout(function() {
+          doOCR(file, tipo, statusEl);
+        }, 1500);
+      }, 1500);
+    }, 1000);
+  } else {
+    statusEl.textContent = 'Immagine caricata. Avvio OCR...';
+    uploadedEl.classList.add('visible');
+    doOCR(file, tipo, statusEl);
+  }
+}
+
+function doOCR(file, tipo, statusEl) {
+  Tesseract.recognize(file, 'ita', {
+    logger: function(m) {
+      if (m.status === 'recognizing text') {
+        statusEl.textContent = 'OCR in corso: ' + Math.round(m.progress * 100) + '%';
+      }
+    }
+  })
   .then(function(result) {
     var text = result.data.text;
-    showToast('Dati ' + tipo + ' estratti dalla bolletta');
+    statusEl.innerHTML = '<span style="color:#00d4aa;">OCR completato. Dati estratti.</span>';
     if (tipo === 'luce') parseBollettaLuce(text);
     else parseBollettaGas(text);
     checkBillsComplete();
   })
   .catch(function(err) {
-    showToast('OCR non riuscito. Inserisci i dati manualmente.');
+    statusEl.innerHTML = '<span style="color:#ff4444;">OCR non riuscito. Inserisci i dati manualmente nel passaggio successivo.</span>';
     checkBillsComplete();
   });
 }
+
+// ==================== PARSER BOLLETTE ====================
+var extractedData = {
+  luce: {},
+  gas: {}
+};
 
 function parseBollettaLuce(text) {
   var lines = text.split("\n");
@@ -875,10 +1167,8 @@ function parseBollettaLuce(text) {
   if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*kWh/i); if (mc) costo = mc[1].replace(',', '.'); }
   if (!consumo) { var mc2 = text.match(/(\d{3,4})\s*kWh/i); if (mc2) consumo = mc2[1]; }
   if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
-  if (costo) document.getElementById('luce-costo').value = costo;
-  if (consumo) document.getElementById('luce-consumo').value = consumo;
-  if (potenza) document.getElementById('luce-potenza').value = potenza;
-  if (totale) document.getElementById('luce-totale').value = totale;
+
+  extractedData.luce = { costo: costo, consumo: consumo, potenza: potenza, totale: totale };
 }
 
 function parseBollettaGas(text) {
@@ -902,20 +1192,20 @@ function parseBollettaGas(text) {
   if (!costo) { var mc = text.match(/(\d+[.,]\d{3,4})\s*(€|EUR)?\s*\/?\s*Smc/i); if (mc) costo = mc[1].replace(',', '.'); }
   if (!consumo) { var mc2 = text.match(/(\d{1,3})\s*Smc/i); if (mc2) consumo = mc2[1]; }
   if (!totale) { var mt = text.match(/(\d+[.,]\d{2})\s*€/); if (mt) totale = mt[1].replace(',', '.'); }
-  if (costo) document.getElementById('gas-costo').value = costo;
-  if (consumo) document.getElementById('gas-consumo').value = consumo;
-  if (totale) document.getElementById('gas-totale').value = totale;
+
+  extractedData.gas = { costo: costo, consumo: consumo, totale: totale };
+}
+
+function checkBillsComplete() {
+  var luceOk = extractedData.luce.totale || extractedData.luce.costo;
+  var gasOk = extractedData.gas.totale || extractedData.gas.costo;
+  var btn = document.getElementById('btn-continua-bollette');
+  if (btn) btn.disabled = !(luceOk || gasOk);
 }
 
 function saveBillData() {
-  var luceCosto = parseFloat(document.getElementById('luce-costo').value) || 0;
-  var luceConsumo = parseFloat(document.getElementById('luce-consumo').value) || 0;
-  var lucePotenza = parseFloat(document.getElementById('luce-potenza').value) || 0;
-  var luceTotale = parseFloat(document.getElementById('luce-totale').value) || 0;
-  var gasCosto = parseFloat(document.getElementById('gas-costo').value) || 0;
-  var gasConsumo = parseFloat(document.getElementById('gas-consumo').value) || 0;
-  var gasTotale = parseFloat(document.getElementById('gas-totale').value) || 0;
-
+  var luceTotale = parseFloat(document.getElementById('cf-luce-totale').value.replace(',', '.')) || 0;
+  var gasTotale = parseFloat(document.getElementById('cf-gas-totale').value.replace(',', '.')) || 0;
   var totaleMese = luceTotale + gasTotale;
   var totaleAnno = totaleMese * 12;
 
@@ -923,85 +1213,58 @@ function saveBillData() {
   document.getElementById('totale-anno').textContent = totaleAnno.toFixed(2) + ' EUR';
 
   var billData = {
-    luceCosto: luceCosto,
-    luceConsumo: luceConsumo,
-    lucePotenza: lucePotenza,
-    luceTotale: luceTotale,
-    gasCosto: gasCosto,
-    gasConsumo: gasConsumo,
-    gasTotale: gasTotale,
+    luce: {
+      periodo: document.getElementById('cf-luce-periodo').value,
+      costo: parseFloat(document.getElementById('cf-luce-costo').value.replace(',', '.')) || 0,
+      consumo: parseFloat(document.getElementById('cf-luce-consumo').value.replace(',', '.')) || 0,
+      potenza: parseFloat(document.getElementById('cf-luce-potenza').value.replace(',', '.')) || 0,
+      tipo: document.getElementById('cf-luce-tipo').value,
+      totale: luceTotale,
+      indirizzo: document.getElementById('cf-luce-indirizzo').value
+    },
+    gas: {
+      periodo: document.getElementById('cf-gas-periodo').value,
+      costo: parseFloat(document.getElementById('cf-gas-costo').value.replace(',', '.')) || 0,
+      consumo: parseFloat(document.getElementById('cf-gas-consumo').value.replace(',', '.')) || 0,
+      totale: gasTotale
+    },
     totaleMese: totaleMese,
     totaleAnno: totaleAnno,
     timestamp: new Date().toISOString()
   };
   localStorage.setItem('ecohybrid_bills', JSON.stringify(billData));
-
-  checkBillsComplete();
 }
 
-function checkBillsComplete() {
-  var luceTotale = parseFloat(document.getElementById('luce-totale').value) || 0;
-  var gasTotale = parseFloat(document.getElementById('gas-totale').value) || 0;
-  var btn = document.getElementById('btn-continua-bollette');
-  if (btn) btn.disabled = !(luceTotale > 0 && gasTotale > 0);
+// ==================== CONFERMA DATI ====================
+function goToConfirm() {
+  // Pre-compila i campi con i dati estratti
+  if (extractedData.luce.costo) document.getElementById('cf-luce-costo').value = extractedData.luce.costo;
+  if (extractedData.luce.consumo) document.getElementById('cf-luce-consumo').value = extractedData.luce.consumo;
+  if (extractedData.luce.potenza) document.getElementById('cf-luce-potenza').value = extractedData.luce.potenza;
+  if (extractedData.luce.totale) document.getElementById('cf-luce-totale').value = extractedData.luce.totale;
+
+  if (extractedData.gas.costo) document.getElementById('cf-gas-costo').value = extractedData.gas.costo;
+  if (extractedData.gas.consumo) document.getElementById('cf-gas-consumo').value = extractedData.gas.consumo;
+  if (extractedData.gas.totale) document.getElementById('cf-gas-totale').value = extractedData.gas.totale;
+
+  showScreen('screen-confirm');
 }
 
-function skipBills() {
-  document.getElementById('luce-costo').value = '0.2927';
-  document.getElementById('luce-consumo').value = '157';
-  document.getElementById('luce-potenza').value = '3.00';
-  document.getElementById('luce-totale').value = '61.96';
-  document.getElementById('gas-costo').value = '0.9426';
-  document.getElementById('gas-consumo').value = '5';
-  document.getElementById('gas-totale').value = '19.17';
-  saveBillData();
-  goToSetup();
-}
+function confirmDataAndGo() {
+  // Verifica campi obbligatori
+  var luceTotale = document.getElementById('cf-luce-totale').value.trim();
+  var gasTotale = document.getElementById('cf-gas-totale').value.trim();
+  var warning = document.getElementById('confirm-warning');
 
-function goToSetup() {
-  if (selectedPath === 'smartthings') {
-    showScreen('screen-2a');
-  } else {
-    showScreen('screen-2b');
+  if (!luceTotale && !gasTotale) {
+    warning.style.display = 'block';
+    warning.innerHTML = 'Inserisci almeno la spesa totale di luce o gas per procedere.';
+    return;
   }
-}
 
-// ==================== SMARTTHINGS ====================
-function connectAndGo() {
-  localStorage.setItem('ecohybrid_device_connected', 'smartthings');
-  localStorage.setItem('ecohybrid_connection_date', new Date().toISOString());
+  saveBillData();
   showScreen('screen-3');
   initDashboard();
-}
-
-// ==================== WIZARD MINI PC ====================
-var currentStep = 1;
-var totalSteps = 9;
-
-function completeStep(step) {
-  var stepEl = document.getElementById('step-' + step);
-  var numEl = document.getElementById('num-' + step);
-  if (stepEl) {
-    stepEl.classList.remove('active');
-    stepEl.classList.add('completed');
-  }
-  if (numEl) {
-    numEl.textContent = 'OK';
-    numEl.classList.add('done');
-  }
-
-  if (step < totalSteps) {
-    var nextEl = document.getElementById('step-' + (step + 1));
-    if (nextEl) nextEl.classList.add('active');
-    setTimeout(function() {
-      if (nextEl) nextEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-  } else {
-    document.getElementById('wizard-complete').classList.remove('hidden');
-    localStorage.setItem('ecohybrid_minipc_setup', 'completed');
-    localStorage.setItem('ecohybrid_device_connected', 'minipc');
-    localStorage.setItem('ecohybrid_connection_date', new Date().toISOString());
-  }
 }
 
 // ==================== DASHBOARD ====================
@@ -1041,9 +1304,8 @@ function initDashboard() {
     }
   }
 
-  var connected = localStorage.getItem('ecohybrid_device_connected');
   if (!connected) {
-    document.getElementById('dash-temp').textContent = '--';
+    document.getElementById('dash-temp-est').textContent = '--';
     document.getElementById('dash-umid').textContent = '--';
     document.getElementById('clima-stato').textContent = 'SPENTO';
     document.getElementById('clima-stato').className = 'status-spento';
@@ -1058,7 +1320,9 @@ function showStimaRisparmio(bills) {
   var sottotitolo = document.getElementById('risparmio-sottotitolo');
 
   if (bills.totaleAnno && bills.totaleAnno > 0) {
-    var f_comfort = 0.92; var f_switch = 0.95; var f_recircolo = 0.95;
+    var f_comfort = 0.92;
+    var f_switch = 0.95;
+    var f_recircolo = 0.95;
     var risparmioStimato = bills.totaleAnno * (1 - (f_comfort * f_switch * f_recircolo));
     var risparmioPct = ((1 - (f_comfort * f_switch * f_recircolo)) * 100).toFixed(1);
     if (titolo) titolo.textContent = 'Risparmio stimato (annuo)';
@@ -1101,7 +1365,9 @@ function showRisparmioReale(bills, giorni) {
   if (titolo) titolo.textContent = 'Risparmio reale (ultimi 7 giorni)';
 
   var baseGiornaliero = bills.totaleAnno / 365;
-  var f_comfort = 0.92; var f_switch = 0.95; var f_recircolo = 0.95;
+  var f_comfort = 0.92;
+  var f_switch = 0.95;
+  var f_recircolo = 0.95;
   var risparmioGiornaliero = baseGiornaliero * (1 - (f_comfort * f_switch * f_recircolo));
   var risparmio7giorni = risparmioGiornaliero * 7;
 
@@ -1116,7 +1382,7 @@ function showRisparmioReale(bills, giorni) {
   if (cardSugg) cardSugg.style.display = 'block';
   document.getElementById('suggerimento-testo').textContent =
     'Ho notato che accendi il clima alle 18:00 ma arrivi a casa alle 19:00. ' +
-    'Vuoi che anticipi il raffreddamento alle 17:30 quando l\'elettricita costa meno?';
+    'Vuoi che anticipi il raffreddamento alle 17:30 quando l elettricita costa meno?';
 }
 
 function applicaSuggerimento() {
@@ -1127,47 +1393,14 @@ function rimandaSuggerimento() {
   showToast('Suggerimento rimandato a domani');
 }
 
-function skipToDashboard() {
-  showScreen('screen-3');
-  initDashboard();
-}
-
-// ==================== DEBUG ====================
-function simulaGiorno31() {
-  localStorage.setItem('ecohybrid_connection_date', new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString());
-  initDashboard();
-  showToast('Simulato: 31 giorni di dati');
-}
-
-// ==================== TOAST ====================
-function showToast(msg) {
-  var toast = document.createElement('div');
-  toast.textContent = msg;
-  toast.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#FF0088; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:700; z-index:9999;';
-  document.body.appendChild(toast);
-  setTimeout(function() {
-    toast.remove();
-  }, 2500);
-}
-
-// ==================== WIZARD ====================
-var currentWizardStep = 1;
-function wizardNext(step) {
-  document.getElementById('w-step-' + currentWizardStep).style.display = 'none';
-  currentWizardStep = step;
-  document.getElementById('w-step-' + step).style.display = 'block';
-  var progress = document.getElementById('wizard-progress');
-  if (progress) progress.style.width = (step / 9 * 100) + '%';
-}
-
 // ==================== ALGORITMI ECOHYBRID ====================
-
-// Dati mercato GME/Terna — 11/08/2026
 var MERCATO = {
-  PUN_F0: 0.189, PUN_F3: 0.152, PSV: 0.664, perditeRete: 1.10
+  PUN_F0: 0.189,
+  PUN_F3: 0.152,
+  PSV: 0.664,
+  perditeRete: 1.10
 };
 
-// COP medi conservativi da datasheet produttori
 function getCOP(tempEst) {
   if (tempEst >= 15) return 4.0;
   if (tempEst >= 10) return 3.5;
@@ -1198,7 +1431,9 @@ function calcolaSwitchDinamico(tempEst) {
   var costoElettricoTermico = (MERCATO.PUN_F0 * MERCATO.perditeRete) / cop;
   var convieneElettrico = costoElettricoTermico < costoGasTermico;
   return {
-    cop: cop, costoGas: costoGasTermico, costoElettrico: costoElettricoTermico,
+    cop: cop,
+    costoGas: costoGasTermico,
+    costoElettrico: costoElettricoTermico,
     convieneElettrico: convieneElettrico,
     spiegazione: 'COP pompa a ' + tempEst + 'C = ' + cop.toFixed(1) +
       '. Costo gas: ' + costoGasTermico.toFixed(3) + ' EUR/kWh termico. ' +
@@ -1209,13 +1444,20 @@ function calcolaSwitchDinamico(tempEst) {
 
 function calcolaRecircolo(tempEst) {
   if (tempEst < 12) {
-    return { attivo: true, spiegazione: 'Inverno: il calore sale sotto il soffitto (scarto 3-5C). Attiva FAN/VMC a 15-20W per destratificazione. Risparmio stimato 20-30% sui consumi invernali.' };
+    return {
+      attivo: true,
+      spiegazione: 'Inverno: il calore sale sotto il soffitto (scarto 3-5C). Attiva FAN/VMC a 15-20W per destratificazione. Risparmio stimato 20-30% sui consumi invernali.'
+    };
   }
   return { attivo: false, spiegazione: '' };
 }
 
+// ==================== METEO ====================
 function fetchMeteoGPS() {
-  if (!navigator.geolocation) return;
+  if (!navigator.geolocation) {
+    console.log('GPS non disponibile');
+    return;
+  }
   navigator.geolocation.getCurrentPosition(
     function(pos) { fetchMeteoCoords(pos.coords.latitude, pos.coords.longitude); },
     function(err) { console.log('GPS errore: ' + err.message); }
@@ -1232,25 +1474,40 @@ function fetchMeteoCoords(lat, lon) {
       var tempEst = cur.temperature_2m;
       var umidita = cur.relative_humidity_2m;
       localStorage.setItem('ecohybrid_meteo', JSON.stringify({
-        tempEst: tempEst, umidita: umidita, apparente: cur.apparent_temperature,
+        tempEst: tempEst,
+        umidita: umidita,
+        apparente: cur.apparent_temperature,
         timestamp: new Date().toISOString()
       }));
-      // Mostra in dashboard
+
       var meteoBox = document.getElementById('meteo-box');
       if (meteoBox) meteoBox.style.display = 'grid';
       var elTemp = document.getElementById('dash-temp-est');
       if (elTemp) elTemp.textContent = tempEst + 'C';
+      var elUmid = document.getElementById('dash-umid');
+      if (elUmid) elUmid.textContent = umidita + '%';
+
       var comfort = calcolaComfortAdattivo(tempEst, umidita);
-      var elSet = document.getElementById('dash-setpoint');
-      if (elSet) elSet.textContent = comfort.setpoint + 'C';
       var cardComfort = document.getElementById('card-comfort');
-      if (cardComfort) { cardComfort.style.display = 'block'; document.getElementById('comfort-testo').textContent = comfort.spiegazione; }
+      if (cardComfort) {
+        cardComfort.style.display = 'block';
+        document.getElementById('comfort-testo').textContent = comfort.spiegazione;
+      }
+
       var sw = calcolaSwitchDinamico(tempEst);
       var cardSwitch = document.getElementById('card-switch');
-      if (cardSwitch) { cardSwitch.style.display = 'block'; document.getElementById('switch-testo').textContent = sw.spiegazione; }
+      if (cardSwitch) {
+        cardSwitch.style.display = 'block';
+        document.getElementById('switch-testo').textContent = sw.spiegazione;
+      }
+
       var rec = calcolaRecircolo(tempEst);
       var cardRec = document.getElementById('card-recircolo');
-      if (cardRec && rec.attivo) { cardRec.style.display = 'block'; document.getElementById('recircolo-testo').textContent = rec.spiegazione; }
+      if (cardRec && rec.attivo) {
+        cardRec.style.display = 'block';
+        document.getElementById('recircolo-testo').textContent = rec.spiegazione;
+      }
+
       aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec);
     })
     .catch(function(e) { console.error(e); });
@@ -1267,26 +1524,39 @@ function aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec) {
   var risparmioPct = ((1 - (f_comfort * f_switch * f_recircolo)) * 100).toFixed(1);
   var valore = document.getElementById('risparmio-valore');
   var sottotitolo = document.getElementById('risparmio-sottotitolo');
-  if (valore) { valore.textContent = risparmioStimato.toFixed(2) + ' EUR'; valore.style.color = '#00d4aa'; }
-  if (sottotitolo) { sottotitolo.textContent = 'Stima conservativa ' + risparmioPct + '% (comfort + switch + recircolo)'; }
+  if (valore) {
+    valore.textContent = risparmioStimato.toFixed(2) + ' EUR';
+    valore.style.color = '#00d4aa';
+  }
+  if (sottotitolo) {
+    sottotitolo.textContent = 'Stima conservativa ' + risparmioPct + '% (comfort + switch + recircolo)';
+  }
+}
+
+// ==================== TOAST ====================
+function showToast(msg) {
+  var toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#FF0088; color:#fff; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:700; z-index:9999;';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 2500);
 }
 
 // ==================== INIT ====================
 window.onload = function() {
-  var saved = localStorage.getItem('ecohybrid_bills');
-  if (saved) {
+  var savedBills = localStorage.getItem('ecohybrid_bills');
+  if (savedBills) {
     try {
-      var b = JSON.parse(saved);
-      if (b.luceTotale) document.getElementById('luce-totale').value = b.luceTotale;
-      if (b.gasTotale) document.getElementById('gas-totale').value = b.gasTotale;
-      if (b.luceCosto) document.getElementById('luce-costo').value = b.luceCosto;
-      if (b.luceConsumo) document.getElementById('luce-consumo').value = b.luceConsumo;
-      if (b.lucePotenza) document.getElementById('luce-potenza').value = b.lucePotenza;
-      if (b.gasCosto) document.getElementById('gas-costo').value = b.gasCosto;
-      if (b.gasConsumo) document.getElementById('gas-consumo').value = b.gasConsumo;
-      saveBillData();
+      var b = JSON.parse(savedBills);
+      if (b.totaleMese) {
+        document.getElementById('totale-mese').textContent = b.totaleMese.toFixed(2) + ' EUR';
+        document.getElementById('totale-anno').textContent = b.totaleAnno.toFixed(2) + ' EUR';
+      }
     } catch (e) {}
   }
+
+  var savedHA = localStorage.getItem('ecohybrid_ha_url');
+  if (savedHA) document.getElementById('ha-url').value = savedHA;
 
   if (document.getElementById('screen-3').classList.contains('active')) {
     initDashboard();
