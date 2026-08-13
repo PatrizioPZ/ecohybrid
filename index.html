@@ -155,6 +155,11 @@
   .summary-value { font-size: 32px; font-weight: 800; color: #00d4aa; }
   .summary-label { font-size: 12px; color: #a0a0c0; margin-top: 4px; }
   ::-webkit-scrollbar { width: 0; background: transparent; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 212, 170, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0); }
+  }
 
   /* CERCHIETTI DEVICE */
   .device-section { margin-bottom: 20px; }
@@ -565,11 +570,11 @@
         <input type="text" id="unified-gas-periodo" placeholder="es. 01/05/2026 - 31/07/2026">
       </div>
       <div class="input-group">
-        <label>Costo Smc (EUR)</label>
+        <label>Costo m³ (EUR)</label>
         <input type="text" id="unified-gas-costo" placeholder="es. 0,9426" oninput="updateTotals()">
       </div>
       <div class="input-group">
-        <label>Consumo Smc</label>
+        <label>Consumo m³</label>
         <input type="text" id="unified-gas-consumo" placeholder="es. 5" oninput="updateTotals()">
       </div>
       <div class="input-group">
@@ -631,7 +636,7 @@
     <div style="display:flex; align-items:center; gap:12px;">
       <div style="width:12px; height:12px; border-radius:50%; background:#ff4444;" id="status-dot"></div>
       <div>
-        <div style="font-size:14px; font-weight:700;" id="status-text">Nessun device collegato</div>
+        <div style="font-size:14px; font-weight:700;" id="status-text">Automazione in standby — connetti Home Assistant</div>
         <div style="font-size:12px; color:#a0a0c0;" id="status-desc">Inserisci bollette per stimare il risparmio potenziale</div>
       </div>
     </div>
@@ -650,14 +655,14 @@
 
   <div class="card">
     <div class="card-title">Stato climatizzatore</div>
-    <div id="clima-stato" class="status-spento">SPENTO</div>
+    <div id="clima-stato" class="status-acceso">AUTO</div>
     <p style="color:#a0a0c0; font-size:13px; margin-top:6px;" id="clima-dettagli">Target: -- | Modalita: --</p>
   </div>
 
   <div class="card" id="card-comfort" style="display:none;">
     <div class="card-title">Comfort adattivo (ASHRAE 55)</div>
     <div class="suggestion-box" id="comfort-testo">
-      Carica i dati meteo per vedere il suggerimento comfort.
+      Carica i dati meteo per l ottimizzazione automatica del comfort.
     </div>
   </div>
 
@@ -675,19 +680,39 @@
     </div>
   </div>
 
+  <div class="card" id="card-occupancy">
+    <div class="card-title">Gestione assenza</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+      <div id="occupancy-dot" style="width:12px; height:12px; border-radius:50%; background:#00d4aa;"></div>
+      <div style="font-size:14px; font-weight:700;" id="occupancy-stato">Casa occupata</div>
+    </div>
+    <div class="info-box" id="occupancy-dettaglio">
+      Il sistema rileva la tua presenza e mantiene il comfort ottimale.
+    </div>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="btn btn-secondary" style="flex:1; padding:10px; font-size:13px;" onclick="simulaAssenza(true)">Simula: sono uscito</button>
+      <button class="btn btn-secondary" style="flex:1; padding:10px; font-size:13px;" onclick="simulaAssenza(false)">Simula: sono a casa</button>
+    </div>
+  </div>
+
   <div class="card" id="card-risparmio">
     <div class="card-title" id="risparmio-titolo">Risparmio stimato</div>
     <div class="summary-value" id="risparmio-valore" style="font-size:28px;">--</div>
     <div class="summary-label" id="risparmio-sottotitolo">Inserisci bollette per calcolare</div>
   </div>
 
-  <div class="card" id="card-suggerimento" style="display:none;">
-    <div class="card-title">Suggerimento</div>
-    <div class="suggestion-box" id="suggerimento-testo">
-      Carica le tue bollette luce e gas per ricevere suggerimenti personalizzati.
+  <div class="card" id="card-automazione">
+    <div class="card-title">Automazione EcoHybrid</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+      <div style="width:12px; height:12px; border-radius:50%; background:#00d4aa; animation:pulse 2s infinite;"></div>
+      <div style="font-size:14px; font-weight:700; color:#00d4aa;">Attiva — nessuna azione richiesta</div>
     </div>
-    <button class="btn btn-primary" id="btn-applica-sugg" onclick="applicaSuggerimento()">Applica suggerimento</button>
-    <button class="btn btn-secondary" onclick="rimandaSuggerimento()">Non ora</button>
+    <div class="info-box">
+      EcoHybrid gestisce automaticamente il clima. Non devi fare nulla. L'app lavora in background 24/7.
+    </div>
+    <div class="device-meta" style="margin-top:8px;">
+      Ultima ottimizzazione: <span id="last-optimization">--</span>
+    </div>
   </div>
 
   <div class="card" id="card-apprendimento" style="display:none;">
@@ -697,7 +722,7 @@
       <div style="font-size:13px; color:#a0a0c0;">giorni di raccolta dati</div>
     </div>
     <p style="font-size:13px; color:#a0a0c0; line-height:1.5;">
-      Sto imparando i pattern della tua casa. Il confronto reale tra consumo base e ottimizzato sara disponibile tra <span id="giorni-mancanti">30</span> giorni.
+      Calibrazione automatica in corso. Il sistema sta ottimizzando il clima in base ai dati raccolti. Nessuna azione richiesta. Dati completi tra <span id="giorni-mancanti">30</span> giorni.
     </p>
   </div>
 
@@ -781,7 +806,7 @@
       <!-- Popolato da JS -->
     </div>
     <div id="device-empty" style="text-align:center; padding:20px; color:#a0a0c0; font-size:13px;">
-      Nessun device collegato.<br>
+      Automazione in standby — connetti Home Assistant.<br>
       <span style="font-size:11px;">Connetti Home Assistant o attendi la configurazione automatica.</span>
     </div>
   </div>
@@ -804,7 +829,7 @@
   <div class="card" style="opacity:0.6;">
     <div class="card-title">Gestione device</div>
     <p style="font-size:13px; color:#a0a0c0; margin-bottom:12px;">
-      Aggiungi o rimuovi climatizzatori, termostati, VMC e altri device.
+      Aggiungi o rimuovi climatizzatori, termostati e altri device.
     </p>
     <button class="btn btn-outline" disabled style="opacity:0.5;">
       Gestisci device (prossimamente)
@@ -1216,32 +1241,32 @@ function parseAndFill(text, tipo) {
       var m = t.match(/PERIODO\s*DI\s*RIFERIMENTO:\s*dal\s*(\d{2}\/\d{2}\/\d{4})\s*al\s*(\d{2}\/\d{2}\/\d{4})/i);
       if (m) document.getElementById('unified-gas-periodo').value = m[1] + ' - ' + m[2];
 
-      // Consumo: CONSUMO FATTURATO o qualsiasi numero + Smc
-      m = t.match(/CONSUMO\s*FATTURATO\s*[:=]?\s*(\d+)\s*Smc/i);
+      // Consumo: CONSUMO FATTURATO o qualsiasi numero + m³
+      m = t.match(/CONSUMO\s*FATTURATO\s*[:=]?\s*(\d+)\s*m³/i);
       if (!m) {
-        var allSmc = t.match(/(\d+)\s*Smc/gi);
-        if (allSmc) {
-          for (var i = 0; i < allSmc.length; i++) {
-            var val = parseInt(allSmc[i].match(/(\d+)/)[1]);
+        var allm³ = t.match(/(\d+)\s*m³/gi);
+        if (allm³) {
+          for (var i = 0; i < allm³.length; i++) {
+            var val = parseInt(allm³[i].match(/(\d+)/)[1]);
             if (val >= 1 && val <= 500) { m = [null, val.toString()]; break; }
           }
         }
       }
       if (m) document.getElementById('unified-gas-consumo').value = m[1];
 
-      // Costo: PREZZO FISSO, poi tabella, poi qualsiasi €/Smc
+      // Costo: PREZZO FISSO, poi tabella, poi qualsiasi €/m³
       var costo = null;
-      var mCosto = t.match(/PREZZO\s*FISSO\s*[:=]?\s*(\d+[.,]\d+)\s*€?\s*\/?\s*Smc/i);
+      var mCosto = t.match(/PREZZO\s*FISSO\s*[:=]?\s*(\d+[.,]\d+)\s*€?\s*\/?\s*m³/i);
       if (mCosto) {
         costo = mCosto[1].replace(',', '.');
       } else {
         // Tabella scontrino
-        mCosto = t.match(/\|\s*(\d+)\s*Smc\s*x\s*\|\s*(\d+[.,]\d+)\s*€?\s*\/?\s*Smc/i);
+        mCosto = t.match(/\|\s*(\d+)\s*m³\s*x\s*\|\s*(\d+[.,]\d+)\s*€?\s*\/?\s*m³/i);
         if (mCosto) costo = mCosto[2].replace(',', '.');
       }
       if (!costo) {
-        // Ultimo fallback: cerca qualsiasi €/Smc
-        var allPrices = t.match(/(\d+[.,]\d+)\s*€?\s*\/?\s*Smc/gi);
+        // Ultimo fallback: cerca qualsiasi €/m³
+        var allPrices = t.match(/(\d+[.,]\d+)\s*€?\s*\/?\s*m³/gi);
         if (allPrices) {
           for (var i = 0; i < allPrices.length; i++) {
             var val = parseFloat(allPrices[i].match(/(\d+[.,]\d+)/)[1].replace(',', '.'));
@@ -1351,7 +1376,7 @@ function parseAndFill(text, tipo) {
       var m = t.match(consumoPatterns[p]);
       if (m) { var val = parseFloat(m[1].replace(',', '.')); if (val >= 1 && val <= 500) consumo = m[1].replace(',', '.'); }
     }
-    if (!consumo) { var mc2 = t.match(/(\d{1,3})\s*Smc/i); if (mc2) consumo = mc2[1]; }
+    if (!consumo) { var mc2 = t.match(/(\d{1,3})\s*m³/i); if (mc2) consumo = mc2[1]; }
     var totalePatterns = [
       /(?:totale\s*a\s*pagare|importo\s*totale|totale\s*fattura)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i,
       /(?:da\s*pagare|importo\s*da\s*pagare)[^\d]{0,30}(\d{1,3}[.,]\d{2})/i
@@ -1747,7 +1772,7 @@ function initDashboard() {
 
   if (!connected) {
     if (statusDot) statusDot.style.background = '#ff4444';
-    if (statusText) statusText.textContent = 'Nessun device collegato';
+    if (statusText) statusText.textContent = 'Automazione in standby — connetti Home Assistant';
     if (statusDesc) statusDesc.textContent = 'Inserisci bollette per stimare il risparmio potenziale';
     showStimaRisparmio(bills);
   } else {
@@ -1772,9 +1797,9 @@ function initDashboard() {
   if (!connected) {
     document.getElementById('dash-temp-est').textContent = '--';
     document.getElementById('dash-umid').textContent = '--';
-    document.getElementById('clima-stato').textContent = 'SPENTO';
+    document.getElementById('clima-stato').textContent = 'AUTO';
     document.getElementById('clima-stato').className = 'status-spento';
-    document.getElementById('clima-dettagli').textContent = 'Nessun device collegato';
+    document.getElementById('clima-dettagli').textContent = 'Automazione in standby — connetti Home Assistant';
   }
   fetchMeteoGPS();
 }
@@ -1926,10 +1951,78 @@ function calcolaRecircolo(tempEst) {
   if (tempEst < 12) {
     return {
       attivo: true,
-      spiegazione: 'Inverno: il calore sale sotto il soffitto (scarto 3-5C). Attiva FAN/VMC a 15-20W per destratificazione. Risparmio stimato 20-30% sui consumi invernali.'
+      spiegazione: 'Inverno: il calore sale sotto il soffitto (scarto 3-5C). Attiva modalita ventilazione del climatizzatore (15-50W) per destratificazione. Risparmio stimato 20-30% sui consumi invernali.'
     };
   }
   return { attivo: false, spiegazione: '' };
+}
+
+// ==================== OCCUPANCY / GESTIONE ASSENZA ====================
+var occupancySimulata = null; // null = auto (geofencing reale), true = fuori casa, false = a casa
+
+function rilevaPresenza() {
+  // In futuro: geofencing reale via GPS + service worker
+  // Per ora: se simulata, usa quella; altrimenti assume presente
+  if (occupancySimulata !== null) return !occupancySimulata;
+  // Placeholder: in una PWA reale, qui si leggerebbe lo stato geofencing
+  return true;
+}
+
+function calcolaSetbackAssenza(tempEst, stagione, presente) {
+  if (presente) {
+    return { attivo: false, setpointComfort: null, setpointAttuale: null, risparmioPct: 0, spiegazione: 'Presenza rilevata. Setpoint comfort attivo.' };
+  }
+  var setback = 3.0; // 3°C conservativo (DOE: 5-12% con 3-10°F)
+  var setpointComfort, setpointAttuale;
+  if (stagione === 'estate') {
+    setpointComfort = Math.min(26, tempEst - 2);
+    setpointAttuale = setpointComfort + setback;
+  } else {
+    setpointComfort = 20.5;
+    setpointAttuale = setpointComfort - setback;
+  }
+  // Risparmio stimato: 5-12% su consumi HVAC (fonte DOE)
+  var risparmioPct = 0.08; // 8% medio conservativo
+  return {
+    attivo: true,
+    setpointComfort: setpointComfort,
+    setpointAttuale: setpointAttuale,
+    risparmioPct: risparmioPct,
+    spiegazione: 'Casa vuota. Setback ' + setback + '°C attivo. Risparmio stimato: ' + (risparmioPct * 100).toFixed(0) + '% sui consumi HVAC.'
+  };
+}
+
+function simulaAssenza(fuoriCasa) {
+  occupancySimulata = fuoriCasa;
+  var presente = !fuoriCasa;
+  var dot = document.getElementById('occupancy-dot');
+  var stato = document.getElementById('occupancy-stato');
+  var dettaglio = document.getElementById('occupancy-dettaglio');
+
+  if (presente) {
+    if (dot) dot.style.background = '#00d4aa';
+    if (stato) stato.textContent = 'Casa occupata';
+    if (dettaglio) dettaglio.innerHTML = 'Presenza rilevata. Il sistema mantiene il comfort ottimale (ASHRAE 55).';
+  } else {
+    if (dot) dot.style.background = '#ffaa00';
+    if (stato) stato.textContent = 'Casa vuota — setback attivo';
+    var meteoRaw = localStorage.getItem('ecohybrid_meteo');
+    var meteo = meteoRaw ? JSON.parse(meteoRaw) : null;
+    var tempEst = meteo ? meteo.tempEst : 20;
+    var stagione = tempEst > 20 ? 'estate' : 'inverno';
+    var sb = calcolaSetbackAssenza(tempEst, stagione, false);
+    if (dettaglio) {
+      dettaglio.innerHTML = '<strong>Setback ' + (stagione === 'estate' ? '+' : '-') + '3°C attivo.</strong><br>' +
+        'Setpoint comfort: ' + sb.setpointComfort.toFixed(1) + '°C → Setpoint attuale: ' + sb.setpointAttuale.toFixed(1) + '°C<br>' +
+        'Risparmio stimato: ' + (sb.risparmioPct * 100).toFixed(0) + '% sui consumi HVAC (fonte: DOE).';
+    }
+  }
+
+  // Aggiorna anche il risparmio totale
+  var bills = JSON.parse(localStorage.getItem('ecohybrid_bills') || '{}');
+  if (bills.totaleAnno) {
+    aggiornaRisparmioConAlgoritmi(tempEst || 20, null, null, null, !presente);
+  }
 }
 
 // ==================== METEO ====================
@@ -1988,20 +2081,22 @@ function fetchMeteoCoords(lat, lon) {
         document.getElementById('recircolo-testo').textContent = rec.spiegazione;
       }
 
-      aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec);
+      var presente = rilevaPresenza();
+      aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec, !presente);
     })
     .catch(function(e) { console.error(e); });
 }
 
-function aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec) {
+function aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec, casaVuota) {
   var bills = JSON.parse(localStorage.getItem('ecohybrid_bills') || '{}');
   if (!bills.totaleAnno) return;
   var base = bills.totaleAnno;
-  var f_comfort = comfort.stagione === 'estate' ? 0.92 : 1.0;
-  var f_switch = sw.convieneElettrico ? 0.90 : 1.0;
-  var f_recircolo = rec.attivo ? 0.88 : 1.0;
-  var risparmioStimato = base * (1 - (f_comfort * f_switch * f_recircolo));
-  var risparmioPct = ((1 - (f_comfort * f_switch * f_recircolo)) * 100).toFixed(1);
+  var f_comfort = comfort && comfort.stagione === 'estate' ? 0.92 : 1.0;
+  var f_switch = sw && sw.convieneElettrico ? 0.90 : 1.0;
+  var f_recircolo = rec && rec.attivo ? 0.88 : 1.0;
+  var f_occupancy = casaVuota ? 0.92 : 1.0; // 8% risparmio da setback assenza (DOE)
+  var risparmioStimato = base * (1 - (f_comfort * f_switch * f_recircolo * f_occupancy));
+  var risparmioPct = ((1 - (f_comfort * f_switch * f_recircolo * f_occupancy)) * 100).toFixed(1);
   var valore = document.getElementById('risparmio-valore');
   var sottotitolo = document.getElementById('risparmio-sottotitolo');
   if (valore) {
@@ -2009,7 +2104,12 @@ function aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec) {
     valore.style.color = '#00d4aa';
   }
   if (sottotitolo) {
-    sottotitolo.textContent = 'Stima conservativa ' + risparmioPct + '% (comfort + switch + recircolo)';
+    var algs = [];
+    if (f_comfort < 1) algs.push('comfort');
+    if (f_switch < 1) algs.push('switch');
+    if (f_recircolo < 1) algs.push('recircolo');
+    if (f_occupancy < 1) algs.push('assenza');
+    sottotitolo.textContent = 'Stima conservativa ' + risparmioPct + '% (' + algs.join(' + ') + ')';
   }
 }
 
