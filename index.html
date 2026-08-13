@@ -1244,10 +1244,10 @@ function parseAndFill(text, tipo) {
       // Consumo: CONSUMO FATTURATO o qualsiasi numero + m³
       m = t.match(/CONSUMO\s*FATTURATO\s*[:=]?\s*(\d+)\s*m³/i);
       if (!m) {
-        var allm³ = t.match(/(\d+)\s*m³/gi);
-        if (allm³) {
-          for (var i = 0; i < allm³.length; i++) {
-            var val = parseInt(allm³[i].match(/(\d+)/)[1]);
+        var allM3 = t.match(/(\d+)\s*m³/gi);
+        if (allM3) {
+          for (var i = 0; i < allM3.length; i++) {
+            var val = parseInt(allM3[i].match(/(\d+)/)[1]);
             if (val >= 1 && val <= 500) { m = [null, val.toString()]; break; }
           }
         }
