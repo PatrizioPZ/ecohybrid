@@ -2,6 +2,9 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>EcoHybrid</title>
 <style>
@@ -208,7 +211,6 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <base target="_blank">
-<base target="_blank">
 </head>
 <body>
 
@@ -232,68 +234,60 @@
       <span class="path-badge badge-pink">Richiede hardware</span>
     </div>
     <p style="text-align:center; margin-top:16px; font-size:13px;">
-      <a href="#" onclick="showScreen('screen-compat')" style="color:#FF0088; text-decoration:none;">Non so se il mio condizionatore e compatibile</a>
+      <button type="button" onclick="showScreen('screen-compat-check')" style="background:none;border:none;color:#FF0088;text-decoration:none;cursor:pointer;font-size:13px;font-family:inherit;padding:0;">Non so se il mio condizionatore e compatibile</button>
+    </p>
+    <p style="text-align:center; margin-top:8px; font-size:13px;">
+      <button type="button" onclick="showScreen('screen-lab')" style="background:none;border:none;color:#a0a0c0;text-decoration:none;cursor:pointer;font-size:13px;font-family:inherit;padding:0;">Laboratorio simulazione</button>
     </p>
   </div>
 </div>
 
-<!-- ==================== SCREEN COMPAT ==================== -->
-<div id="screen-compat" class="screen">
+<!-- ==================== SCREEN-COMPAT-CHECK: VERIFICA COMPATIBILITA ==================== -->
+<div id="screen-compat-check" class="screen">
   <div class="app-header">
-    <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Compatibilita condizionatori</p>
+    <h1>Quale <span style="color:#FF0088">app</span> usi?</h1>
+    <p>Seleziona l app con cui accendi il clima dal telefono</p>
   </div>
   <div class="divider"></div>
+
   <div class="card">
-    <div class="card-title">Controllo completo via WiFi / App nativa</div>
-    <p style="font-size:13px; color:#a0a0c0; line-height:1.5; margin-bottom:16px;">
-      Queste marche permettono controllo completo (modalita, temperatura, ventilazione, dry, eco) tramite app ufficiale o API cloud.
+    <div class="card-title">App compatibili — Percorso A (nessun hardware)</div>
+    <p style="font-size:12px; color:#a0a0c0; margin-bottom:12px; line-height:1.5;">
+      Queste app hanno integrazione ufficiale con Home Assistant. Se usi una di queste, il tuo clima si collega direttamente.
     </p>
-    <div class="compat-category">
-      <h4>WiFi nativo con API ufficiale</h4>
-      <div class="compat-list">
-        <span class="compat-item native">Samsung SmartThings</span>
-        <span class="compat-item native">LG ThinQ</span>
-        <span class="compat-item native">Daikin Onecta</span>
-        <span class="compat-item native">Mitsubishi MelCloud</span>
-        <span class="compat-item native">Panasonic Comfort Cloud</span>
-        <span class="compat-item native">Haier hOn</span>
-        <span class="compat-item native">Toshiba Home AC</span>
-      </div>
-    </div>
-    <div class="compat-category">
-      <h4>Tuya / Smart Life</h4>
-      <div class="compat-list">
-        <span class="compat-item tuya">Midea</span>
-        <span class="compat-item tuya">Comfee</span>
-        <span class="compat-item tuya">TCL</span>
-        <span class="compat-item tuya">Ariston</span>
-        <span class="compat-item tuya">Altri brand Tuya</span>
-      </div>
-    </div>
-    <div class="compat-category">
-      <h4>IR universale (richiede Mini PC)</h4>
-      <div class="compat-list">
-        <span class="compat-item ir">Qualsiasi marca con telecomando IR</span>
-        <span class="compat-item ir">Modelli non-smart di tutte le marche sopra</span>
-      </div>
-    </div>
-    <div class="info-box">
-      <strong style="color:#fff;">Come capire se il tuo e compatibile:</strong><br>
-      Se il telecomando ha i pulsanti Modalita, Temperatura, Ventilazione, Dry e il condizionatore ha un adesivo WiFi o QR code, e compatibile.<br><br>
-      Se non ha WiFi ma ha telecomando IR, e comunque compatibile con il percorso Mini PC.
-    </div>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#1428a0;">SmartThings — Samsung</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#00a8e1;">Onecta — Daikin</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#e60012;">MelCloud — Mitsubishi</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#a50034;">ThinQ — LG</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#006ab0;">Comfort Cloud — Panasonic</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#ed1c24;">Home AC — Toshiba</button>
   </div>
+
   <div class="card">
-    <p style="font-size:14px; margin-bottom:16px;">Il tuo condizionatore e in questa lista?</p>
-    <button class="btn btn-primary" onclick="selectPath('ha')">Si, e WiFi nativo o Tuya</button>
-    <button class="btn btn-secondary" onclick="selectPath('generic')">No, o non so / e con telecomando IR</button>
+    <div class="card-title">Altra app o telecomando — Percorso B (Mini PC)</div>
+    <p style="font-size:12px; color:#a0a0c0; margin-bottom:12px; line-height:1.5;">
+      Nethome Plus, Tuya Smart, Smart Life, app cinesi generiche, o telecomando IR. Serve un Mini PC + adattatore IR universale.
+    </p>
+    <button class="btn btn-secondary" onclick="selectPath('generic')">Altra app (Nethome Plus, Tuya, ecc.)</button>
+    <button class="btn btn-secondary" onclick="selectPath('generic')" style="margin-top:8px;">Solo telecomando / Non so</button>
   </div>
+
+  <div class="card" style="opacity:0.7;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:11px; color:#a0a0c0;">
+        Lista aggiornata al: <span id="compat-update-date">2026-08-15</span>
+      </div>
+      <button class="btn btn-outline" style="padding:6px 12px; font-size:11px; margin:0; width:auto;" onclick="checkCompatUpdates()">
+        Verifica aggiornamenti
+      </button>
+    </div>
+    <div id="compat-update-msg" style="font-size:11px; color:#a0a0c0; margin-top:6px; display:none;"></div>
+  </div>
+
   <div class="nav-bar">
     <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
   </div>
 </div>
-
 <!-- ==================== SCREEN 1A: CONFIGURA HA ==================== -->
 <div id="screen-1a" class="screen">
   <div class="app-header">
@@ -321,7 +315,22 @@
     <button class="btn btn-primary" id="btn-test-ha" onclick="testHAConnection()">Test connessione</button>
     <div id="ha-test-result" style="margin-top:12px;"></div>
   </div>
-  <div class="card" id="card-ha-help" style="display:none;">
+    <div class="card">
+    <div class="card-title">Come trovo l indirizzo?</div>
+    <div class="info-box">
+      <strong style="color:#fff;">1. Prova il piu comune</strong><br>
+      Se usi Home Assistant OS, Raspberry o Mini PC, scrivi:<br>
+      <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">http://homeassistant.local:8123</code><br><br>
+      <strong style="color:#fff;">2. Guarda nel tuo router</strong><br>
+      Apri il browser e vai su <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">192.168.1.1</code> (o <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">192.168.0.1</code>).<br>
+      Cerca "Dispositivi connessi" o "Stato rete" e trova il Mini PC / Raspberry.<br><br>
+      <strong style="color:#fff;">3. App Fing (gratuita)</strong><br>
+      Scarica Fing dal Play Store / App Store, scansiona la rete e cerca "homeassistant".<br>
+      L IP sara qualcosa come <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">192.168.1.50</code>.
+    </div>
+  </div>
+
+<div class="card" id="card-ha-help" style="display:none;">
     <div class="card-title">Come ottenere il token</div>
     <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
       1. Apri Home Assistant nel browser<br>
@@ -680,6 +689,13 @@
     </div>
   </div>
 
+  <div class="card" id="card-anticipo" style="display:none;">
+    <div class="card-title">Anticipo predittivo (7° pilastro)</div>
+    <div class="suggestion-box" id="anticipo-testo">
+      Carica i dati meteo per l ottimizzazione predittiva.
+    </div>
+  </div>
+
   <div class="card" id="card-occupancy">
     <div class="card-title">Gestione assenza</div>
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
@@ -851,10 +867,65 @@
 </div>
 
 <script>
-// ==================== NAVIGAZIONE ====================
+// ==================== COMPATIBILITA AGGIORNAMENTO ====================
+var COMPAT_LISTA_HARD = [
+  { app: 'SmartThings', brand: 'Samsung', path: 'ha' },
+  { app: 'Onecta', brand: 'Daikin', path: 'ha' },
+  { app: 'MelCloud', brand: 'Mitsubishi', path: 'ha' },
+  { app: 'ThinQ', brand: 'LG', path: 'ha' },
+  { app: 'Comfort Cloud', brand: 'Panasonic', path: 'ha' },
+  { app: 'Home AC', brand: 'Toshiba', path: 'ha' }
+];
+var COMPAT_UPDATE_URL = 'https://raw.githubusercontent.com/PatrizioPZ/ecohybrid/main/compat.json';
+
+function initCompatDate() {
+  var saved = localStorage.getItem('ecohybrid_compat_date');
+  var el = document.getElementById('compat-update-date');
+  if (el) el.textContent = saved || '2026-08-15';
+}
+
+function checkCompatUpdates() {
+  var msgEl = document.getElementById('compat-update-msg');
+  if (msgEl) { msgEl.style.display = 'block'; msgEl.textContent = 'Verifica in corso...'; }
+
+  fetch(COMPAT_UPDATE_URL + '?t=' + Date.now(), { method: 'GET', cache: 'no-store' })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      if (data && data.updated) {
+        localStorage.setItem('ecohybrid_compat_date', data.updated);
+        localStorage.setItem('ecohybrid_compat_data', JSON.stringify(data.apps || []));
+        var el = document.getElementById('compat-update-date');
+        if (el) el.textContent = data.updated;
+        if (msgEl) msgEl.innerHTML = '<span style="color:#00d4aa;">Aggiornato al ' + data.updated + '</span>';
+      } else {
+        if (msgEl) msgEl.textContent = 'Nessun aggiornamento disponibile.';
+      }
+    })
+    .catch(function(err) {
+      console.log('Compat update check failed:', err.message);
+      if (msgEl) msgEl.textContent = 'Offline — lista corrente valida.';
+    });
+}
+
+// Auto-check ogni 7 giorni
+function autoCheckCompat() {
+  var last = localStorage.getItem('ecohybrid_compat_lastcheck');
+  var now = Date.now();
+  var days7 = 7 * 24 * 60 * 60 * 1000;
+  if (!last || (now - parseInt(last)) > days7) {
+    localStorage.setItem('ecohybrid_compat_lastcheck', now.toString());
+    checkCompatUpdates();
+  }
+}
+
+// ==================== NAVIGAZIONE ====================// ==================== NAVIGAZIONE ====================
 var screenHistory = [];
 
 function showScreen(id) {
+  if (event && event.preventDefault) event.preventDefault();
   var current = document.querySelector('.screen.active');
   if (current && current.id !== id) {
     screenHistory.push(current.id);
@@ -1957,6 +2028,123 @@ function calcolaRecircolo(tempEst) {
   return { attivo: false, spiegazione: '' };
 }
 
+// ==================== 7° PILASTRO: ANTICIPO PREDITTIVO ====================
+function calcolaAnticipoPredittivo(tempEstAttuale, previsioniOrarie, isWinter) {
+  var minutiAnticipoBase = 30;
+  if (!previsioniOrarie || previsioniOrarie.length === 0) {
+    return { anticipo: minutiAnticipoBase, attivo: false, spiegazione: 'Nessuna previsione disponibile. Anticipo standard 30 min.' };
+  }
+  // Prendi le prossime 3 ore
+  var prossime = previsioniOrarie.slice(0, 3);
+  var tempMin = Math.min.apply(null, prossime);
+
+  if (isWinter) {
+    if (tempMin < 5.0) {
+      return {
+        anticipo: minutiAnticipoBase + 20,
+        attivo: true,
+        spiegazione: 'Anticipo predittivo: tra 1-3 ore la temperatura esterna crollera a ' + tempMin.toFixed(1) + 'C. Accensione anticipata di 50 minuti a regime ridotto (soft start). Nessun sbalzo termico.'
+      };
+    }
+  } else {
+    // Estate: se tra poco salira sopra 30C, anticipa raffrescamento
+    var tempMax = Math.max.apply(null, prossime);
+    if (tempMax > 30.0) {
+      return {
+        anticipo: minutiAnticipoBase + 15,
+        attivo: true,
+        spiegazione: 'Anticipo predittivo: tra 1-3 ore la temperatura esterna salira a ' + tempMax.toFixed(1) + 'C. Raffrescamento anticipato di 45 minuti per mantenere 26C costanti.'
+      };
+    }
+  }
+  return { anticipo: minutiAnticipoBase, attivo: false, spiegazione: 'Condizioni stabili. Anticipo standard 30 min.' };
+}
+
+// ==================== LABORATORIO SIMULAZIONE ====================
+function runLabSimulation() {
+  var tempEst = parseFloat(document.getElementById('lab-temp-est').value);
+  var umid = parseFloat(document.getElementById('lab-umid').value);
+  var pun = parseFloat(document.getElementById('lab-pun').value);
+  var psv = parseFloat(document.getElementById('lab-psv').value);
+  var stagioneSel = document.getElementById('lab-stagione').value;
+  var occupancy = document.getElementById('lab-occupancy').value === 'true';
+  var prev3h = parseFloat(document.getElementById('lab-prev-3h').value);
+
+  var isWinter = stagioneSel === 'inverno' || (stagioneSel === 'auto' && tempEst <= 20);
+
+  // Sovrascrivi temporaneamente i prezzi di mercato
+  var oldPUN = MERCATO.PUN_F0;
+  var oldPSV = MERCATO.PSV;
+  MERCATO.PUN_F0 = pun;
+  MERCATO.PSV = psv;
+
+  // 1. Comfort
+  var comfort = calcolaComfortAdattivo(tempEst, umid);
+  if (isWinter && comfort.stagione === 'estate') {
+    comfort = { stagione: 'inverno', setpoint: 20.5, modalita: 'Heat', spiegazione: 'Inverno: target 20.5C (ASHRAE 55). Setback notte 17.5C.' };
+  }
+
+  // 2. Switch
+  var sw = calcolaSwitchDinamico(tempEst);
+
+  // 3. Recircolo
+  var rec = calcolaRecircolo(tempEst);
+
+  // 4. Anticipo
+  var previsioni = [prev3h, prev3h - 1, prev3h + 1];
+  var anticipo = calcolaAnticipoPredittivo(tempEst, previsioni, isWinter);
+
+  // 5. Occupancy
+  var occ = calcolaSetbackAssenza(tempEst, comfort.stagione, occupancy);
+
+  // Ripristina mercato
+  MERCATO.PUN_F0 = oldPUN;
+  MERCATO.PSV = oldPSV;
+
+  // Render
+  document.getElementById('lab-results').style.display = 'block';
+  document.getElementById('lab-res-setpoint').textContent = comfort.setpoint.toFixed(1);
+  document.getElementById('lab-res-modalita').textContent = comfort.modalita;
+  document.getElementById('lab-res-cop').textContent = sw.cop.toFixed(1);
+  document.getElementById('lab-res-fonte').textContent = sw.convieneElettrico ? 'ELETTRICO' : 'GAS';
+
+  document.getElementById('lab-res-comfort').textContent = comfort.spiegazione;
+  document.getElementById('lab-res-switch').textContent = sw.spiegazione;
+
+  var recEl = document.getElementById('lab-res-recircolo');
+  if (rec.attivo) { recEl.style.display = 'block'; recEl.textContent = rec.spiegazione; }
+  else { recEl.style.display = 'none'; }
+
+  var antEl = document.getElementById('lab-res-anticipo');
+  if (anticipo.attivo) { antEl.style.display = 'block'; antEl.textContent = anticipo.spiegazione; }
+  else { antEl.style.display = 'none'; }
+
+  var occEl = document.getElementById('lab-res-occupancy');
+  if (!occupancy) {
+    occEl.style.display = 'block';
+    occEl.innerHTML = '<strong>Setback attivo.</strong> ' + occ.spiegazione;
+  } else { occEl.style.display = 'none'; }
+
+  // Risparmio stimato
+  var f_comfort = comfort.stagione === 'estate' ? 0.92 : 1.0;
+  var f_switch = sw.convieneElettrico ? 0.90 : 1.0;
+  var f_recircolo = rec.attivo ? 0.88 : 1.0;
+  var f_occupancy = !occupancy ? 0.92 : 1.0;
+  var risparmioTot = (1 - (f_comfort * f_switch * f_recircolo * f_occupancy)) * 100;
+  var algs = [];
+  if (f_comfort < 1) algs.push('comfort');
+  if (f_switch < 1) algs.push('switch');
+  if (f_recircolo < 1) algs.push('recircolo');
+  if (f_occupancy < 1) algs.push('assenza');
+  if (anticipo.attivo) algs.push('anticipo');
+
+  document.getElementById('lab-res-risparmio').innerHTML =
+    '<strong>Risparmio stimato: ' + risparmioTot.toFixed(1) + '%</strong><br>' +
+    '<span style="font-size:12px;">Pilastri attivi: ' + (algs.length > 0 ? algs.join(' + ') : 'nessuno') + '</span>';
+
+  window.scrollTo(0, document.getElementById('lab-results').offsetTop - 20);
+}
+
 // ==================== OCCUPANCY / GESTIONE ASSENZA ====================
 var occupancySimulata = null; // null = auto (geofencing reale), true = fuori casa, false = a casa
 
@@ -2039,7 +2227,7 @@ function fetchMeteoGPS() {
 
 function fetchMeteoCoords(lat, lon) {
   var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
-    '&current=temperature_2m,relative_humidity_2m,apparent_temperature&timezone=auto&forecast_days=1';
+    '&current=temperature_2m,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&timezone=auto&forecast_days=2';
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -2079,6 +2267,19 @@ function fetchMeteoCoords(lat, lon) {
       if (cardRec && rec.attivo) {
         cardRec.style.display = 'block';
         document.getElementById('recircolo-testo').textContent = rec.spiegazione;
+      }
+
+      // 7° Pilastro: Anticipo Predittivo
+      var previsioniOrarie = [];
+      if (d.hourly && d.hourly.temperature_2m) {
+        previsioniOrarie = d.hourly.temperature_2m.slice(0, 6);
+      }
+      var isWinter = comfort.stagione === 'inverno';
+      var anticipo = calcolaAnticipoPredittivo(tempEst, previsioniOrarie, isWinter);
+      var cardAnticipo = document.getElementById('card-anticipo');
+      if (cardAnticipo && anticipo.attivo) {
+        cardAnticipo.style.display = 'block';
+        document.getElementById('anticipo-testo').textContent = anticipo.spiegazione;
       }
 
       var presente = rilevaPresenza();
@@ -2124,6 +2325,9 @@ function showToast(msg) {
 
 // ==================== INIT ====================
 window.onload = function() {
+  initCompatDate();
+  autoCheckCompat();
+
   var isEdge = navigator.userAgent.indexOf("Edg") > -1 || navigator.userAgent.indexOf("Edge") > -1;
   if (isEdge) {
     var edgeBanner = document.getElementById("edge-banner-unified");
@@ -2158,5 +2362,88 @@ window.onload = function() {
   }
 };
 </script>
+<!-- ==================== SCREEN-LAB: LABORATORIO SIMULAZIONE ==================== -->
+<div id="screen-lab" class="screen">
+  <div class="app-header">
+    <h1>Lab <span style="color:#FF0088">Simulazione</span></h1>
+    <p>Testa EcoHybrid senza hardware</p>
+  </div>
+  <div class="divider"></div>
+
+  <div class="card">
+    <div class="card-title">Variabili ambiente</div>
+    <div class="input-group">
+      <label>Temperatura esterna (C)</label>
+      <input type="number" id="lab-temp-est" value="28" step="0.5">
+    </div>
+    <div class="input-group">
+      <label>Umidita (%)</label>
+      <input type="number" id="lab-umid" value="55" step="1" min="0" max="100">
+    </div>
+    <div class="input-group">
+      <label>PUN elettricita F0 (EUR/kWh)</label>
+      <input type="number" id="lab-pun" value="0.189" step="0.001">
+    </div>
+    <div class="input-group">
+      <label>PSV gas (EUR/m3)</label>
+      <input type="number" id="lab-psv" value="0.664" step="0.001">
+    </div>
+    <div class="input-group">
+      <label>Stagione</label>
+      <select id="lab-stagione">
+        <option value="auto">Auto (da temperatura)</option>
+        <option value="estate">Estate</option>
+        <option value="inverno">Inverno</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Casa occupata?</label>
+      <select id="lab-occupancy">
+        <option value="true">Occupata</option>
+        <option value="false">Vuota</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Previsione temp tra 3 ore (C)</label>
+      <input type="number" id="lab-prev-3h" value="26" step="0.5">
+    </div>
+    <button class="btn btn-primary" onclick="runLabSimulation()">Calcola ottimizzazione</button>
+  </div>
+
+  <div id="lab-results" style="display:none;">
+    <div class="card">
+      <div class="card-title">Risultati EcoHybrid</div>
+      <div class="metric-grid">
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-setpoint" style="color:#00d4aa;">--</div>
+          <div class="metric-unit">C Setpoint</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-modalita" style="color:#4488ff;">--</div>
+          <div class="metric-unit">Modalita</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-cop" style="color:#ffaa00;">--</div>
+          <div class="metric-unit">COP</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-fonte" style="color:#FF0088;">--</div>
+          <div class="metric-unit">Fonte consigliata</div>
+        </div>
+      </div>
+      <div id="lab-res-comfort" class="info-box" style="margin-top:12px;"></div>
+      <div id="lab-res-switch" class="info-box" style="margin-top:8px;"></div>
+      <div id="lab-res-recircolo" class="info-box" style="margin-top:8px; display:none;"></div>
+      <div id="lab-res-anticipo" class="info-box" style="margin-top:8px; display:none;"></div>
+      <div id="lab-res-occupancy" class="info-box" style="margin-top:8px; display:none;"></div>
+      <div id="lab-res-risparmio" class="success-box" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
+  </div>
+</div>
+
 </body>
 </html>
