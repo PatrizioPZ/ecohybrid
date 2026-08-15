@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#111144">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/ecohybrid/manifest.json">
+<link rel="apple-touch-icon" href="/ecohybrid/icon-192.png">
 <title>EcoHybrid — Laboratorio Simulazione</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -78,6 +82,7 @@
   }
   ::-webkit-scrollbar { width: 0; background: transparent; }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -118,6 +123,15 @@
     <select id="lab-occupancy">
       <option value="true">Occupata</option>
       <option value="false">Vuota</option>
+    </select>
+  </div>
+  <div class="input-group">
+    <label>Tipo impianto termico</label>
+    <select id="lab-tipo-impianto">
+      <option value="pompa">Pompa di calore / Clima</option>
+      <option value="pannelli">Pannelli radianti / IR (solo elettrico)</option>
+      <option value="caldaia">Caldaia a gas</option>
+      <option value="ibrido">Ibrido</option>
     </select>
   </div>
   <div class="input-group">
@@ -320,6 +334,7 @@ function runLabSimulation() {
   var prev3h = parseFloat(document.getElementById('lab-prev-3h').value);
 
   var isWinter = stagioneSel === 'inverno' || (stagioneSel === 'auto' && tempEst <= 20);
+  var tipo = document.getElementById('lab-tipo-impianto').value;
 
   var oldPUN = MERCATO.PUN_F0;
   var oldPSV = MERCATO.PSV;
@@ -364,16 +379,17 @@ function runLabSimulation() {
   } else { occEl.style.display = 'none'; }
 
   var f_comfort = comfort.stagione === 'estate' ? 0.92 : 1.0;
-  var f_switch = sw.convieneElettrico ? 0.90 : 1.0;
-  var f_recircolo = rec.attivo ? 0.88 : 1.0;
+  var f_switch = (sw.convieneElettrico && tipo !== 'pannelli' && tipo !== 'caldaia') ? 0.90 : 1.0;
+  var f_recircolo = (rec.attivo && tipo !== 'pannelli' && tipo !== 'caldaia') ? 0.88 : 1.0;
+  var f_anticipo = (tipo !== 'caldaia') ? 0.95 : 1.0;
   var f_occupancy = !occupancy ? 0.92 : 1.0;
-  var risparmioTot = (1 - (f_comfort * f_switch * f_recircolo * f_occupancy)) * 100;
+  var risparmioTot = (1 - (f_comfort * f_switch * f_recircolo * f_anticipo * f_occupancy)) * 100;
   var algs = [];
   if (f_comfort < 1) algs.push('comfort');
   if (f_switch < 1) algs.push('switch');
   if (f_recircolo < 1) algs.push('recircolo');
+  if (f_anticipo < 1) algs.push('anticipo');
   if (f_occupancy < 1) algs.push('assenza');
-  if (anticipo.attivo) algs.push('anticipo');
 
   document.getElementById('lab-res-risparmio').innerHTML =
     '<strong>Risparmio stimato: ' + risparmioTot.toFixed(1) + '%</strong><br>' +
@@ -414,6 +430,7 @@ function valutaScenario(params) {
   var modalita = document.getElementById('lab-res-modalita').textContent;
   var cop = document.getElementById('lab-res-cop').textContent;
   var fonte = document.getElementById('lab-res-fonte').textContent;
+  var tipo = document.getElementById('lab-tipo-impianto').value;
 
   var anomalie = [];
   var sp = parseFloat(setpoint);
@@ -595,6 +612,14 @@ function fermaStressContinuo() {
   endLine.innerHTML = '<span style="color:#ff4444;">[STOP] Stress continuo fermato.</span>';
   log.appendChild(endLine);
   log.scrollTop = log.scrollHeight;
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/ecohybrid/sw.js')
+    .then(function(reg) { console.log('SW Lab registrato:', reg.scope); })
+    .catch(function(err) { console.log('SW Lab fallito:', err); });
 }
 </script>
 
