@@ -236,6 +236,9 @@
     <p style="text-align:center; margin-top:16px; font-size:13px;">
       <button type="button" onclick="showScreen('screen-compat-check')" style="background:none;border:none;color:#FF0088;text-decoration:none;cursor:pointer;font-size:13px;font-family:inherit;padding:0;">Non so se il mio condizionatore e compatibile</button>
     </p>
+    <p style="text-align:center; margin-top:8px; font-size:13px;">
+      <button type="button" onclick="showScreen('screen-lab')" style="background:none;border:none;color:#a0a0c0;text-decoration:none;cursor:pointer;font-size:13px;font-family:inherit;padding:0;">Laboratorio simulazione</button>
+    </p>
   </div>
 </div>
 
@@ -683,6 +686,13 @@
     <div class="card-title">Recircolo calore invernale</div>
     <div class="suggestion-box" id="recircolo-testo">
       Analisi in corso...
+    </div>
+  </div>
+
+  <div class="card" id="card-anticipo" style="display:none;">
+    <div class="card-title">Anticipo predittivo (7° pilastro)</div>
+    <div class="suggestion-box" id="anticipo-testo">
+      Carica i dati meteo per l ottimizzazione predittiva.
     </div>
   </div>
 
@@ -2018,6 +2028,123 @@ function calcolaRecircolo(tempEst) {
   return { attivo: false, spiegazione: '' };
 }
 
+// ==================== 7° PILASTRO: ANTICIPO PREDITTIVO ====================
+function calcolaAnticipoPredittivo(tempEstAttuale, previsioniOrarie, isWinter) {
+  var minutiAnticipoBase = 30;
+  if (!previsioniOrarie || previsioniOrarie.length === 0) {
+    return { anticipo: minutiAnticipoBase, attivo: false, spiegazione: 'Nessuna previsione disponibile. Anticipo standard 30 min.' };
+  }
+  // Prendi le prossime 3 ore
+  var prossime = previsioniOrarie.slice(0, 3);
+  var tempMin = Math.min.apply(null, prossime);
+
+  if (isWinter) {
+    if (tempMin < 5.0) {
+      return {
+        anticipo: minutiAnticipoBase + 20,
+        attivo: true,
+        spiegazione: 'Anticipo predittivo: tra 1-3 ore la temperatura esterna crollera a ' + tempMin.toFixed(1) + 'C. Accensione anticipata di 50 minuti a regime ridotto (soft start). Nessun sbalzo termico.'
+      };
+    }
+  } else {
+    // Estate: se tra poco salira sopra 30C, anticipa raffrescamento
+    var tempMax = Math.max.apply(null, prossime);
+    if (tempMax > 30.0) {
+      return {
+        anticipo: minutiAnticipoBase + 15,
+        attivo: true,
+        spiegazione: 'Anticipo predittivo: tra 1-3 ore la temperatura esterna salira a ' + tempMax.toFixed(1) + 'C. Raffrescamento anticipato di 45 minuti per mantenere 26C costanti.'
+      };
+    }
+  }
+  return { anticipo: minutiAnticipoBase, attivo: false, spiegazione: 'Condizioni stabili. Anticipo standard 30 min.' };
+}
+
+// ==================== LABORATORIO SIMULAZIONE ====================
+function runLabSimulation() {
+  var tempEst = parseFloat(document.getElementById('lab-temp-est').value);
+  var umid = parseFloat(document.getElementById('lab-umid').value);
+  var pun = parseFloat(document.getElementById('lab-pun').value);
+  var psv = parseFloat(document.getElementById('lab-psv').value);
+  var stagioneSel = document.getElementById('lab-stagione').value;
+  var occupancy = document.getElementById('lab-occupancy').value === 'true';
+  var prev3h = parseFloat(document.getElementById('lab-prev-3h').value);
+
+  var isWinter = stagioneSel === 'inverno' || (stagioneSel === 'auto' && tempEst <= 20);
+
+  // Sovrascrivi temporaneamente i prezzi di mercato
+  var oldPUN = MERCATO.PUN_F0;
+  var oldPSV = MERCATO.PSV;
+  MERCATO.PUN_F0 = pun;
+  MERCATO.PSV = psv;
+
+  // 1. Comfort
+  var comfort = calcolaComfortAdattivo(tempEst, umid);
+  if (isWinter && comfort.stagione === 'estate') {
+    comfort = { stagione: 'inverno', setpoint: 20.5, modalita: 'Heat', spiegazione: 'Inverno: target 20.5C (ASHRAE 55). Setback notte 17.5C.' };
+  }
+
+  // 2. Switch
+  var sw = calcolaSwitchDinamico(tempEst);
+
+  // 3. Recircolo
+  var rec = calcolaRecircolo(tempEst);
+
+  // 4. Anticipo
+  var previsioni = [prev3h, prev3h - 1, prev3h + 1];
+  var anticipo = calcolaAnticipoPredittivo(tempEst, previsioni, isWinter);
+
+  // 5. Occupancy
+  var occ = calcolaSetbackAssenza(tempEst, comfort.stagione, occupancy);
+
+  // Ripristina mercato
+  MERCATO.PUN_F0 = oldPUN;
+  MERCATO.PSV = oldPSV;
+
+  // Render
+  document.getElementById('lab-results').style.display = 'block';
+  document.getElementById('lab-res-setpoint').textContent = comfort.setpoint.toFixed(1);
+  document.getElementById('lab-res-modalita').textContent = comfort.modalita;
+  document.getElementById('lab-res-cop').textContent = sw.cop.toFixed(1);
+  document.getElementById('lab-res-fonte').textContent = sw.convieneElettrico ? 'ELETTRICO' : 'GAS';
+
+  document.getElementById('lab-res-comfort').textContent = comfort.spiegazione;
+  document.getElementById('lab-res-switch').textContent = sw.spiegazione;
+
+  var recEl = document.getElementById('lab-res-recircolo');
+  if (rec.attivo) { recEl.style.display = 'block'; recEl.textContent = rec.spiegazione; }
+  else { recEl.style.display = 'none'; }
+
+  var antEl = document.getElementById('lab-res-anticipo');
+  if (anticipo.attivo) { antEl.style.display = 'block'; antEl.textContent = anticipo.spiegazione; }
+  else { antEl.style.display = 'none'; }
+
+  var occEl = document.getElementById('lab-res-occupancy');
+  if (!occupancy) {
+    occEl.style.display = 'block';
+    occEl.innerHTML = '<strong>Setback attivo.</strong> ' + occ.spiegazione;
+  } else { occEl.style.display = 'none'; }
+
+  // Risparmio stimato
+  var f_comfort = comfort.stagione === 'estate' ? 0.92 : 1.0;
+  var f_switch = sw.convieneElettrico ? 0.90 : 1.0;
+  var f_recircolo = rec.attivo ? 0.88 : 1.0;
+  var f_occupancy = !occupancy ? 0.92 : 1.0;
+  var risparmioTot = (1 - (f_comfort * f_switch * f_recircolo * f_occupancy)) * 100;
+  var algs = [];
+  if (f_comfort < 1) algs.push('comfort');
+  if (f_switch < 1) algs.push('switch');
+  if (f_recircolo < 1) algs.push('recircolo');
+  if (f_occupancy < 1) algs.push('assenza');
+  if (anticipo.attivo) algs.push('anticipo');
+
+  document.getElementById('lab-res-risparmio').innerHTML =
+    '<strong>Risparmio stimato: ' + risparmioTot.toFixed(1) + '%</strong><br>' +
+    '<span style="font-size:12px;">Pilastri attivi: ' + (algs.length > 0 ? algs.join(' + ') : 'nessuno') + '</span>';
+
+  window.scrollTo(0, document.getElementById('lab-results').offsetTop - 20);
+}
+
 // ==================== OCCUPANCY / GESTIONE ASSENZA ====================
 var occupancySimulata = null; // null = auto (geofencing reale), true = fuori casa, false = a casa
 
@@ -2100,7 +2227,7 @@ function fetchMeteoGPS() {
 
 function fetchMeteoCoords(lat, lon) {
   var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
-    '&current=temperature_2m,relative_humidity_2m,apparent_temperature&timezone=auto&forecast_days=1';
+    '&current=temperature_2m,relative_humidity_2m,apparent_temperature&hourly=temperature_2m&timezone=auto&forecast_days=2';
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -2140,6 +2267,19 @@ function fetchMeteoCoords(lat, lon) {
       if (cardRec && rec.attivo) {
         cardRec.style.display = 'block';
         document.getElementById('recircolo-testo').textContent = rec.spiegazione;
+      }
+
+      // 7° Pilastro: Anticipo Predittivo
+      var previsioniOrarie = [];
+      if (d.hourly && d.hourly.temperature_2m) {
+        previsioniOrarie = d.hourly.temperature_2m.slice(0, 6);
+      }
+      var isWinter = comfort.stagione === 'inverno';
+      var anticipo = calcolaAnticipoPredittivo(tempEst, previsioniOrarie, isWinter);
+      var cardAnticipo = document.getElementById('card-anticipo');
+      if (cardAnticipo && anticipo.attivo) {
+        cardAnticipo.style.display = 'block';
+        document.getElementById('anticipo-testo').textContent = anticipo.spiegazione;
       }
 
       var presente = rilevaPresenza();
@@ -2222,5 +2362,88 @@ window.onload = function() {
   }
 };
 </script>
+<!-- ==================== SCREEN-LAB: LABORATORIO SIMULAZIONE ==================== -->
+<div id="screen-lab" class="screen">
+  <div class="app-header">
+    <h1>Lab <span style="color:#FF0088">Simulazione</span></h1>
+    <p>Testa EcoHybrid senza hardware</p>
+  </div>
+  <div class="divider"></div>
+
+  <div class="card">
+    <div class="card-title">Variabili ambiente</div>
+    <div class="input-group">
+      <label>Temperatura esterna (C)</label>
+      <input type="number" id="lab-temp-est" value="28" step="0.5">
+    </div>
+    <div class="input-group">
+      <label>Umidita (%)</label>
+      <input type="number" id="lab-umid" value="55" step="1" min="0" max="100">
+    </div>
+    <div class="input-group">
+      <label>PUN elettricita F0 (EUR/kWh)</label>
+      <input type="number" id="lab-pun" value="0.189" step="0.001">
+    </div>
+    <div class="input-group">
+      <label>PSV gas (EUR/m3)</label>
+      <input type="number" id="lab-psv" value="0.664" step="0.001">
+    </div>
+    <div class="input-group">
+      <label>Stagione</label>
+      <select id="lab-stagione">
+        <option value="auto">Auto (da temperatura)</option>
+        <option value="estate">Estate</option>
+        <option value="inverno">Inverno</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Casa occupata?</label>
+      <select id="lab-occupancy">
+        <option value="true">Occupata</option>
+        <option value="false">Vuota</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Previsione temp tra 3 ore (C)</label>
+      <input type="number" id="lab-prev-3h" value="26" step="0.5">
+    </div>
+    <button class="btn btn-primary" onclick="runLabSimulation()">Calcola ottimizzazione</button>
+  </div>
+
+  <div id="lab-results" style="display:none;">
+    <div class="card">
+      <div class="card-title">Risultati EcoHybrid</div>
+      <div class="metric-grid">
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-setpoint" style="color:#00d4aa;">--</div>
+          <div class="metric-unit">C Setpoint</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-modalita" style="color:#4488ff;">--</div>
+          <div class="metric-unit">Modalita</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-cop" style="color:#ffaa00;">--</div>
+          <div class="metric-unit">COP</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-value" id="lab-res-fonte" style="color:#FF0088;">--</div>
+          <div class="metric-unit">Fonte consigliata</div>
+        </div>
+      </div>
+      <div id="lab-res-comfort" class="info-box" style="margin-top:12px;"></div>
+      <div id="lab-res-switch" class="info-box" style="margin-top:8px;"></div>
+      <div id="lab-res-recircolo" class="info-box" style="margin-top:8px; display:none;"></div>
+      <div id="lab-res-anticipo" class="info-box" style="margin-top:8px; display:none;"></div>
+      <div id="lab-res-occupancy" class="info-box" style="margin-top:8px; display:none;"></div>
+      <div id="lab-res-risparmio" class="success-box" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
+  </div>
+</div>
+
 </body>
 </html>
