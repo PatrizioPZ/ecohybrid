@@ -2,6 +2,9 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>EcoHybrid</title>
 <style>
@@ -231,7 +234,7 @@
       <span class="path-badge badge-pink">Richiede hardware</span>
     </div>
     <p style="text-align:center; margin-top:16px; font-size:13px;">
-      <span onclick="showScreen('screen-compat-check')" style="cursor:pointer;color:#FF0088;text-decoration:none;">Non so se il mio condizionatore e compatibile</span>
+      <button type="button" onclick="showScreen('screen-compat-check')" style="background:none;border:none;color:#FF0088;text-decoration:none;cursor:pointer;font-size:13px;font-family:inherit;padding:0;">Non so se il mio condizionatore e compatibile</button>
     </p>
   </div>
 </div>
@@ -897,6 +900,7 @@ function autoCheckCompat() {
 var screenHistory = [];
 
 function showScreen(id) {
+  if (event && event.preventDefault) event.preventDefault();
   var current = document.querySelector('.screen.active');
   if (current && current.id !== id) {
     screenHistory.push(current.id);
