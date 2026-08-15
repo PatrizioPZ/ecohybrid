@@ -1,0 +1,12 @@
+{
+  "updated": "2026-08-15",
+  "apps": [
+    {"app": "SmartThings", "brand": "Samsung", "path": "ha"},
+    {"app": "Onecta", "brand": "Daikin", "path": "ha"},
+    {"app": "MelCloud", "brand": "Mitsubishi", "path": "ha"},
+    {"app": "ThinQ", "brand": "LG", "path": "ha"},
+    {"app": "Comfort Cloud", "brand": "Panasonic", "path": "ha"},
+    {"app": "Home AC", "brand": "Toshiba", "path": "ha"}
+  ],
+  "note": "Se l app del tuo clima non e in questa lista, serve Mini PC + adattatore IR (percorso B)"
+}
