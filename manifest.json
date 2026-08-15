@@ -1,23 +1,36 @@
 {
-  "name": "EcoHybrid - Smart Energy Optimizer",
+  "name": "EcoHybrid",
   "short_name": "EcoHybrid",
-  "description": "Ottimizzazione automatica tra gas, pompa di calore e circolazione recupero basata sul meteo esterno.",
-  "start_url": "/",
+  "description": "Ottimizzazione energetica domestica intelligente",
+  "start_url": "/ecohybrid/",
   "display": "standalone",
-  "background_color": "#f3f4f6",
-  "theme_color": "#10b981",
-  "orientation": "portrait-primary",
+  "background_color": "#111144",
+  "theme_color": "#111144",
+  "orientation": "portrait",
+  "scope": "/ecohybrid/",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/ecohybrid/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "sizes": "192x192"
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
-      "type": "image/png",
+      "src": "/ecohybrid/icon-512.png",
       "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "it",
+  "dir": "ltr",
+  "screenshots": [
+    {
+      "src": "/ecohybrid/screenshot-1.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 }
