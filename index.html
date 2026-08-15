@@ -232,68 +232,57 @@
       <span class="path-badge badge-pink">Richiede hardware</span>
     </div>
     <p style="text-align:center; margin-top:16px; font-size:13px;">
-      <a href="#" onclick="showScreen('screen-compat')" style="color:#FF0088; text-decoration:none;">Non so se il mio condizionatore e compatibile</a>
+      <a href="#" onclick="showScreen('screen-compat-check')" style="color:#FF0088; text-decoration:none;">Non so se il mio condizionatore e compatibile</a>
     </p>
   </div>
 </div>
 
-<!-- ==================== SCREEN COMPAT ==================== -->
-<div id="screen-compat" class="screen">
+<!-- ==================== SCREEN-COMPAT-CHECK: VERIFICA COMPATIBILITA ==================== -->
+<div id="screen-compat-check" class="screen">
   <div class="app-header">
-    <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
-    <p>Compatibilita condizionatori</p>
+    <h1>Quale <span style="color:#FF0088">app</span> usi?</h1>
+    <p>Seleziona l app con cui accendi il clima dal telefono</p>
   </div>
   <div class="divider"></div>
+
   <div class="card">
-    <div class="card-title">Controllo completo via WiFi / App nativa</div>
-    <p style="font-size:13px; color:#a0a0c0; line-height:1.5; margin-bottom:16px;">
-      Queste marche permettono controllo completo (modalita, temperatura, ventilazione, dry, eco) tramite app ufficiale o API cloud.
+    <div class="card-title">App compatibili — Percorso A (nessun hardware)</div>
+    <p style="font-size:12px; color:#a0a0c0; margin-bottom:12px; line-height:1.5;">
+      Queste app hanno integrazione ufficiale con Home Assistant. Se usi una di queste, il tuo clima si collega direttamente.
     </p>
-    <div class="compat-category">
-      <h4>WiFi nativo con API ufficiale</h4>
-      <div class="compat-list">
-        <span class="compat-item native">Samsung SmartThings</span>
-        <span class="compat-item native">LG ThinQ</span>
-        <span class="compat-item native">Daikin Onecta</span>
-        <span class="compat-item native">Mitsubishi MelCloud</span>
-        <span class="compat-item native">Panasonic Comfort Cloud</span>
-        <span class="compat-item native">Haier hOn</span>
-        <span class="compat-item native">Toshiba Home AC</span>
-      </div>
-    </div>
-    <div class="compat-category">
-      <h4>Tuya / Smart Life</h4>
-      <div class="compat-list">
-        <span class="compat-item tuya">Midea</span>
-        <span class="compat-item tuya">Comfee</span>
-        <span class="compat-item tuya">TCL</span>
-        <span class="compat-item tuya">Ariston</span>
-        <span class="compat-item tuya">Altri brand Tuya</span>
-      </div>
-    </div>
-    <div class="compat-category">
-      <h4>IR universale (richiede Mini PC)</h4>
-      <div class="compat-list">
-        <span class="compat-item ir">Qualsiasi marca con telecomando IR</span>
-        <span class="compat-item ir">Modelli non-smart di tutte le marche sopra</span>
-      </div>
-    </div>
-    <div class="info-box">
-      <strong style="color:#fff;">Come capire se il tuo e compatibile:</strong><br>
-      Se il telecomando ha i pulsanti Modalita, Temperatura, Ventilazione, Dry e il condizionatore ha un adesivo WiFi o QR code, e compatibile.<br><br>
-      Se non ha WiFi ma ha telecomando IR, e comunque compatibile con il percorso Mini PC.
-    </div>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#1428a0;">SmartThings — Samsung</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#00a8e1;">Onecta — Daikin</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#e60012;">MelCloud — Mitsubishi</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#a50034;">ThinQ — LG</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#006ab0;">Comfort Cloud — Panasonic</button>
+    <button class="btn btn-primary" onclick="selectPath('ha')" style="margin-bottom:8px; background:#ed1c24;">Home AC — Toshiba</button>
   </div>
+
   <div class="card">
-    <p style="font-size:14px; margin-bottom:16px;">Il tuo condizionatore e in questa lista?</p>
-    <button class="btn btn-primary" onclick="selectPath('ha')">Si, e WiFi nativo o Tuya</button>
-    <button class="btn btn-secondary" onclick="selectPath('generic')">No, o non so / e con telecomando IR</button>
+    <div class="card-title">Altra app o telecomando — Percorso B (Mini PC)</div>
+    <p style="font-size:12px; color:#a0a0c0; margin-bottom:12px; line-height:1.5;">
+      Nethome Plus, Tuya Smart, Smart Life, app cinesi generiche, o telecomando IR. Serve un Mini PC + adattatore IR universale.
+    </p>
+    <button class="btn btn-secondary" onclick="selectPath('generic')">Altra app (Nethome Plus, Tuya, ecc.)</button>
+    <button class="btn btn-secondary" onclick="selectPath('generic')" style="margin-top:8px;">Solo telecomando / Non so</button>
   </div>
+
+  <div class="card" style="opacity:0.7;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:11px; color:#a0a0c0;">
+        Lista aggiornata al: <span id="compat-update-date">2026-08-15</span>
+      </div>
+      <button class="btn btn-outline" style="padding:6px 12px; font-size:11px; margin:0; width:auto;" onclick="checkCompatUpdates()">
+        Verifica aggiornamenti
+      </button>
+    </div>
+    <div id="compat-update-msg" style="font-size:11px; color:#a0a0c0; margin-top:6px; display:none;"></div>
+  </div>
+
   <div class="nav-bar">
     <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
   </div>
 </div>
-
 <!-- ==================== SCREEN 1A: CONFIGURA HA ==================== -->
 <div id="screen-1a" class="screen">
   <div class="app-header">
@@ -851,7 +840,61 @@
 </div>
 
 <script>
-// ==================== NAVIGAZIONE ====================
+// ==================== COMPATIBILITA AGGIORNAMENTO ====================
+var COMPAT_LISTA_HARD = [
+  { app: 'SmartThings', brand: 'Samsung', path: 'ha' },
+  { app: 'Onecta', brand: 'Daikin', path: 'ha' },
+  { app: 'MelCloud', brand: 'Mitsubishi', path: 'ha' },
+  { app: 'ThinQ', brand: 'LG', path: 'ha' },
+  { app: 'Comfort Cloud', brand: 'Panasonic', path: 'ha' },
+  { app: 'Home AC', brand: 'Toshiba', path: 'ha' }
+];
+var COMPAT_UPDATE_URL = 'https://raw.githubusercontent.com/PatrizioPZ/ecohybrid/main/compat.json';
+
+function initCompatDate() {
+  var saved = localStorage.getItem('ecohybrid_compat_date');
+  var el = document.getElementById('compat-update-date');
+  if (el) el.textContent = saved || '2026-08-15';
+}
+
+function checkCompatUpdates() {
+  var msgEl = document.getElementById('compat-update-msg');
+  if (msgEl) { msgEl.style.display = 'block'; msgEl.textContent = 'Verifica in corso...'; }
+
+  fetch(COMPAT_UPDATE_URL + '?t=' + Date.now(), { method: 'GET', cache: 'no-store' })
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      if (data && data.updated) {
+        localStorage.setItem('ecohybrid_compat_date', data.updated);
+        localStorage.setItem('ecohybrid_compat_data', JSON.stringify(data.apps || []));
+        var el = document.getElementById('compat-update-date');
+        if (el) el.textContent = data.updated;
+        if (msgEl) msgEl.innerHTML = '<span style="color:#00d4aa;">Aggiornato al ' + data.updated + '</span>';
+      } else {
+        if (msgEl) msgEl.textContent = 'Nessun aggiornamento disponibile.';
+      }
+    })
+    .catch(function(err) {
+      console.log('Compat update check failed:', err.message);
+      if (msgEl) msgEl.textContent = 'Offline — lista corrente valida.';
+    });
+}
+
+// Auto-check ogni 7 giorni
+function autoCheckCompat() {
+  var last = localStorage.getItem('ecohybrid_compat_lastcheck');
+  var now = Date.now();
+  var days7 = 7 * 24 * 60 * 60 * 1000;
+  if (!last || (now - parseInt(last)) > days7) {
+    localStorage.setItem('ecohybrid_compat_lastcheck', now.toString());
+    checkCompatUpdates();
+  }
+}
+
+// ==================== NAVIGAZIONE ====================// ==================== NAVIGAZIONE ====================
 var screenHistory = [];
 
 function showScreen(id) {
@@ -2124,6 +2167,9 @@ function showToast(msg) {
 
 // ==================== INIT ====================
 window.onload = function() {
+  initCompatDate();
+  autoCheckCompat();
+
   var isEdge = navigator.userAgent.indexOf("Edg") > -1 || navigator.userAgent.indexOf("Edge") > -1;
   if (isEdge) {
     var edgeBanner = document.getElementById("edge-banner-unified");
