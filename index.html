@@ -312,7 +312,22 @@
     <button class="btn btn-primary" id="btn-test-ha" onclick="testHAConnection()">Test connessione</button>
     <div id="ha-test-result" style="margin-top:12px;"></div>
   </div>
-  <div class="card" id="card-ha-help" style="display:none;">
+    <div class="card">
+    <div class="card-title">Come trovo l indirizzo?</div>
+    <div class="info-box">
+      <strong style="color:#fff;">1. Prova il piu comune</strong><br>
+      Se usi Home Assistant OS, Raspberry o Mini PC, scrivi:<br>
+      <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">http://homeassistant.local:8123</code><br><br>
+      <strong style="color:#fff;">2. Guarda nel tuo router</strong><br>
+      Apri il browser e vai su <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">192.168.1.1</code> (o <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">192.168.0.1</code>).<br>
+      Cerca "Dispositivi connessi" o "Stato rete" e trova il Mini PC / Raspberry.<br><br>
+      <strong style="color:#fff;">3. App Fing (gratuita)</strong><br>
+      Scarica Fing dal Play Store / App Store, scansiona la rete e cerca "homeassistant".<br>
+      L IP sara qualcosa come <code style="background:rgba(255,255,255,0.10);padding:2px 6px;border-radius:4px;font-size:12px;">192.168.1.50</code>.
+    </div>
+  </div>
+
+<div class="card" id="card-ha-help" style="display:none;">
     <div class="card-title">Come ottenere il token</div>
     <p style="font-size:13px; color:#a0a0c0; line-height:1.6;">
       1. Apri Home Assistant nel browser<br>
