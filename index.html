@@ -701,6 +701,76 @@
   </div>
 
   <div class="card">
+   <!-- ========== DEMO CLOUD ECOHYBRID ========== -->
+<div class="card" style="margin-bottom: 20px; border: 2px solid #00D4AA;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+    <div style="width:12px; height:12px; border-radius:50%; background:#00D4AA; animation:pulse 2s infinite;"></div>
+    <h2 style="color:#00D4AA; margin:0; font-size:1.1rem;">Demo Cloud — Scatola Nera v2.0</h2>
+  </div>
+  <p style="font-size:0.8rem; color:#8892b0; margin:0 0 12px 0;">
+    Server: <code style="background:#0f0f1a; padding:2px 6px; border-radius:4px;">ecohybrid-api.onrender.com</code> | 
+    Key: <code style="background:#0f0f1a; padding:2px 6px; border-radius:4px;">CALEFFI_SANDBOX</code>
+  </p>
+  
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Temp interna (C)</label>
+      <input type="number" id="eh-temp-int" value="22" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Temp esterna (C)</label>
+      <input type="number" id="eh-temp-ext" value="28" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Umidita (%)</label>
+      <input type="number" id="eh-umid" value="55" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Previsione 3h (C)</label>
+      <input type="number" id="eh-forecast" value="30" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">PUN (EUR/kWh)</label>
+      <input type="number" id="eh-pun" value="0.189" step="0.001" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">PSV (EUR/Smc)</label>
+      <input type="number" id="eh-psv" value="0.664" step="0.001" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Sistema</label>
+      <select id="eh-system" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+        <option value="pompa">Pompa di calore</option>
+        <option value="caldaia">Caldaia gas</option>
+        <option value="pannelli">Pannelli elettrici</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Stato clima</label>
+      <select id="eh-mode" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+        <option value="off">Spento</option>
+        <option value="cool">Raffreddamento</option>
+        <option value="heat">Riscaldamento</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 10px;">
+    <label style="font-size:0.8rem; color:#ccd6f6; cursor:pointer;">
+      <input type="checkbox" id="eh-occupancy" checked style="margin-right:6px;"> Casa occupata
+    </label>
+  </div>
+
+  <button onclick="callEcoHybridCloud()" style="width:100%; padding:12px; border-radius:8px; border:none; background:#00D4AA; color:#0a192f; font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit;">
+    Calcola con EcoHybrid Cloud
+  </button>
+
+  <div id="cloud-result" style="margin-top:15px;"></div>
+</div>
+<!-- ========== FINE DEMO CLOUD ========== -->
     <div class="card-title">Stato climatizzatore</div>
     <div id="clima-stato" class="status-acceso">AUTO</div>
     <p style="color:#a0a0c0; font-size:13px; margin-top:6px;" id="clima-dettagli">Target: -- | Modalita: --</p>
@@ -2826,6 +2896,94 @@ window.onload = function() {
   }
 };
 </script>
+<script>
+const EH_CLOUD_URL = 'https://ecohybrid-api.onrender.com';
+const EH_API_KEY   = 'EHY_CALEFFI_SANDBOX_7730';
 
+async function callEcoHybridCloud() {
+  const btn = document.querySelector('button[onclick="callEcoHybridCloud()"]');
+  const originalText = btn.textContent;
+  btn.textContent = 'Calcolo in corso...';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+
+  const payload = {
+    temperature_internal_c: parseFloat(document.getElementById('eh-temp-int').value) || 22,
+    temperature_external_c: parseFloat(document.getElementById('eh-temp-ext').value) || 28,
+    humidity_internal_pct: parseFloat(document.getElementById('eh-umid').value) || 55,
+    hvac_mode_current: document.getElementById('eh-mode').value || 'off',
+    energy_tariffs: {
+      pun_euro_kwh: parseFloat(document.getElementById('eh-pun').value) || 0.189,
+      psv_euro_smc: parseFloat(document.getElementById('eh-psv').value) || 0.664
+    },
+    occupancy_detected: document.getElementById('eh-occupancy').checked,
+    weather_forecast_3h_c: parseFloat(document.getElementById('eh-forecast').value) || 30,
+    system_type: document.getElementById('eh-system').value || 'pompa',
+    grid_demand_response_trigger: false
+  };
+
+  try {
+    const res = await fetch(`${EH_CLOUD_URL}/v1/optimize`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-EcoHybrid-Key': EH_API_KEY
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Errore HTTP ' + res.status);
+    }
+
+    const data = await res.json();
+    renderCloudResult(data);
+  } catch (e) {
+    document.getElementById('cloud-result').innerHTML = 
+      '<div style="color:#ff6b6b; border-left:3px solid #ff6b6b; padding:10px; background:#1a0f0f; border-radius:4px; margin-top:8px;">' +
+      '<strong>Errore API:</strong> ' + e.message + '<br><small>Se il server era inattivo, riprova tra 30 secondi (risveglio Render).</small>' +
+      '</div>';
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+function renderCloudResult(d) {
+  const a = d.actions;
+  const html = 
+    '<div style="border-left: 4px solid #00D4AA; padding: 15px; background:#0f1f1a; border-radius:8px; margin-top:10px;">' +
+      '<h3 style="color:#00D4AA; margin:0 0 12px 0; font-size:1rem;">Risultato Algoritmo</h3>' +
+      '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Setpoint</div>' +
+          '<div style="font-size:1.8rem; font-weight:800; color:#fff;">' + a.hvac_setpoint_c + '<span style="font-size:0.9rem;">C</span></div>' +
+        '</div>' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Modalita</div>' +
+          '<div style="font-size:1.2rem; font-weight:700; color:#fff; margin-top:4px;">' + a.hvac_mode + '</div>' +
+        '</div>' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Fonte</div>' +
+          '<div style="font-size:1.2rem; font-weight:700; margin-top:4px; color:' + (a.hvac_source === 'ELETTRICO' ? '#00D4AA' : '#E6007E') + ';">' + a.hvac_source + '</div>' +
+        '</div>' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Risparmio</div>' +
+          '<div style="font-size:1.8rem; font-weight:800; color:#00D4AA;">' + d.estimated_saving_index_pct + '<span style="font-size:0.9rem;">%</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:12px; font-size:0.75rem; color:#8892b0; line-height:1.6;">' +
+        '<strong style="color:#ccd6f6;">Pilastri attivi:</strong> ' + d.pilastri_attivi.join(', ') + '<br>' +
+        '<strong style="color:#ccd6f6;">Destratificazione:</strong> ' + a.fan_destratification_speed_pct + '% | ' +
+        '<strong style="color:#ccd6f6;">Schermatura:</strong> ' + a.passive_shading_position + ' | ' +
+        '<strong style="color:#ccd6f6;">Anticipo:</strong> ' + a.anticipo_minuti + ' min<br>' +
+        '<code style="font-size:0.65rem; opacity:0.5;">' + d.license + '</code>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('cloud-result').innerHTML = html;
+}
+</script>
 </body>
 </html>
