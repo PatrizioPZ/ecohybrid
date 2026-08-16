@@ -6,6 +6,12 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#111144">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EcoHybrid">
+<link rel="manifest" href="/ecohybrid/manifest.json">
+<link rel="apple-touch-icon" href="/ecohybrid/icon-192.png">
 <title>EcoHybrid</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -221,6 +227,20 @@
     <p>Ottimizzazione energetica intelligente</p>
   </div>
   <div class="divider"></div>
+  <div id="install-banner" class="card" style="display:none; border-color:#00d4aa;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+      <div style="width:12px; height:12px; border-radius:50%; background:#00d4aa;"></div>
+      <div style="font-size:14px; font-weight:700; color:#00d4aa;">Installa EcoHybrid</div>
+    </div>
+    <p style="font-size:13px; color:#a0a0c0; margin-bottom:12px;">
+      Aggiungi EcoHybrid alla home del telefono per usarla come app vera, anche offline.
+    </p>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" style="flex:1; padding:10px; font-size:13px;" onclick="installaPWA()">Installa</button>
+      <button class="btn btn-outline" style="flex:1; padding:10px; font-size:13px;" onclick="chiudiInstallPrompt()">Piu tardi</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-title">Scegli il tuo percorso</div>
     <div class="path-card" onclick="selectPath('ha')">
@@ -236,9 +256,7 @@
     <p style="text-align:center; margin-top:16px; font-size:13px;">
       <button type="button" onclick="showScreen('screen-compat-check')" style="background:none;border:none;color:#FF0088;text-decoration:none;cursor:pointer;font-size:13px;font-family:inherit;padding:0;">Non so se il mio condizionatore e compatibile</button>
     </p>
-    <p style="text-align:center; margin-top:8px; font-size:13px;">
-      <button type="button" onclick="showScreen('screen-lab')" style="background:none;border:none;color:#a0a0c0;text-decoration:none;cursor:pointer;font-size:13px;font-family:inherit;padding:0;">Laboratorio simulazione</button>
-    </p>
+
   </div>
 </div>
 
@@ -312,6 +330,16 @@
       <label>Entita clima (opzionale)</label>
       <input type="text" id="ha-entity" placeholder="es. climate.soggiorno (lascia vuoto per auto-discovery)">
     </div>
+    <div class="input-group">
+      <label>Tipo impianto termico</label>
+      <select id="ha-tipo-impianto" onchange="salvaTipoImpianto()">
+        <option value="pompa">Pompa di calore / Clima</option>
+        <option value="pannelli">Pannelli radianti / IR (solo elettrico)</option>
+        <option value="caldaia">Caldaia a gas</option>
+        <option value="ibrido">Ibrido (pompa + caldaia)</option>
+      </select>
+    </div>
+    <div class="info-box" id="info-tipo-impianto" style="display:none;"></div>
     <button class="btn btn-primary" id="btn-test-ha" onclick="testHAConnection()">Test connessione</button>
     <div id="ha-test-result" style="margin-top:12px;"></div>
   </div>
@@ -440,6 +468,15 @@
       Cerca e installa <strong>LocalTuya</strong> o <strong>Tuya</strong>. Inserisci le credenziali dell'app.<br><br>
       <strong>Se il clima ha solo telecomando IR:</strong><br>
       Installa <strong>SmartIR</strong>. Ti servira un ricevitore/trasmittente IR collegato al Mini PC via USB.
+    </div>
+    <div class="input-group">
+      <label>Tipo impianto termico</label>
+      <select id="wz-tipo-impianto" onchange="salvaTipoImpianto()">
+        <option value="pompa">Pompa di calore / Clima</option>
+        <option value="pannelli">Pannelli radianti / IR (solo elettrico)</option>
+        <option value="caldaia">Caldaia a gas</option>
+        <option value="ibrido">Ibrido (pompa + caldaia)</option>
+      </select>
     </div>
     <div class="info-box">
       Dopo l'integrazione, il clima apparira come entita <code>climate.nome</code> in Home Assistant.
@@ -638,6 +675,7 @@
   <div class="app-header">
     <h1>Eco<span style="color:#FF0088">Hybrid</span></h1>
     <p id="dashboard-subtitle">Ottimizzazione energetica intelligente</p>
+    <p id="dashboard-tipo-impianto" style="font-size:12px; color:#a0a0c0; margin-top:4px;"></p>
   </div>
   <div class="divider"></div>
 
@@ -663,6 +701,76 @@
   </div>
 
   <div class="card">
+   <!-- ========== DEMO CLOUD ECOHYBRID ========== -->
+<div class="card" style="margin-bottom: 20px; border: 2px solid #00D4AA;">
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+    <div style="width:12px; height:12px; border-radius:50%; background:#00D4AA; animation:pulse 2s infinite;"></div>
+    <h2 style="color:#00D4AA; margin:0; font-size:1.1rem;">Demo Cloud — Scatola Nera v2.0</h2>
+  </div>
+  <p style="font-size:0.8rem; color:#8892b0; margin:0 0 12px 0;">
+    Server: <code style="background:#0f0f1a; padding:2px 6px; border-radius:4px;">ecohybrid-api.onrender.com</code> | 
+    Key: <code style="background:#0f0f1a; padding:2px 6px; border-radius:4px;">CALEFFI_SANDBOX</code>
+  </p>
+  
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Temp interna (C)</label>
+      <input type="number" id="eh-temp-int" value="22" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Temp esterna (C)</label>
+      <input type="number" id="eh-temp-ext" value="28" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Umidita (%)</label>
+      <input type="number" id="eh-umid" value="55" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Previsione 3h (C)</label>
+      <input type="number" id="eh-forecast" value="30" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">PUN (EUR/kWh)</label>
+      <input type="number" id="eh-pun" value="0.189" step="0.001" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">PSV (EUR/Smc)</label>
+      <input type="number" id="eh-psv" value="0.664" step="0.001" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Sistema</label>
+      <select id="eh-system" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+        <option value="pompa">Pompa di calore</option>
+        <option value="caldaia">Caldaia gas</option>
+        <option value="pannelli">Pannelli elettrici</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:0.75rem; color:#8892b0; display:block; margin-bottom:4px;">Stato clima</label>
+      <select id="eh-mode" style="width:100%; padding:8px; border-radius:6px; border:1px solid #233554; background:#0f0f1a; color:#fff; font-family:inherit; box-sizing:border-box;">
+        <option value="off">Spento</option>
+        <option value="cool">Raffreddamento</option>
+        <option value="heat">Riscaldamento</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 10px;">
+    <label style="font-size:0.8rem; color:#ccd6f6; cursor:pointer;">
+      <input type="checkbox" id="eh-occupancy" checked style="margin-right:6px;"> Casa occupata
+    </label>
+  </div>
+
+  <button onclick="callEcoHybridCloud()" style="width:100%; padding:12px; border-radius:8px; border:none; background:#00D4AA; color:#0a192f; font-weight:700; font-size:0.95rem; cursor:pointer; font-family:inherit;">
+    Calcola con EcoHybrid Cloud
+  </button>
+
+  <div id="cloud-result" style="margin-top:15px;"></div>
+</div>
+<!-- ========== FINE DEMO CLOUD ========== -->
     <div class="card-title">Stato climatizzatore</div>
     <div id="clima-stato" class="status-acceso">AUTO</div>
     <p style="color:#a0a0c0; font-size:13px; margin-top:6px;" id="clima-dettagli">Target: -- | Modalita: --</p>
@@ -720,14 +828,18 @@
   <div class="card" id="card-automazione">
     <div class="card-title">Automazione EcoHybrid</div>
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-      <div style="width:12px; height:12px; border-radius:50%; background:#00d4aa; animation:pulse 2s infinite;"></div>
-      <div style="font-size:14px; font-weight:700; color:#00d4aa;">Attiva — nessuna azione richiesta</div>
+      <div style="width:12px; height:12px; border-radius:50%; background:#00d4aa; animation:pulse 2s infinite;" id="auto-dot"></div>
+      <div style="font-size:14px; font-weight:700; color:#00d4aa;" id="auto-stato-text">Attiva — nessuna azione richiesta</div>
     </div>
-    <div class="info-box">
-      EcoHybrid gestisce automaticamente il clima. Non devi fare nulla. L'app lavora in background 24/7.
+    <div class="info-box" id="auto-info">
+      EcoHybrid gestisce automaticamente il clima. Non devi fare nulla.
+    </div>
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button class="btn btn-secondary" style="flex:1; padding:10px; font-size:13px;" id="btn-auto-on" onclick="toggleAutomazione(true)">Attiva auto</button>
+      <button class="btn btn-outline" style="flex:1; padding:10px; font-size:13px;" id="btn-auto-off" onclick="toggleAutomazione(false)">Disattiva auto</button>
     </div>
     <div class="device-meta" style="margin-top:8px;">
-      Ultima ottimizzazione: <span id="last-optimization">--</span>
+      Ultimo comando: <span id="last-optimization">--</span>
     </div>
   </div>
 
@@ -921,7 +1033,217 @@ function autoCheckCompat() {
   }
 }
 
-// ==================== NAVIGAZIONE ====================// ==================== NAVIGAZIONE ====================
+// ==================== SERVER ECOHYBRID (SCATOLA NERA) ====================
+function getEcoHybridServerURL() {
+  return localStorage.getItem('ecohybrid_server_url') || '';
+}
+
+function salvaEcoHybridServerURL() {
+  var url = document.getElementById('eh-server-url').value.trim();
+  if (url) {
+    localStorage.setItem('ecohybrid_server_url', url);
+  } else {
+    localStorage.removeItem('ecohybrid_server_url');
+  }
+}
+
+function chiamaServerEcoHybrid(dati, callback) {
+  var serverUrl = getEcoHybridServerURL();
+  if (!serverUrl) {
+    callback(null); // Usa calcolo locale
+    return;
+  }
+
+  // Aggiungi API key (placeholder, da configurare)
+  var apiKey = localStorage.getItem('ecohybrid_api_key') || 'EHY_DEMO_KEY_001';
+
+  fetch(serverUrl + '/v1/optimize', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-EcoHybrid-Key': apiKey
+    },
+    body: JSON.stringify(dati)
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    callback(data);
+  })
+  .catch(function(err) {
+    console.error('Errore server EcoHybrid:', err);
+    callback(null); // Fallback calcolo locale
+  });
+}
+
+// ==================== INVIO COMANDI A HOME ASSISTANT ====================
+function getHAConfig() {
+  return {
+    url: localStorage.getItem('ecohybrid_ha_url'),
+    token: localStorage.getItem('ecohybrid_ha_token'),
+    entity: localStorage.getItem('ecohybrid_ha_entity') || 'climate.soggiorno'
+  };
+}
+
+function sendHACommand(service, data) {
+  var cfg = getHAConfig();
+  if (!cfg.url || !cfg.token) {
+    console.log('HA non configurato');
+    return Promise.reject('HA non configurato');
+  }
+
+  var domain = service.split('.')[0];
+  var serviceName = service.split('.')[1];
+
+  return fetch(cfg.url + '/api/services/' + domain + '/' + serviceName, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + cfg.token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(Object.assign({ entity_id: cfg.entity }, data))
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  });
+}
+
+function applicaSetpointHA(setpoint, modalita) {
+  var promises = [];
+
+  // Accendi se spento
+  promises.push(sendHACommand('climate.turn_on', {}));
+
+  // Imposta modalita
+  var haMode = 'off';
+  if (modalita === 'Cool' || modalita === 'Cool + Dry') haMode = 'cool';
+  else if (modalita === 'Heat') haMode = 'heat';
+  else if (modalita === 'Dry') haMode = 'dry';
+  else if (modalita === 'Fan') haMode = 'fan_only';
+
+  if (haMode !== 'off') {
+    promises.push(sendHACommand('climate.set_hvac_mode', { hvac_mode: haMode }));
+  }
+
+  // Imposta temperatura
+  promises.push(sendHACommand('climate.set_temperature', { temperature: setpoint }));
+
+  return Promise.all(promises);
+}
+
+function spegniClimaHA() {
+  return sendHACommand('climate.turn_off', {});
+}
+
+// ==================== NAVIGAZIONE ====================// ==================== SERVER ECOHYBRID (SCATOLA NERA) ====================
+function getEcoHybridServerURL() {
+  return localStorage.getItem('ecohybrid_server_url') || '';
+}
+
+function salvaEcoHybridServerURL() {
+  var url = document.getElementById('eh-server-url').value.trim();
+  if (url) {
+    localStorage.setItem('ecohybrid_server_url', url);
+  } else {
+    localStorage.removeItem('ecohybrid_server_url');
+  }
+}
+
+function chiamaServerEcoHybrid(dati, callback) {
+  var serverUrl = getEcoHybridServerURL();
+  if (!serverUrl) {
+    callback(null); // Usa calcolo locale
+    return;
+  }
+
+  // Aggiungi API key (placeholder, da configurare)
+  var apiKey = localStorage.getItem('ecohybrid_api_key') || 'EHY_DEMO_KEY_001';
+
+  fetch(serverUrl + '/v1/optimize', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-EcoHybrid-Key': apiKey
+    },
+    body: JSON.stringify(dati)
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    callback(data);
+  })
+  .catch(function(err) {
+    console.error('Errore server EcoHybrid:', err);
+    callback(null); // Fallback calcolo locale
+  });
+}
+
+// ==================== INVIO COMANDI A HOME ASSISTANT ====================
+function getHAConfig() {
+  return {
+    url: localStorage.getItem('ecohybrid_ha_url'),
+    token: localStorage.getItem('ecohybrid_ha_token'),
+    entity: localStorage.getItem('ecohybrid_ha_entity') || 'climate.soggiorno'
+  };
+}
+
+function sendHACommand(service, data) {
+  var cfg = getHAConfig();
+  if (!cfg.url || !cfg.token) {
+    console.log('HA non configurato');
+    return Promise.reject('HA non configurato');
+  }
+
+  var domain = service.split('.')[0];
+  var serviceName = service.split('.')[1];
+
+  return fetch(cfg.url + '/api/services/' + domain + '/' + serviceName, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + cfg.token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(Object.assign({ entity_id: cfg.entity }, data))
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  });
+}
+
+function applicaSetpointHA(setpoint, modalita) {
+  var promises = [];
+
+  // Accendi se spento
+  promises.push(sendHACommand('climate.turn_on', {}));
+
+  // Imposta modalita
+  var haMode = 'off';
+  if (modalita === 'Cool' || modalita === 'Cool + Dry') haMode = 'cool';
+  else if (modalita === 'Heat') haMode = 'heat';
+  else if (modalita === 'Dry') haMode = 'dry';
+  else if (modalita === 'Fan') haMode = 'fan_only';
+
+  if (haMode !== 'off') {
+    promises.push(sendHACommand('climate.set_hvac_mode', { hvac_mode: haMode }));
+  }
+
+  // Imposta temperatura
+  promises.push(sendHACommand('climate.set_temperature', { temperature: setpoint }));
+
+  return Promise.all(promises);
+}
+
+function spegniClimaHA() {
+  return sendHACommand('climate.turn_off', {});
+}
+
+// ==================== NAVIGAZIONE ====================
 var screenHistory = [];
 
 function showScreen(id) {
@@ -1830,6 +2152,13 @@ function aggiungiBolletta() {
 
 // ==================== DASHBOARD ====================
 function initDashboard() {
+  attivaWakeLock();
+  richiediBackgroundSync();
+  var tipo = getTipoImpianto();
+  var tipoLabels = { pompa: 'Pompa di calore', pannelli: 'Pannelli radianti / IR', caldaia: 'Caldaia a gas', ibrido: 'Ibrido' };
+  var tipoEl = document.getElementById('dashboard-tipo-impianto');
+  if (tipoEl) tipoEl.textContent = 'Impianto: ' + (tipoLabels[tipo] || 'Pompa di calore');
+
   var connected = localStorage.getItem('ecohybrid_device_connected');
   var bills = JSON.parse(localStorage.getItem('ecohybrid_bills') || '{}');
   var connDate = localStorage.getItem('ecohybrid_connection_date');
@@ -2145,6 +2474,7 @@ function runLabSimulation() {
   window.scrollTo(0, document.getElementById('lab-results').offsetTop - 20);
 }
 
+
 // ==================== OCCUPANCY / GESTIONE ASSENZA ====================
 var occupancySimulata = null; // null = auto (geofencing reale), true = fuori casa, false = a casa
 
@@ -2262,42 +2592,76 @@ function fetchMeteoCoords(lat, lon) {
         document.getElementById('switch-testo').textContent = sw.spiegazione;
       }
 
-      var rec = calcolaRecircolo(tempEst);
+      var tipo = getTipoImpianto();
+
+      // Mostra/nascondi pilastri in base al tipo impianto
+      var cardSwitch = document.getElementById('card-switch');
       var cardRec = document.getElementById('card-recircolo');
-      if (cardRec && rec.attivo) {
-        cardRec.style.display = 'block';
-        document.getElementById('recircolo-testo').textContent = rec.spiegazione;
+      var cardAnticipo = document.getElementById('card-anticipo');
+
+      if (tipo === 'pannelli' || tipo === 'caldaia') {
+        if (cardSwitch) cardSwitch.style.display = 'none';
+      }
+      if (tipo === 'pannelli' || tipo === 'caldaia') {
+        if (cardRec) cardRec.style.display = 'none';
+      } else {
+        var rec = calcolaRecircolo(tempEst);
+        if (cardRec && rec.attivo) {
+          cardRec.style.display = 'block';
+          document.getElementById('recircolo-testo').textContent = rec.spiegazione;
+        }
       }
 
-      // 7° Pilastro: Anticipo Predittivo
-      var previsioniOrarie = [];
-      if (d.hourly && d.hourly.temperature_2m) {
-        previsioniOrarie = d.hourly.temperature_2m.slice(0, 6);
-      }
-      var isWinter = comfort.stagione === 'inverno';
-      var anticipo = calcolaAnticipoPredittivo(tempEst, previsioniOrarie, isWinter);
-      var cardAnticipo = document.getElementById('card-anticipo');
-      if (cardAnticipo && anticipo.attivo) {
-        cardAnticipo.style.display = 'block';
-        document.getElementById('anticipo-testo').textContent = anticipo.spiegazione;
+      // 7° Pilastro: Anticipo Predittivo (solo pompa e pannelli)
+      if (tipo !== 'caldaia') {
+        var previsioniOrarie = [];
+        if (d.hourly && d.hourly.temperature_2m) {
+          previsioniOrarie = d.hourly.temperature_2m.slice(0, 6);
+        }
+        var isWinter = comfort.stagione === 'inverno';
+        var anticipo = calcolaAnticipoPredittivo(tempEst, previsioniOrarie, isWinter);
+        if (cardAnticipo && anticipo.attivo) {
+          cardAnticipo.style.display = 'block';
+          document.getElementById('anticipo-testo').textContent = anticipo.spiegazione;
+        }
+      } else {
+        if (cardAnticipo) cardAnticipo.style.display = 'none';
       }
 
       var presente = rilevaPresenza();
-      aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec, !presente);
+      aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec, !presente, tipo);
+
+      // INVIO COMANDI A HA (se automazione attiva)
+      if (automazioneAttiva) {
+        var target = comfort.setpoint;
+        var mode = comfort.modalita;
+        applicaSetpointHA(target, mode)
+          .then(function() {
+            var optEl = document.getElementById('last-optimization');
+            if (optEl) optEl.textContent = new Date().toLocaleTimeString('it-IT') + ' — Setpoint ' + target + 'C inviato';
+          })
+          .catch(function(err) {
+            console.error('Errore comando HA:', err);
+            var optEl = document.getElementById('last-optimization');
+            if (optEl) optEl.textContent = new Date().toLocaleTimeString('it-IT') + ' — Errore invio: ' + err.message;
+          });
+      }
     })
     .catch(function(e) { console.error(e); });
 }
 
-function aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec, casaVuota) {
+function aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec, casaVuota, tipo) {
+  if (!tipo) tipo = getTipoImpianto();
   var bills = JSON.parse(localStorage.getItem('ecohybrid_bills') || '{}');
   if (!bills.totaleAnno) return;
   var base = bills.totaleAnno;
   var f_comfort = comfort && comfort.stagione === 'estate' ? 0.92 : 1.0;
-  var f_switch = sw && sw.convieneElettrico ? 0.90 : 1.0;
-  var f_recircolo = rec && rec.attivo ? 0.88 : 1.0;
-  var f_occupancy = casaVuota ? 0.92 : 1.0; // 8% risparmio da setback assenza (DOE)
-  var risparmioStimato = base * (1 - (f_comfort * f_switch * f_recircolo * f_occupancy));
-  var risparmioPct = ((1 - (f_comfort * f_switch * f_recircolo * f_occupancy)) * 100).toFixed(1);
+  var f_switch = (sw && sw.convieneElettrico && tipo !== 'pannelli' && tipo !== 'caldaia') ? 0.90 : 1.0;
+  var f_recircolo = (rec && rec.attivo && tipo !== 'pannelli' && tipo !== 'caldaia') ? 0.88 : 1.0;
+  var f_anticipo = (tipo !== 'caldaia') ? 0.95 : 1.0;
+  var f_occupancy = casaVuota ? 0.92 : 1.0;
+  var risparmioStimato = base * (1 - (f_comfort * f_switch * f_recircolo * f_anticipo * f_occupancy));
+  var risparmioPct = ((1 - (f_comfort * f_switch * f_recircolo * f_anticipo * f_occupancy)) * 100).toFixed(1);
   var valore = document.getElementById('risparmio-valore');
   var sottotitolo = document.getElementById('risparmio-sottotitolo');
   if (valore) {
@@ -2309,6 +2673,7 @@ function aggiornaRisparmioConAlgoritmi(tempEst, comfort, sw, rec, casaVuota) {
     if (f_comfort < 1) algs.push('comfort');
     if (f_switch < 1) algs.push('switch');
     if (f_recircolo < 1) algs.push('recircolo');
+    if (f_anticipo < 1) algs.push('anticipo');
     if (f_occupancy < 1) algs.push('assenza');
     sottotitolo.textContent = 'Stima conservativa ' + risparmioPct + '% (' + algs.join(' + ') + ')';
   }
@@ -2323,10 +2688,168 @@ function showToast(msg) {
   setTimeout(function() { toast.remove(); }, 2500);
 }
 
+// ==================== TIPO IMPIANTO ====================
+function salvaTipoImpianto() {
+  var sel = document.getElementById('ha-tipo-impianto') || document.getElementById('wz-tipo-impianto');
+  if (sel) {
+    localStorage.setItem('ecohybrid_tipo_impianto', sel.value);
+    aggiornaInfoTipoImpianto(sel.value);
+  }
+}
+
+function aggiornaInfoTipoImpianto(tipo) {
+  var info = document.getElementById('info-tipo-impianto');
+  if (!info) return;
+  var testi = {
+    pompa: 'Pompa di calore: tutti e 7 i pilastri attivi (comfort, switch, recircolo, schermatura, meteo, occupancy, anticipo).',
+    pannelli: 'Pannelli radianti / IR: pilastri attivi = comfort, setback, occupancy, anticipo, schermatura. NO switch gas/elettrico, NO recircolo (COP=1.0, niente aria da muovere).',
+    caldaia: 'Caldaia a gas: pilastri attivi = comfort, setback, occupancy. NO switch (sempre gas), NO recircolo, NO anticipo predittivo.',
+    ibrido: 'Ibrido: tutti e 7 i pilastri attivi con priorità configurabile tra pompa e caldaia.'
+  };
+  info.textContent = testi[tipo] || '';
+  info.style.display = 'block';
+}
+
+function getTipoImpianto() {
+  return localStorage.getItem('ecohybrid_tipo_impianto') || 'pompa';
+}
+
+// ==================== SERVICE WORKER & PWA ====================
+var swRegistration = null;
+var deferredPrompt = null;
+
+function registraServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/ecohybrid/sw.js')
+      .then(function(reg) {
+        swRegistration = reg;
+        console.log('SW registrato:', reg.scope);
+        // Richiedi notifiche push
+        if ('Notification' in window && Notification.permission === 'granted') {
+          subscribePush();
+        }
+      })
+      .catch(function(err) {
+        console.log('SW registrazione fallita:', err);
+      });
+  }
+}
+
+function subscribePush() {
+  if (!swRegistration) return;
+  swRegistration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array('BEl62iTMgU8gWmK8Zr7x8i4v3v2v1v0v9v8v7v6v5v4v3v2v1v0') // placeholder, da sostituire con VAPID key reale
+  }).then(function(sub) {
+    console.log('Push subscription:', sub);
+  }).catch(function(err) {
+    console.log('Push subscription fallita:', err);
+  });
+}
+
+function urlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  var rawData = atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for (var i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Install prompt
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  mostraInstallPrompt();
+});
+
+function mostraInstallPrompt() {
+  var banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'block';
+}
+
+function installaPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choice) {
+      if (choice.outcome === 'accepted') {
+        console.log('PWA installata');
+      }
+      deferredPrompt = null;
+      var banner = document.getElementById('install-banner');
+      if (banner) banner.style.display = 'none';
+    });
+  }
+}
+
+function chiudiInstallPrompt() {
+  var banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'none';
+  deferredPrompt = null;
+}
+
+// Background sync
+function richiediBackgroundSync() {
+  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      return reg.sync.register('ecohybrid-sync');
+    }).then(function() {
+      console.log('Background sync registrato');
+    }).catch(function(err) {
+      console.log('Background sync fallito:', err);
+    });
+  }
+}
+
+// Ascolta messaggi dal SW
+navigator.serviceWorker.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SYNC') {
+    console.log('Background sync ricevuto');
+    // Aggiorna meteo e algoritmi
+    if (typeof fetchMeteoGPS === 'function') {
+      fetchMeteoGPS();
+    }
+  }
+});
+
+// Wake Lock (tiene attivo il display)
+var wakeLock = null;
+
+async function attivaWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock attivo');
+      wakeLock.addEventListener('release', function() {
+        console.log('Wake Lock rilasciato');
+      });
+    } catch (err) {
+      console.log('Wake Lock fallito:', err);
+    }
+  }
+}
+
+function rilasciaWakeLock() {
+  if (wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+}
+
 // ==================== INIT ====================
 window.onload = function() {
   initCompatDate();
   autoCheckCompat();
+
+  var savedAuto = localStorage.getItem('ecohybrid_automazione');
+  if (savedAuto === '1') {
+    automazioneAttiva = true;
+    toggleAutomazione(true);
+  }
+
+  registraServiceWorker();
 
   var isEdge = navigator.userAgent.indexOf("Edg") > -1 || navigator.userAgent.indexOf("Edge") > -1;
   if (isEdge) {
@@ -2348,6 +2871,17 @@ window.onload = function() {
   var savedHA = localStorage.getItem('ecohybrid_ha_url');
   if (savedHA) document.getElementById('ha-url').value = savedHA;
 
+  var savedServer = localStorage.getItem('ecohybrid_server_url');
+  if (savedServer) document.getElementById('eh-server-url').value = savedServer;
+
+  var savedTipo = localStorage.getItem('ecohybrid_tipo_impianto');
+  if (savedTipo) {
+    var sel1 = document.getElementById('ha-tipo-impianto');
+    var sel2 = document.getElementById('wz-tipo-impianto');
+    if (sel1) sel1.value = savedTipo;
+    if (sel2) sel2.value = savedTipo;
+  }
+
   // Se siamo sulla schermata bollette, ripristina i campi
   if (document.getElementById('screen-bills-unified').classList.contains('active')) {
     restoreBillFields();
@@ -2362,88 +2896,94 @@ window.onload = function() {
   }
 };
 </script>
-<!-- ==================== SCREEN-LAB: LABORATORIO SIMULAZIONE ==================== -->
-<div id="screen-lab" class="screen">
-  <div class="app-header">
-    <h1>Lab <span style="color:#FF0088">Simulazione</span></h1>
-    <p>Testa EcoHybrid senza hardware</p>
-  </div>
-  <div class="divider"></div>
+<script>
+const EH_CLOUD_URL = 'https://ecohybrid-api.onrender.com';
+const EH_API_KEY   = 'EHY_CALEFFI_SANDBOX_7730';
 
-  <div class="card">
-    <div class="card-title">Variabili ambiente</div>
-    <div class="input-group">
-      <label>Temperatura esterna (C)</label>
-      <input type="number" id="lab-temp-est" value="28" step="0.5">
-    </div>
-    <div class="input-group">
-      <label>Umidita (%)</label>
-      <input type="number" id="lab-umid" value="55" step="1" min="0" max="100">
-    </div>
-    <div class="input-group">
-      <label>PUN elettricita F0 (EUR/kWh)</label>
-      <input type="number" id="lab-pun" value="0.189" step="0.001">
-    </div>
-    <div class="input-group">
-      <label>PSV gas (EUR/m3)</label>
-      <input type="number" id="lab-psv" value="0.664" step="0.001">
-    </div>
-    <div class="input-group">
-      <label>Stagione</label>
-      <select id="lab-stagione">
-        <option value="auto">Auto (da temperatura)</option>
-        <option value="estate">Estate</option>
-        <option value="inverno">Inverno</option>
-      </select>
-    </div>
-    <div class="input-group">
-      <label>Casa occupata?</label>
-      <select id="lab-occupancy">
-        <option value="true">Occupata</option>
-        <option value="false">Vuota</option>
-      </select>
-    </div>
-    <div class="input-group">
-      <label>Previsione temp tra 3 ore (C)</label>
-      <input type="number" id="lab-prev-3h" value="26" step="0.5">
-    </div>
-    <button class="btn btn-primary" onclick="runLabSimulation()">Calcola ottimizzazione</button>
-  </div>
+async function callEcoHybridCloud() {
+  const btn = document.querySelector('button[onclick="callEcoHybridCloud()"]');
+  const originalText = btn.textContent;
+  btn.textContent = 'Calcolo in corso...';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
 
-  <div id="lab-results" style="display:none;">
-    <div class="card">
-      <div class="card-title">Risultati EcoHybrid</div>
-      <div class="metric-grid">
-        <div class="metric-box">
-          <div class="metric-value" id="lab-res-setpoint" style="color:#00d4aa;">--</div>
-          <div class="metric-unit">C Setpoint</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-value" id="lab-res-modalita" style="color:#4488ff;">--</div>
-          <div class="metric-unit">Modalita</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-value" id="lab-res-cop" style="color:#ffaa00;">--</div>
-          <div class="metric-unit">COP</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-value" id="lab-res-fonte" style="color:#FF0088;">--</div>
-          <div class="metric-unit">Fonte consigliata</div>
-        </div>
-      </div>
-      <div id="lab-res-comfort" class="info-box" style="margin-top:12px;"></div>
-      <div id="lab-res-switch" class="info-box" style="margin-top:8px;"></div>
-      <div id="lab-res-recircolo" class="info-box" style="margin-top:8px; display:none;"></div>
-      <div id="lab-res-anticipo" class="info-box" style="margin-top:8px; display:none;"></div>
-      <div id="lab-res-occupancy" class="info-box" style="margin-top:8px; display:none;"></div>
-      <div id="lab-res-risparmio" class="success-box" style="margin-top:12px;"></div>
-    </div>
-  </div>
+  const payload = {
+    temperature_internal_c: parseFloat(document.getElementById('eh-temp-int').value) || 22,
+    temperature_external_c: parseFloat(document.getElementById('eh-temp-ext').value) || 28,
+    humidity_internal_pct: parseFloat(document.getElementById('eh-umid').value) || 55,
+    hvac_mode_current: document.getElementById('eh-mode').value || 'off',
+    energy_tariffs: {
+      pun_euro_kwh: parseFloat(document.getElementById('eh-pun').value) || 0.189,
+      psv_euro_smc: parseFloat(document.getElementById('eh-psv').value) || 0.664
+    },
+    occupancy_detected: document.getElementById('eh-occupancy').checked,
+    weather_forecast_3h_c: parseFloat(document.getElementById('eh-forecast').value) || 30,
+    system_type: document.getElementById('eh-system').value || 'pompa',
+    grid_demand_response_trigger: false
+  };
 
-  <div class="nav-bar">
-    <button class="btn btn-secondary" onclick="showScreen('screen-0')">Indietro</button>
-  </div>
-</div>
+  try {
+    const res = await fetch(`${EH_CLOUD_URL}/v1/optimize`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-EcoHybrid-Key': EH_API_KEY
+      },
+      body: JSON.stringify(payload)
+    });
 
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Errore HTTP ' + res.status);
+    }
+
+    const data = await res.json();
+    renderCloudResult(data);
+  } catch (e) {
+    document.getElementById('cloud-result').innerHTML = 
+      '<div style="color:#ff6b6b; border-left:3px solid #ff6b6b; padding:10px; background:#1a0f0f; border-radius:4px; margin-top:8px;">' +
+      '<strong>Errore API:</strong> ' + e.message + '<br><small>Se il server era inattivo, riprova tra 30 secondi (risveglio Render).</small>' +
+      '</div>';
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+function renderCloudResult(d) {
+  const a = d.actions;
+  const html = 
+    '<div style="border-left: 4px solid #00D4AA; padding: 15px; background:#0f1f1a; border-radius:8px; margin-top:10px;">' +
+      '<h3 style="color:#00D4AA; margin:0 0 12px 0; font-size:1rem;">Risultato Algoritmo</h3>' +
+      '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Setpoint</div>' +
+          '<div style="font-size:1.8rem; font-weight:800; color:#fff;">' + a.hvac_setpoint_c + '<span style="font-size:0.9rem;">C</span></div>' +
+        '</div>' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Modalita</div>' +
+          '<div style="font-size:1.2rem; font-weight:700; color:#fff; margin-top:4px;">' + a.hvac_mode + '</div>' +
+        '</div>' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Fonte</div>' +
+          '<div style="font-size:1.2rem; font-weight:700; margin-top:4px; color:' + (a.hvac_source === 'ELETTRICO' ? '#00D4AA' : '#E6007E') + ';">' + a.hvac_source + '</div>' +
+        '</div>' +
+        '<div style="text-align:center; padding:10px; background:#0a192f; border-radius:6px;">' +
+          '<div style="font-size:0.7rem; color:#8892b0;">Risparmio</div>' +
+          '<div style="font-size:1.8rem; font-weight:800; color:#00D4AA;">' + d.estimated_saving_index_pct + '<span style="font-size:0.9rem;">%</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:12px; font-size:0.75rem; color:#8892b0; line-height:1.6;">' +
+        '<strong style="color:#ccd6f6;">Pilastri attivi:</strong> ' + d.pilastri_attivi.join(', ') + '<br>' +
+        '<strong style="color:#ccd6f6;">Destratificazione:</strong> ' + a.fan_destratification_speed_pct + '% | ' +
+        '<strong style="color:#ccd6f6;">Schermatura:</strong> ' + a.passive_shading_position + ' | ' +
+        '<strong style="color:#ccd6f6;">Anticipo:</strong> ' + a.anticipo_minuti + ' min<br>' +
+        '<code style="font-size:0.65rem; opacity:0.5;">' + d.license + '</code>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('cloud-result').innerHTML = html;
+}
+</script>
 </body>
 </html>
