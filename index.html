@@ -963,6 +963,51 @@ function autoCheckCompat() {
   }
 }
 
+// ==================== SERVER ECOHYBRID (SCATOLA NERA) ====================
+function getEcoHybridServerURL() {
+  return localStorage.getItem('ecohybrid_server_url') || '';
+}
+
+function salvaEcoHybridServerURL() {
+  var url = document.getElementById('eh-server-url').value.trim();
+  if (url) {
+    localStorage.setItem('ecohybrid_server_url', url);
+  } else {
+    localStorage.removeItem('ecohybrid_server_url');
+  }
+}
+
+function chiamaServerEcoHybrid(dati, callback) {
+  var serverUrl = getEcoHybridServerURL();
+  if (!serverUrl) {
+    callback(null); // Usa calcolo locale
+    return;
+  }
+
+  // Aggiungi API key (placeholder, da configurare)
+  var apiKey = localStorage.getItem('ecohybrid_api_key') || 'EHY_DEMO_KEY_001';
+
+  fetch(serverUrl + '/v1/optimize', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-EcoHybrid-Key': apiKey
+    },
+    body: JSON.stringify(dati)
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    callback(data);
+  })
+  .catch(function(err) {
+    console.error('Errore server EcoHybrid:', err);
+    callback(null); // Fallback calcolo locale
+  });
+}
+
 // ==================== INVIO COMANDI A HOME ASSISTANT ====================
 function getHAConfig() {
   return {
@@ -1023,7 +1068,52 @@ function spegniClimaHA() {
   return sendHACommand('climate.turn_off', {});
 }
 
-// ==================== NAVIGAZIONE ====================// ==================== INVIO COMANDI A HOME ASSISTANT ====================
+// ==================== NAVIGAZIONE ====================// ==================== SERVER ECOHYBRID (SCATOLA NERA) ====================
+function getEcoHybridServerURL() {
+  return localStorage.getItem('ecohybrid_server_url') || '';
+}
+
+function salvaEcoHybridServerURL() {
+  var url = document.getElementById('eh-server-url').value.trim();
+  if (url) {
+    localStorage.setItem('ecohybrid_server_url', url);
+  } else {
+    localStorage.removeItem('ecohybrid_server_url');
+  }
+}
+
+function chiamaServerEcoHybrid(dati, callback) {
+  var serverUrl = getEcoHybridServerURL();
+  if (!serverUrl) {
+    callback(null); // Usa calcolo locale
+    return;
+  }
+
+  // Aggiungi API key (placeholder, da configurare)
+  var apiKey = localStorage.getItem('ecohybrid_api_key') || 'EHY_DEMO_KEY_001';
+
+  fetch(serverUrl + '/v1/optimize', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-EcoHybrid-Key': apiKey
+    },
+    body: JSON.stringify(dati)
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    callback(data);
+  })
+  .catch(function(err) {
+    console.error('Errore server EcoHybrid:', err);
+    callback(null); // Fallback calcolo locale
+  });
+}
+
+// ==================== INVIO COMANDI A HOME ASSISTANT ====================
 function getHAConfig() {
   return {
     url: localStorage.getItem('ecohybrid_ha_url'),
@@ -2710,6 +2800,9 @@ window.onload = function() {
 
   var savedHA = localStorage.getItem('ecohybrid_ha_url');
   if (savedHA) document.getElementById('ha-url').value = savedHA;
+
+  var savedServer = localStorage.getItem('ecohybrid_server_url');
+  if (savedServer) document.getElementById('eh-server-url').value = savedServer;
 
   var savedTipo = localStorage.getItem('ecohybrid_tipo_impianto');
   if (savedTipo) {
