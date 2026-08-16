@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111144">
+<title>EcoHybrid — Admin Metrics</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #111144; color: #ffffff; min-height: 100vh;
+    padding: 20px 16px 40px; font-size: 15px; line-height: 1.5;
+  }
+  .app-header { text-align: center; padding: 24px 0 16px; }
+  .app-header h1 { font-size: 28px; font-weight: 800; }
+  .app-header p { color: #a0a0c0; font-size: 14px; margin-top: 6px; }
+  .divider { height: 2px; background: #FF0088; width: 120px; margin: 0 auto 24px; border-radius: 2px; }
+  .card {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: #a0a0c0; margin-bottom: 16px;
+  }
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .metric-box {
+    background: rgba(0,0,0,0.25); border-radius: 12px; padding: 16px; text-align: center;
+  }
+  .metric-value { font-size: 24px; font-weight: 800; }
+  .metric-unit { font-size: 11px; color: #a0a0c0; }
+  .input-group { margin-bottom: 14px; }
+  .input-group label {
+    display: block; font-size: 12px; color: #a0a0c0;
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .input-group input, .input-group select {
+    width: 100%; padding: 14px; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; background: rgba(0,0,0,0.25); color: #fff;
+    font-size: 15px; outline: none;
+  }
+  .btn {
+    display: block; width: 100%; padding: 16px; border: none;
+    border-radius: 12px; font-size: 15px; font-weight: 700;
+    cursor: pointer; text-align: center; margin-bottom: 12px;
+  }
+  .btn-primary { background: #FF0088; color: #fff; }
+  .btn-secondary { background: rgba(255,255,255,0.10); color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 10px 6px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  th { color: #a0a0c0; font-weight: 600; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  .partner-caleffi { color: #4488ff; }
+  .partner-owl { color: #00d4aa; }
+  .partner-sit { color: #ffaa00; }
+  .partner-octopus { color: #FF0088; }
+  .total-row { font-weight: 700; border-top: 2px solid rgba(255,255,255,0.20); }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Eco<span style="color:#FF0088">Hybrid</span> Admin</h1>
+  <p>Metriche e ricavi per partner</p>
+</div>
+<div class="divider"></div>
+
+<!-- CONFIGURAZIONE PARTNER -->
+<div class="card">
+  <div class="card-title">Configurazione partner</div>
+  <div class="input-group">
+    <label>Seleziona partner</label>
+    <select id="partner-select" onchange="caricaPartner()">
+      <option value="caleffi">Caleffi — 0,50 EUR/utente/mese</option>
+      <option value="sit">SIT — 0,80 EUR/utente/mese</option>
+      <option value="owl">OWL — 0,60 EUR/utente/mese</option>
+      <option value="octopus">Octopus Energy — 1,00 EUR/utente/mese</option>
+    </select>
+  </div>
+  <div class="input-group">
+    <label>Utenti attivi</label>
+    <input type="number" id="partner-users" value="1000" min="0" step="100">
+  </div>
+  <div class="input-group">
+    <label>Chiamate API / utente / giorno</label>
+    <input type="number" id="partner-api" value="48" min="0" step="1">
+  </div>
+  <div class="input-group">
+    <label>Prezzo contrattuale (EUR/utente/mese)</label>
+    <input type="number" id="partner-price" value="0.50" step="0.05">
+  </div>
+  <button class="btn btn-primary" onclick="salvaPartner()">Aggiorna metriche</button>
+</div>
+
+<!-- RIEPILOGO -->
+<div class="card">
+  <div class="card-title">Riepilogo ricavi</div>
+  <div class="metric-grid">
+    <div class="metric-box">
+      <div class="metric-value" id="tot-utenti" style="color:#fff;">0</div>
+      <div class="metric-unit">Utenti totali</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-value" id="tot-ricavo-mese" style="color:#00d4aa;">0 EUR</div>
+      <div class="metric-unit">Ricavo mensile</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-value" id="tot-ricavo-anno" style="color:#FF0088;">0 EUR</div>
+      <div class="metric-unit">Ricavo annuo</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-value" id="tot-api-giorno" style="color:#ffaa00;">0</div>
+      <div class="metric-unit">Chiamate API/giorno</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABELLA DETTAGLIO -->
+<div class="card">
+  <div class="card-title">Dettaglio per partner</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Partner</th>
+        <th>Utenti</th>
+        <th>Prezzo</th>
+        <th>API/giorno</th>
+        <th>Ricavo/mese</th>
+        <th>Ricavo/anno</th>
+      </tr>
+    </thead>
+    <tbody id="tabella-partner"></tbody>
+  </table>
+</div>
+
+<!-- SIMULATORE SCALA -->
+<div class="card">
+  <div class="card-title">Simulatore scala</div>
+  <p style="font-size:12px; color:#a0a0c0; margin-bottom:12px;">
+    Se aggiungi X utenti al mese, quanto fatturi tra 12 mesi?
+  </p>
+  <div class="input-group">
+    <label>Nuovi utenti / mese (tutti i partner)</label>
+    <input type="number" id="sim-crescita" value="500" min="0" step="50">
+  </div>
+  <div class="input-group">
+    <label>Churn mensile (% utenti che abbandonano)</label>
+    <input type="number" id="sim-churn" value="3" min="0" max="100" step="0.5">
+  </div>
+  <button class="btn btn-secondary" onclick="simulaScala()">Calcola proiezione</button>
+  <div id="sim-risultato" style="margin-top:16px; display:none;">
+    <div class="metric-grid">
+      <div class="metric-box">
+        <div class="metric-value" id="sim-mese-12" style="color:#00d4aa;">--</div>
+        <div class="metric-unit">Utenti mese 12</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-value" id="sim-ricavo-12" style="color:#FF0088;">--</div>
+        <div class="metric-unit">Ricavo mese 12</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var PARTNER_DEFAULT = {
+  caleffi: { nome: 'Caleffi', prezzo: 0.50, users: 2000, apiPerUserGiorno: 24 },
+  sit: { nome: 'SIT', prezzo: 0.80, users: 800, apiPerUserGiorno: 48 },
+  owl: { nome: 'OWL', prezzo: 0.60, users: 500, apiPerUserGiorno: 72 },
+  octopus: { nome: 'Octopus Energy', prezzo: 1.00, users: 5000, apiPerUserGiorno: 48 }
+};
+
+var partnerData = {};
+
+function init() {
+  var saved = localStorage.getItem('ecohybrid_admin_partners');
+  if (saved) {
+    try { partnerData = JSON.parse(saved); } catch(e) {}
+  }
+  // Riempi con default se mancanti
+  for (var key in PARTNER_DEFAULT) {
+    if (!partnerData[key]) partnerData[key] = Object.assign({}, PARTNER_DEFAULT[key]);
+  }
+  caricaPartner();
+  aggiornaTabella();
+}
+
+function caricaPartner() {
+  var key = document.getElementById('partner-select').value;
+  var p = partnerData[key];
+  if (!p) return;
+  document.getElementById('partner-users').value = p.users;
+  document.getElementById('partner-api').value = p.apiPerUserGiorno;
+  document.getElementById('partner-price').value = p.prezzo;
+}
+
+function salvaPartner() {
+  var key = document.getElementById('partner-select').value;
+  partnerData[key] = {
+    nome: PARTNER_DEFAULT[key].nome,
+    prezzo: parseFloat(document.getElementById('partner-price').value),
+    users: parseInt(document.getElementById('partner-users').value),
+    apiPerUserGiorno: parseInt(document.getElementById('partner-api').value)
+  };
+  localStorage.setItem('ecohybrid_admin_partners', JSON.stringify(partnerData));
+  aggiornaTabella();
+}
+
+function aggiornaTabella() {
+  var tbody = document.getElementById('tabella-partner');
+  tbody.innerHTML = '';
+  var totUsers = 0, totRicavoMese = 0, totRicavoAnno = 0, totApi = 0;
+
+  var colors = { caleffi: 'partner-caleffi', sit: 'partner-sit', owl: 'partner-owl', octopus: 'partner-octopus' };
+
+  for (var key in partnerData) {
+    var p = partnerData[key];
+    var ricavoMese = p.users * p.prezzo;
+    var ricavoAnno = ricavoMese * 12;
+    var apiGiorno = p.users * p.apiPerUserGiorno;
+
+    totUsers += p.users;
+    totRicavoMese += ricavoMese;
+    totRicavoAnno += ricavoAnno;
+    totApi += apiGiorno;
+
+    var row = document.createElement('tr');
+    row.innerHTML =
+      '<td class="' + (colors[key] || '') + '">' + p.nome + '</td>' +
+      '<td>' + p.users.toLocaleString('it-IT') + '</td>' +
+      '<td>' + p.prezzo.toFixed(2) + ' EUR</td>' +
+      '<td>' + apiGiorno.toLocaleString('it-IT') + '</td>' +
+      '<td>' + ricavoMese.toFixed(2) + ' EUR</td>' +
+      '<td>' + ricavoAnno.toFixed(2) + ' EUR</td>';
+    tbody.appendChild(row);
+  }
+
+  var totalRow = document.createElement('tr');
+  totalRow.className = 'total-row';
+  totalRow.innerHTML =
+    '<td>TOTALE</td>' +
+    '<td>' + totUsers.toLocaleString('it-IT') + '</td>' +
+    '<td>—</td>' +
+    '<td>' + totApi.toLocaleString('it-IT') + '</td>' +
+    '<td>' + totRicavoMese.toFixed(2) + ' EUR</td>' +
+    '<td>' + totRicavoAnno.toFixed(2) + ' EUR</td>';
+  tbody.appendChild(totalRow);
+
+  document.getElementById('tot-utenti').textContent = totUsers.toLocaleString('it-IT');
+  document.getElementById('tot-ricavo-mese').textContent = totRicavoMese.toFixed(2) + ' EUR';
+  document.getElementById('tot-ricavo-anno').textContent = totRicavoAnno.toFixed(2) + ' EUR';
+  document.getElementById('tot-api-giorno').textContent = totApi.toLocaleString('it-IT');
+}
+
+function simulaScala() {
+  var crescita = parseInt(document.getElementById('sim-crescita').value) || 0;
+  var churn = parseFloat(document.getElementById('sim-churn').value) || 0;
+  var churnFactor = 1 - (churn / 100);
+
+  var utenti = 0;
+  for (var key in partnerData) utenti += partnerData[key].users;
+
+  var ricavoMedio = 0;
+  for (var key in partnerData) ricavoMedio += partnerData[key].prezzo;
+  ricavoMedio /= Object.keys(partnerData).length;
+
+  for (var m = 1; m <= 12; m++) {
+    utenti = (utenti + crescita) * churnFactor;
+  }
+
+  var ricavoMese12 = utenti * ricavoMedio;
+
+  document.getElementById('sim-risultato').style.display = 'block';
+  document.getElementById('sim-mese-12').textContent = Math.round(utenti).toLocaleString('it-IT');
+  document.getElementById('sim-ricavo-12').textContent = ricavoMese12.toFixed(2) + ' EUR';
+}
+
+init();
+</script>
+
+</body>
+</html>
