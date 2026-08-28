@@ -1,10 +1,12 @@
 import datetime
 import logging
+import os
 from typing import Dict, Optional, List
 from fastapi import FastAPI, HTTPException, Security, status
 from fastapi.security.api_key import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+import requests
 
 # ==================== LOGGING ROYALTY ====================
 logging.basicConfig(
@@ -17,12 +19,12 @@ logger = logging.getLogger("ecohybrid")
 app = FastAPI(
     title="EcoHybrid Core - OS&Tools Production Cloud",
     description="Architettura Scatola Nera - Algoritmi proprietari protetti ex L. 633/1941",
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# CORS — permette al frontend di chiamare le API
+# CORS — permette al frontend Netlify di chiamare le API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -37,13 +39,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==================== MATRICE PREZZI ====================
+# ==================== CONFIGURAZIONE HA ====================
+HA_URL = os.getenv("HA_URL", "http://192.168.1.21").rstrip("/")
+HA_TOKEN = os.getenv("HA_TOKEN", "")
+HA_ENABLED = bool(HA_TOKEN)
+
+def ha_headers():
+    return {
+        "Authorization": f"Bearer {HA_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+def ha_get(endpoint: str):
+    if not HA_ENABLED:
+        return None
+    try:
+        resp = requests.get(f"{HA_URL}/api/{endpoint}", headers=ha_headers(), timeout=10)
+        return resp.json() if resp.status_code == 200 else None
+    except Exception as e:
+        logger.warning(f"HA GET {endpoint} error: {e}")
+        return None
+
+def ha_post(service: str, payload: dict):
+    if not HA_ENABLED:
+        return False
+    try:
+        resp = requests.post(f"{HA_URL}/api/services/{service}", json=payload, headers=ha_headers(), timeout=10)
+        return resp.status_code in (200, 201)
+    except Exception as e:
+        logger.warning(f"HA POST {service} error: {e}")
+        return False
+
+# ==================== MATRICE PREZZI & API KEYS ====================
 API_KEYS_DB = {
     "EHY_CALEFFI_SANDBOX_7730": {"partner": "Caleffi S.p.A.", "rate": 0.50, "tier": "early_adopter"},
     "EHY_OWL_SANDBOX_4410": {"partner": "Owl Home", "rate": 0.60, "tier": "early_adopter"},
     "EHY_SIT_SANDBOX_9912": {"partner": "SIT S.p.A.", "rate": 0.80, "tier": "second_tier"},
     "EHY_OCTOPUS_KRAKEN_V4": {"partner": "Octopus Energy", "rate": 1.00, "tier": "utility"},
-    "EHY_ENTERPRISE_STANDARD": {"partner": "Enterprise Global", "rate": 1.50, "tier": "enterprise"}
+    "EHY_ENTERPRISE_STANDARD": {"partner": "Enterprise Global", "rate": 1.50, "tier": "enterprise"},
+    "EHY_PATRIZIO_TEST_2026": {"partner": "Test Interno", "rate": 0.00, "tier": "dev"}
 }
 
 api_key_header = APIKeyHeader(name="X-EcoHybrid-Key", auto_error=False)
@@ -71,7 +105,12 @@ class TelemetryInput(BaseModel):
     system_type: str = Field(default="pompa")
     grid_demand_response_trigger: bool = Field(default=False)
 
-# ==================== ALGORITMI ====================
+class HACommand(BaseModel):
+    entity_id: str
+    command: str  # power_on, power_off, set_temp, set_mode
+    value: Optional[str] = None
+
+# ==================== ALGORITMI (Scatola Nera) ====================
 def get_cop(temp_ext: float) -> float:
     if temp_ext >= 15: return 4.0
     if temp_ext >= 10: return 3.5
@@ -120,7 +159,7 @@ def calcola_occupancy(occupancy: bool, stagione: str, setpoint: float) -> Option
     new_sp = setpoint + setback if stagione == "estate" else setpoint - setback
     return {"attivo": True, "setpoint_comfort": setpoint, "setpoint_attuale": new_sp}
 
-# ==================== ENDPOINT PRINCIPALE ====================
+# ==================== ENDPOINT PRINCIPALE /v1/optimize ====================
 @app.post("/v1/optimize")
 async def optimize(payload: TelemetryInput, partner: dict = Security(get_partner)):
     t_ext = payload.temperature_external_c
@@ -160,7 +199,6 @@ async def optimize(payload: TelemetryInput, partner: dict = Security(get_partner
     if f_anticipo < 1: pilastri.append("anticipo")
     if f_occupancy < 1: pilastri.append("occupancy")
 
-    # LOGGING ROYALTY
     logger.info(
         f"PARTNER={partner['partner']} | RATE={partner['rate']} | "
         f"T_EXT={t_ext}C T_INT={t_int}C | PUN={pun} PSV={psv} | SYS={system} | "
@@ -185,16 +223,119 @@ async def optimize(payload: TelemetryInput, partner: dict = Security(get_partner
         "pilastri_attivi": pilastri
     }
 
-# ==================== ENDPOINT UTILI ====================
+# ==================== ENDPOINT HA INTEGRATION ====================
+
+@app.get("/v1/ha/status")
+async def ha_status():
+    """Verifica connessione a Home Assistant."""
+    if not HA_ENABLED:
+        return {"connected": False, "reason": "HA_TOKEN non configurato"}
+    try:
+        resp = requests.get(f"{HA_URL}/api/", headers=ha_headers(), timeout=5)
+        return {"connected": resp.status_code == 200, "ha_message": resp.json() if resp.status_code == 200 else None}
+    except Exception as e:
+        return {"connected": False, "error": str(e)}
+
+@app.get("/v1/ha/climate")
+async def ha_climate():
+    """Legge tutti i dispositivi climate da HA."""
+    if not HA_ENABLED:
+        raise HTTPException(status_code=503, detail="HA non configurato")
+    states = ha_get("states")
+    if not states:
+        raise HTTPException(status_code=503, detail="HA non raggiungibile")
+    climates = []
+    for entity in states:
+        if entity["entity_id"].startswith("climate."):
+            climates.append({
+                "entity_id": entity["entity_id"],
+                "state": entity["state"],
+                "friendly_name": entity["attributes"].get("friendly_name", entity["entity_id"]),
+                "current_temperature": entity["attributes"].get("current_temperature"),
+                "temperature": entity["attributes"].get("temperature"),
+                "hvac_mode": entity["attributes"].get("hvac_mode"),
+                "hvac_modes": entity["attributes"].get("hvac_modes", []),
+                "min_temp": entity["attributes"].get("min_temp"),
+                "max_temp": entity["attributes"].get("max_temp"),
+            })
+    return {"climates": climates, "ha_connected": True}
+
+@app.get("/v1/ha/sensors")
+async def ha_sensors():
+    """Legge sensori temperatura/umidita da HA."""
+    if not HA_ENABLED:
+        raise HTTPException(status_code=503, detail="HA non configurato")
+    states = ha_get("states")
+    if not states:
+        raise HTTPException(status_code=503, detail="HA non raggiungibile")
+    sensors = []
+    for entity in states:
+        eid = entity["entity_id"]
+        if "temperatura" in eid or "temperature" in eid or "humidity" in eid:
+            try:
+                val = float(entity["state"])
+                sensors.append({
+                    "entity_id": eid,
+                    "state": val,
+                    "unit": entity["attributes"].get("unit_of_measurement", "°C"),
+                    "friendly_name": entity["attributes"].get("friendly_name", eid)
+                })
+            except:
+                pass
+    return {"sensors": sensors, "ha_connected": True}
+
+@app.post("/v1/ha/command")
+async def ha_command(cmd: HACommand):
+    """Invia comando a HA."""
+    if not HA_ENABLED:
+        raise HTTPException(status_code=503, detail="HA non configurato")
+
+    success = False
+    if cmd.command == "power_on":
+        success = ha_post("climate/turn_on", {"entity_id": cmd.entity_id})
+    elif cmd.command == "power_off":
+        success = ha_post("climate/turn_off", {"entity_id": cmd.entity_id})
+    elif cmd.command == "set_temp" and cmd.value:
+        success = ha_post("climate/set_temperature", {"entity_id": cmd.entity_id, "temperature": float(cmd.value)})
+    elif cmd.command == "set_mode" and cmd.value:
+        success = ha_post("climate/set_hvac_mode", {"entity_id": cmd.entity_id, "hvac_mode": cmd.value})
+
+    return {"success": success, "entity_id": cmd.entity_id, "command": cmd.command}
+
+# ==================== ENDPOINT TINY (Percorso B) ====================
+
+@app.post("/v1/telemetry")
+async def tiny_telemetry(data: dict, partner: dict = Security(get_partner)):
+    """Il Tiny invia telemetria, Render risponde con comandi ottimizzati."""
+    logger.info(f"Telemetry from Tiny {data.get('tiny_id', 'unknown')}: {data}")
+
+    # Logica decisionale (scatola nera)
+    t_int = data.get("indoor_temp", 20)
+    t_ext = data.get("outdoor_temp", 20)
+    umid = data.get("indoor_humidity", 50)
+
+    comfort = calcola_comfort(t_ext, umid)
+
+    return {
+        "status": "ON" if t_int < comfort["setpoint"] - 1 else "OFF",
+        "setpoint": comfort["setpoint"],
+        "mode": comfort["modalita"],
+        "reason": "Ottimizzazione EcoHybrid v2.1",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+    }
+
+# ==================== ENDPOINT BASE ====================
+
 @app.get("/")
 async def root():
     return {
         "name": "EcoHybrid Core Engine",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "status": "operational",
+        "ha_integration": HA_ENABLED,
         "license": "Diritto d'Autore ex L. 633/1941",
         "docs": "/docs",
-        "endpoints": ["/v1/optimize", "/health"]
+        "endpoints": ["/v1/optimize", "/v1/ha/status", "/v1/ha/climate", "/v1/ha/command", "/v1/telemetry", "/health"]
     }
 
 @app.get("/health")
