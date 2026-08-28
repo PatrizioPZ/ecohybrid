@@ -1,147 +1,262 @@
-const API = '/api';
-let state = { targetTemp: 22, currentMode: 'cool' };
+// EcoHybrid Frontend v2.0
+// Connette a Render (cloud) o locale
+// Legge dati reali da Home Assistant
 
-async function load() {
-  try {
-    const r = await fetch(`${API}/status`);
-    const d = await r.json();
-    render(d);
-    document.getElementById('updateTime').textContent = 'Aggiornato: ' + new Date().toLocaleTimeString('it-IT');
-  } catch (e) {
-    document.getElementById('main').innerHTML = '<div class="card error">Errore connessione: ' + e.message + '</div>';
-  }
+// ==================== CONFIGURAZIONE ====================
+const API_MODE = 'render'; // 'render' per cloud, 'local' per test locale
+
+const API_BASE = API_MODE === 'render' 
+    ? 'https://ecohybrid-api.onrender.com' 
+    : '';
+
+const API_KEY = 'EHY_PATRIZIO_TEST_2026'; // Chiave di test (cambiala in produzione)
+
+const HA_ENTITY_MAIN = 'climate.thermostat'; // Entita principale (termostato)
+
+// ==================== STATO ====================
+let state = {
+    power: false,
+    currentTemp: 20.0,
+    targetTemp: 22.0,
+    humidity: 50,
+    mode: 'cool',
+    fanSpeed: 'auto',
+    swing: false,
+    lastUpdate: Date.now(),
+    climates: [],
+    sensors: [],
+    haConnected: false,
+    suggestion: null
+};
+
+// ==================== HELPER API ====================
+async function apiGet(endpoint) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (API_MODE === 'render') {
+        headers['X-EcoHybrid-Key'] = API_KEY;
+    }
+    try {
+        const resp = await fetch(`${API_BASE}${endpoint}`, { headers });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+    } catch (e) {
+        console.error(`API GET ${endpoint} error:`, e);
+        return null;
+    }
 }
 
-function render(d) {
-  const f = d.fascia;
-  const s = d.suggestion;
-  const isOn = d.power;
-  const isEcon = f.prezzo <= 0.20;
-  const isCara = f.prezzo > 0.30;
+async function apiPost(endpoint, data = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (API_MODE === 'render') {
+        headers['X-EcoHybrid-Key'] = API_KEY;
+    }
+    try {
+        const resp = await fetch(`${API_BASE}${endpoint}`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data)
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+    } catch (e) {
+        console.error(`API POST ${endpoint} error:`, e);
+        return null;
+    }
+}
 
-  // Fascia colors
-  const fColors = { 'fasciaF1': '#E6007E', 'fasciaF2': '#FFD700', 'fasciaF3': '#00D4AA' };
-  const fKeys = ['fasciaF1', 'fasciaF2', 'fasciaF3'];
+// ==================== LETTURA HA ====================
+async function fetchHAData() {
+    // Verifica connessione HA
+    const status = await apiGet('/v1/ha/status');
+    state.haConnected = status && status.connected;
 
-  let html = `
-    <!-- Metrics -->
-    <div class="metrics-grid">
-      <div class="card">
-        <h2>Temperatura</h2>
-        <div class="metric">
-          <div class="metric-value">${d.currentTemp}</div>
-          <div class="metric-unit">C</div>
-        </div>
-      </div>
-      <div class="card">
-        <h2>Umidita</h2>
-        <div class="metric">
-          <div class="metric-value">${d.humidity}</div>
-          <div class="metric-unit">%</div>
-        </div>
-      </div>
-    </div>
+    if (!state.haConnected) {
+        console.warn('HA non connesso, uso dati mock');
+        updateUI();
+        return;
+    }
 
-    <!-- Status -->
-    <div class="card">
-      <h2>Stato Climatizzatore</h2>
-      <span class="status-badge ${isOn ? 'on' : 'off'}">${isOn ? 'ACCESO' : 'SPENTO'}</span>
-      <div style="margin-top:10px; font-size:0.85rem; color:var(--octo-text-secondary);">
-        Target: ${d.targetTemp}C | Modalita: ${d.mode} | Ventola: ${d.fanSpeed}
-      </div>
-    </div>
+    // Leggi climate
+    const climateData = await apiGet('/v1/ha/climate');
+    if (climateData && climateData.climates) {
+        state.climates = climateData.climates;
 
-    <!-- Fascia Energetica -->
-    <div class="card">
-      <h2>Fascia Energetica</h2>
-      <div class="fascia-bar">
-        ${fKeys.map(k => `<div class="fascia-segment ${k === f.key ? 'active' : ''}" style="background:${fColors[k]}; color:${fColors[k]}"></div>`).join('')}
-      </div>
-      <div class="fascia-info">
-        <span class="nome" style="color:${f.colore}">${f.nome}</span>
-        <span class="prezzo">${f.prezzo.toFixed(2)} EUR/kWh</span>
-      </div>
-    </div>
+        // Trova entita principale
+        const main = climateData.climates.find(c => c.entity_id === HA_ENTITY_MAIN) 
+                   || climateData.climates[0];
 
-    <!-- Suggestion -->
-    <div class="card">
-      <h2>Suggerimento IA</h2>
-      <div class="suggestion">
-        ${s.pilastro > 0 ? `<span class="pilastro-tag">Pilastro ${s.pilastro}</span><br>` : ''}
-        ${s.reason}
-      </div>
-      ${s.action !== 'none' ? `<button class="btn btn-set" style="margin-top:10px;" onclick="applySuggestion('${s.action}', '${s.mode || ''}')">Applica Suggerimento</button>` : ''}
-    </div>
+        if (main) {
+            state.power = main.state !== 'off' && main.state !== 'unavailable';
+            state.currentTemp = main.current_temperature || 20;
+            state.targetTemp = main.temperature || 22;
+            state.mode = main.hvac_mode || 'cool';
+        }
+    }
 
-    <!-- Controls -->
-    <div class="card">
-      <h2>Controllo Manuale</h2>
-      <button class="btn btn-on" onclick="cmd('power/on')">Accendi</button>
-      <button class="btn btn-off" onclick="cmd('power/off')">Spegni</button>
+    // Leggi sensori
+    const sensorData = await apiGet('/v1/ha/sensors');
+    if (sensorData && sensorData.sensors) {
+        state.sensors = sensorData.sensors;
 
-      <div class="temp-control">
-        <label style="font-size:0.8rem; color:var(--octo-text-secondary);">
-          Temperatura target: <span id="tval" style="color:var(--octo-pink); font-weight:800;">22</span>C
-        </label>
-        <input type="range" class="temp-slider" min="16" max="30" value="22"
-          oninput="document.getElementById('tval').textContent=this.value; state.targetTemp=this.value">
-        <button class="btn btn-set" onclick="cmd('temp/' + state.targetTemp)">Imposta Temperatura</button>
-      </div>
+        // Trova umidita
+        const humSensor = sensorData.sensors.find(s => s.entity_id.includes('humidity'));
+        if (humSensor) {
+            state.humidity = humSensor.state;
+        }
+    }
 
-      <div style="margin-top:14px;">
-        <label style="font-size:0.8rem; color:var(--octo-text-secondary);">Modalita</label>
-        <div class="mode-grid">
-          ${['cool','heat','dry','fan_only','auto'].map(m =>
-            `<button class="btn btn-mode ${d.mode === m ? 'active' : ''}" onclick="cmdMode('${m}')">${labelMode(m)}</button>`
-          ).join('')}
-        </div>
-      </div>
-    </div>
+    state.lastUpdate = Date.now();
+    updateUI();
+}
 
-    <!-- 5 Pilastri -->
-    <div class="card">
-      <h2>I 5 Pilastri EcoHybrid</h2>
-      <div class="pilastri-list">
-        ${d.pilastri.map(p => `
-          <div class="pilastro-item ${p.attivo ? 'active' : 'inactive'}">
-            <div class="pilastro-num">${p.id}</div>
-            <div class="pilastro-info">
-              <div class="nome">${p.nome}</div>
-              <div class="desc">${p.desc}</div>
+// ==================== COMANDI HA ====================
+async function sendHACommand(entityId, command, value = null) {
+    const result = await apiPost('/v1/ha/command', {
+        entity_id: entityId,
+        command: command,
+        value: value
+    });
+    if (result && result.success) {
+        setTimeout(fetchHAData, 1000); // Aggiorna dopo 1 secondo
+    } else {
+        alert('Errore comando HA. Verifica connessione.');
+    }
+}
+
+// ==================== CONTROLLI UI ====================
+function togglePower() {
+    const main = state.climates.find(c => c.entity_id === HA_ENTITY_MAIN) || state.climates[0];
+    if (!main) return;
+    const cmd = state.power ? 'power_off' : 'power_on';
+    sendHACommand(main.entity_id, cmd);
+}
+
+function setTemp(delta) {
+    const main = state.climates.find(c => c.entity_id === HA_ENTITY_MAIN) || state.climates[0];
+    if (!main) return;
+    const newTemp = (main.temperature || 20) + delta;
+    sendHACommand(main.entity_id, 'set_temp', newTemp.toString());
+}
+
+function setMode(mode) {
+    const main = state.climates.find(c => c.entity_id === HA_ENTITY_MAIN) || state.climates[0];
+    if (!main) return;
+    sendHACommand(main.entity_id, 'set_mode', mode);
+}
+
+function setFan(speed) {
+    state.fanSpeed = speed;
+    updateUI();
+}
+
+function toggleSwing() {
+    state.swing = !state.swing;
+    updateUI();
+}
+
+// ==================== AGGIORNA UI ====================
+function updateUI() {
+    // Stato connessione
+    const connStatus = document.getElementById('connection-status');
+    if (connStatus) {
+        connStatus.textContent = state.haConnected ? 'HA Connesso' : 'HA Offline';
+        connStatus.className = state.haConnected ? 'status-badge online' : 'status-badge offline';
+    }
+
+    // Temperatura attuale
+    const currentTempEl = document.getElementById('current-temp');
+    if (currentTempEl) currentTempEl.textContent = `${state.currentTemp.toFixed(1)}°C`;
+
+    // Temperatura target
+    const targetTempEl = document.getElementById('target-temp');
+    if (targetTempEl) targetTempEl.textContent = `${state.targetTemp.toFixed(1)}°C`;
+
+    // Umidita
+    const humidityEl = document.getElementById('humidity');
+    if (humidityEl) humidityEl.textContent = `${state.humidity}%`;
+
+    // Stato power
+    const powerBtn = document.getElementById('btn-power');
+    if (powerBtn) {
+        powerBtn.textContent = state.power ? 'SPEGNI' : 'ACCENDI';
+        powerBtn.className = state.power ? 'btn btn-danger' : 'btn btn-primary';
+    }
+
+    // Modalita
+    const modeEl = document.getElementById('current-mode');
+    if (modeEl) modeEl.textContent = state.mode.toUpperCase();
+
+    // Lista climate
+    const climateList = document.getElementById('climate-list');
+    if (climateList && state.climates.length > 0) {
+        climateList.innerHTML = state.climates.map(c => `
+            <div class="climate-card ${c.state !== 'off' ? 'active' : ''}">
+                <div class="climate-name">${c.friendly_name}</div>
+                <div class="climate-info">
+                    <span class="climate-state">${c.state}</span>
+                    <span class="climate-temp">${c.current_temperature != null ? c.current_temperature + '°C' : '--'}</span>
+                    <span class="climate-target">target: ${c.temperature != null ? c.temperature + '°C' : '--'}</span>
+                </div>
+                <div class="climate-modes">
+                    ${(c.hvac_modes || []).map(m => `
+                        <button class="mode-btn ${c.hvac_mode === m ? 'active' : ''}" 
+                                onclick="sendHACommand('${c.entity_id}', 'set_mode', '${m}')">
+                            ${m === 'heat' ? 'Caldo' : m === 'cool' ? 'Freddo' : m === 'dry' ? 'Deumidifica' : m === 'auto' ? 'Auto' : m === 'fan_only' ? 'Ventilatore' : m}
+                        </button>
+                    `).join('')}
+                </div>
             </div>
-            <div class="pilastro-status ${p.attivo ? 'on' : 'off'}">${p.attivo ? 'ON' : 'OFF'}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
+        `).join('');
+    }
 
-  document.getElementById('main').innerHTML = html;
+    // Lista sensori
+    const sensorList = document.getElementById('sensor-list');
+    if (sensorList && state.sensors.length > 0) {
+        sensorList.innerHTML = state.sensors.map(s => `
+            <div class="sensor-card">
+                <div class="sensor-value">${s.state}${s.unit}</div>
+                <div class="sensor-name">${s.friendly_name}</div>
+            </div>
+        `).join('');
+    }
+
+    // Timestamp
+    const tsEl = document.getElementById('last-update');
+    if (tsEl) {
+        const d = new Date(state.lastUpdate);
+        tsEl.textContent = `Aggiornato: ${d.toLocaleTimeString('it-IT')}`;
+    }
 }
 
-function labelMode(m) {
-  const labels = { cool: 'Freddo', heat: 'Caldo', dry: 'Dry', fan_only: 'Ventola', auto: 'Auto' };
-  return labels[m] || m;
-}
+// ==================== INIZIALIZZAZIONE ====================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('EcoHybrid v2.0 - Modalita:', API_MODE);
 
-async function cmd(ep) {
-  await fetch(`${API}/${ep}`, { method: 'POST' });
-  setTimeout(load, 500);
-}
+    // Collega eventi
+    const btnPower = document.getElementById('btn-power');
+    if (btnPower) btnPower.addEventListener('click', togglePower);
 
-async function cmdMode(m) {
-  await fetch(`${API}/mode/${m}`, { method: 'POST' });
-  setTimeout(load, 500);
-}
+    const btnTempDown = document.getElementById('btn-temp-down');
+    if (btnTempDown) btnTempDown.addEventListener('click', () => setTemp(-1));
 
-async function applySuggestion(action, mode) {
-  if (action === 'on') await cmd('power/on');
-  if (action === 'off') await cmd('power/off');
-  if (action === 'fan_recycle') { await cmd('power/on'); await cmdMode('fan_only'); }
-  if (mode && mode !== 'fan_only') await cmdMode(mode);
-  setTimeout(load, 800);
-}
+    const btnTempUp = document.getElementById('btn-temp-up');
+    if (btnTempUp) btnTempUp.addEventListener('click', () => setTemp(1));
 
-// Init
-load();
-setInterval(load, 30000);
+    const btnModeHeat = document.getElementById('btn-mode-heat');
+    if (btnModeHeat) btnModeHeat.addEventListener('click', () => setMode('heat'));
+
+    const btnModeCool = document.getElementById('btn-mode-cool');
+    if (btnModeCool) btnModeCool.addEventListener('click', () => setMode('cool'));
+
+    const btnModeDry = document.getElementById('btn-mode-dry');
+    if (btnModeDry) btnModeDry.addEventListener('click', () => setMode('dry'));
+
+    const btnModeAuto = document.getElementById('btn-mode-auto');
+    if (btnModeAuto) btnModeAuto.addEventListener('click', () => setMode('auto'));
+
+    // Primo caricamento
+    fetchHAData();
+
+    // Auto-refresh ogni 30 secondi
+    setInterval(fetchHAData, 30000);
+});
