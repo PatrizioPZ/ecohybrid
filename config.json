@@ -15,12 +15,12 @@
     "deviceId": "",
     "endpoint": "https://openapi.tuyaeu.com"
   },
-  "homeassistant": {
-    "enabled": false,
-    "url": "http://localhost:8123",
-    "token": "",
-    "entityId": "climate.termostato"
-  },
+ "homeassistant": {
+  "enabled": true,
+  "url": "http://192.168.1.21",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...IL_TUO_TOKEN...",
+  "entityId": "climate.thermostat"
+}
   "energy": {
     "provider": "octopus",
     "fasciaF1": { "start": "08:00", "end": "19:00", "prezzo": 0.35, "nome": "F1 - Giorno", "colore": "#E6007E" },
