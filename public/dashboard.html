@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoHybrid - Dashboard</title>
+    <title>EcoHybrid Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -21,8 +21,6 @@
         .status-pill.online { background: #00d4aa; color: #1a1a2e; }
         .status-pill.offline { background: #e74c3c; color: #fff; }
         .status-pill.auto { background: #ff0080; color: #fff; }
-        .status-pill.strat { background: #3498db; color: #fff; }
-        .status-pill.comfort { background: #f39c12; color: #fff; }
         .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
         .card-title { font-size: 14px; color: #8892b0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
         .climate-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -50,10 +48,6 @@
         .mode-btn.active { background: #00d4aa; color: #1a1a2e; border-color: #00d4aa; }
         .override-box { background: rgba(255,0,128,0.1); border: 1px solid rgba(255,0,128,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; text-align: center; }
         .override-box p { font-size: 13px; color: #b0c4de; margin-bottom: 10px; }
-        .strat-box { background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
-        .strat-box h4 { color: #3498db; margin-bottom: 8px; }
-        .strat-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
-        .strat-active { background: rgba(0,212,170,0.2); border-color: #00d4aa; }
         .comfort-box { background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
         .comfort-box h4 { color: #f39c12; margin-bottom: 8px; }
         .comfort-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
@@ -61,13 +55,6 @@
         .deum-box { background: rgba(155,89,182,0.1); border: 1px solid rgba(155,89,182,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
         .deum-box h4 { color: #9b59b6; margin-bottom: 8px; }
         .deum-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
-        .weather-box { background: rgba(52,152,219,0.05); border: 1px solid rgba(52,152,219,0.2); border-radius: 12px; padding: 15px; margin-top: 15px; }
-        .weather-box h4 { color: #3498db; margin-bottom: 8px; }
-        .weather-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
-        .back-link { text-align: center; margin-top: 20px; }
-        .back-link a { color: #ff0080; text-decoration: none; }
-    
-        /* === OTTIMIZZATORE ECONOMICO === */
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
         .price-box { padding: 15px; border-radius: 12px; text-align: center; }
         .price-box.elec { background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); }
@@ -84,40 +71,55 @@
         .decision-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
         .savings { font-size: 1.1rem; font-weight: 700; color: #00d4aa; margin-top: 8px; }
         .opt-note { font-size: 11px; color: #8892b0; margin-top: 10px; text-align: center; }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a { color: #ff0080; text-decoration: none; }
+        .thermostat-only { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; margin-top: 8px; }
+        .thermostat-only .label { color: #8892b0; font-size: 12px; }
+        .thermostat-only .value { color: #fff; font-size: 18px; font-weight: 600; }
     </style>
-<base target="_blank">
 <base target="_blank">
 </head>
 <body>
     <div class="header">
         <h1>EcoHybrid Dashboard</h1>
-        <p>Controllo climatizzazione - Modalita: <span id="algo-mode">AUTO</span></p>
+        <p>Controllo climatizzazione - Backend Python v2.1</p>
     </div>
     <div class="status-bar">
         <div class="status-pill offline" id="ha-status">HA: Connessione...</div>
         <div class="status-pill auto" id="algo-status">Algoritmo: ON</div>
-        <div class="status-pill offline" id="strat-status">Stratificazione: OFF</div>
-        <div class="status-pill offline" id="comfort-status">Comfort: --</div>
     </div>
     <div id="content"><div class="loading">Caricamento dati...</div></div>
     <div class="back-link"><a href="/">Torna alla home</a></div>
 
     <script>
-        let algoEnabled = true;
+        const API_BASE = '';
+        let climates = [];
+        let sensors = [];
 
         async function fetchData() {
             try {
-                const resp = await fetch('/api/status');
-                const data = await resp.json();
-                render(data);
+                const [climateResp, sensorResp, optResp] = await Promise.all([
+                    fetch(`${API_BASE}/v1/ha/climate`).catch(() => null),
+                    fetch(`${API_BASE}/v1/ha/sensors`).catch(() => null),
+                    fetch(`${API_BASE}/api/convenienza`).catch(() => null)
+                ]);
+
+                const climateData = climateResp && climateResp.ok ? await climateResp.json() : null;
+                const sensorData = sensorResp && sensorResp.ok ? await sensorResp.json() : null;
+                const optData = optResp && optResp.ok ? await optResp.json() : null;
+
+                climates = climateData && climateData.climates ? climateData.climates : [];
+                sensors = sensorData && sensorData.sensors ? sensorData.sensors : [];
+
+                render(climateData, sensorData, optData);
             } catch (e) {
-                document.getElementById('content').innerHTML = `<div class="error">Errore: ${e.message}</div>`;
+                document.getElementById('content').innerHTML = `<div class="error">Errore connessione: ${e.message}<br><small>Verifica che il backend sia attivo su Render</small></div>`;
             }
         }
 
-        function render(data) {
+        function render(climateData, sensorData, optData) {
             const haStatus = document.getElementById('ha-status');
-            if (data.haConnected) {
+            if (climateData && climateData.ha_connected) {
                 haStatus.className = 'status-pill online';
                 haStatus.textContent = 'HA: Connesso';
             } else {
@@ -125,234 +127,190 @@
                 haStatus.textContent = 'HA: Offline';
             }
 
-            const stratStatus = document.getElementById('strat-status');
-            if (data.stratificazione && data.stratificazione.attivo) {
-                stratStatus.className = 'status-pill strat';
-                stratStatus.textContent = 'Stratificazione: ATTIVA';
-            } else {
-                stratStatus.className = 'status-pill offline';
-                stratStatus.textContent = 'Stratificazione: OFF';
-            }
-
-            const comfortStatus = document.getElementById('comfort-status');
-            if (data.comfort) {
-                if (data.comfort.inComfort) {
-                    comfortStatus.className = 'status-pill comfort';
-                    comfortStatus.textContent = 'Comfort: OK';
-                } else {
-                    comfortStatus.className = 'status-pill offline';
-                    comfortStatus.textContent = 'Comfort: ' + data.comfort.suggestion;
-                }
-            }
-
             let html = '';
 
             // Sensori
-            if (data.sensors && data.sensors.length > 0) {
+            if (sensors.length > 0) {
                 html += `<div class="card"><div class="card-title">Sensori Ambientali</div><div class="sensor-grid">`;
-                data.sensors.forEach(s => {
+                sensors.forEach(s => {
                     html += `<div class="sensor-box"><div class="sensor-value">${s.state}${s.unit}</div><div class="sensor-label">${s.friendly_name}</div></div>`;
                 });
                 html += `</div></div>`;
             }
 
-            // Meteo esterno
-            if (data.weather && data.weather.tempExt !== null) {
-                html += `<div class="card weather-box">
-                    <div class="card-title">Meteo Esterno (weather.casa)</div>
-                    <h4>${data.weather.condition || 'N/D'}</h4>
-                    <p><strong>Temperatura:</strong> ${data.weather.tempExt}°C</p>
-                    <p><strong>Umidita:</strong> ${data.weather.humidityExt}%</p>
-                    <p><strong>Pressione:</strong> ${data.weather.pressure || 'N/D'} hPa</p>
-                </div>`;
-            }
-
-            // Comfort ASHRAE 55 Inspired
-            if (data.comfort) {
-                const c = data.comfort;
-                html += `<div class="card comfort-box ${c.inComfort ? 'comfort-ok' : ''}">
-                    <div class="card-title">Comfort ASHRAE 55 Inspired</div>
-                    <h4>${c.inComfort ? 'Zona Comfort Raggiunta' : 'Fuori Zona Comfort'}</h4>
-                    <p><strong>Stagione:</strong> ${c.stagione === 'estate' ? 'Estate' : 'Inverno'}</p>
-                    <p><strong>Range temperatura:</strong> ${c.tMin}°C - ${c.tMax}°C</p>
-                    <p><strong>Range umidita:</strong> ${c.rhMin}% - ${c.rhMax}%</p>
-                    <p><strong>Suggerimento:</strong> ${c.suggestion}</p>
-                    <p style="color:#8892b0; font-size:11px; margin-top:8px;">${c.note}</p>
-                </div>`;
-            }
-
-            // Deumidifica
-            if (data.deumidifica) {
-                const d = data.deumidifica;
-                html += `<div class="card deum-box">
-                    <div class="card-title">Gestione Umidita (Umidita Assoluta)</div>
-                    <h4>Azione: ${d.action.toUpperCase()}</h4>
-                    <p><strong>Umidita interna:</strong> ${d.umiditaInt}%</p>
-                    <p><strong>Umidita esterna:</strong> ${d.umiditaExt !== null ? d.umiditaExt + '%' : 'N/D'}</p>
-                    ${d.uaInt ? `<p><strong>Umidita assoluta interna:</strong> ${d.uaInt} g/m3</p>` : ''}
-                    ${d.uaExt ? `<p><strong>Umidita assoluta esterna:</strong> ${d.uaExt} g/m3</p>` : ''}
-                    <p style="color:#b0c4de; margin-top:8px;">${d.reason}</p>
-                </div>`;
-            }
-
-            // Stratificazione
-            if (data.stratificazione) {
-                const s = data.stratificazione;
-                html += `
-            <!-- Ottimizzatore Economico -->
-            <div class="card" id="optimizer-card">
-                <div class="card-title">Ottimizzatore Economico</div>
-                <div id="opt-loading" style="text-align:center; color:#8892b0; padding:20px;">Caricamento prezzi energia...</div>
-                <div id="opt-content" style="display:none;">
-                    <div class="price-grid">
-                        <div class="price-box elec">
-                            <span class="label">Luce (PUN)</span>
-                            <span class="value" id="pun-val">--</span>
-                            <small id="pun-src">--</small>
-                        </div>
-                        <div class="price-box gas">
-                            <span class="label">Gas (PSV)</span>
-                            <span class="value" id="psv-val">--</span>
-                            <small id="psv-src">--</small>
-                        </div>
-                    </div>
-                    <div id="decision" class="decision-box">
-                        <h4 id="dec-title">--</h4>
-                        <p id="dec-detail">--</p>
-                        <p id="dec-savings" class="savings">--</p>
-                    </div>
-                    <p class="opt-note">
-                        COP pompa: <strong id="cop-display">3.5</strong> |
-                        Eff. caldaia: <strong id="boiler-display">90%</strong> |
-                        Aggiornato: <span id="last-update">--</span>
-                    </p>
-                </div>
-            </div>
-            <div class="card strat-box ${s.attivo ? 'strat-active' : ''}">
-                    <div class="card-title">Pilastro 1: Riciclo Termico / Destratificazione</div>
-                    <h4>${s.attivo ? 'Ventilazione Mescolante ATTIVA' : 'In attesa'}</h4>
-                    <p><strong>Delta:</strong> ${s.delta}°C tra clima (alto) e termostato</p>
-                    <p><strong>Soglia:</strong> ${s.config ? s.config.deltaMin : '1.0'}°C per attivazione</p>
-                    ${s.attivo ? `<p><strong>Consumo:</strong> ${s.consumoW}W (vs 1000W compressore)</p><p><strong>Risparmio stimato:</strong> ${s.risparmio}</p>` : ''}
-                    <p style="color:#8892b0; font-size:12px; margin-top:8px;">${s.motivo}</p>
-                </div>`;
-            }
-
-            // Termostato
-            html += `<div class="card">
-                <div class="card-title">Termostato Principale</div>
-                <div class="climate-item">
-                    <div>
-                        <div class="climate-name">Stato: ${data.power ? 'ON' : 'OFF'}</div>
-                        <div class="climate-state">Temperatura attuale: ${data.currentTemp}°C</div>
-                    </div>
-                    <div class="climate-temp">${data.targetTemp}°C</div>
-                </div>
-                <div class="temp-control">
-                    <button class="temp-btn" onclick="setTemp(${data.targetTemp - 1})">-</button>
-                    <div class="temp-value">${data.targetTemp}</div>
-                    <button class="temp-btn" onclick="setTemp(${data.targetTemp + 1})">+</button>
-                </div>
-                <div class="mode-selector">
-                    <button class="mode-btn ${data.mode === 'heat' ? 'active' : ''}" onclick="setMode('heat')">Caldo</button>
-                    <button class="mode-btn ${data.mode === 'cool' ? 'active' : ''}" onclick="setMode('cool')">Freddo</button>
-                    <button class="mode-btn ${data.mode === 'dry' ? 'active' : ''}" onclick="setMode('dry')">Deumidifica</button>
-                    <button class="mode-btn ${data.mode === 'auto' ? 'active' : ''}" onclick="setMode('auto')">Auto</button>
-                    <button class="mode-btn ${data.mode === 'fan_only' ? 'active' : ''}" onclick="setMode('fan_only')">Ventilatore</button>
-                </div>
-                <div class="controls" style="margin-top:15px">
-                    <button class="btn btn-primary" onclick="togglePower()">${data.power ? 'SPEGNI' : 'ACCENDI'}</button>
-                </div>
-                <div class="override-box">
-                    <p>L'algoritmo EcoHybrid gestisce automaticamente temperatura, modalita, destratificazione e umidita in base ai costi energetici, effemeridi e comfort ASHRAE 55 Inspired.</p>
-                    <button class="btn btn-warning" onclick="toggleAlgo()">${algoEnabled ? 'DISATTIVA ALGORITMO' : 'ATTIVA ALGORITMO'}</button>
-                </div>
+            // Comfort ASHRAE 55 (calcolato frontend)
+            const tempSensor = sensors.find(s => s.entity_id.includes('temperatura') || s.entity_id.includes('temperature'));
+            const humSensor = sensors.find(s => s.entity_id.includes('umidita') || s.entity_id.includes('humidity'));
+            const tInt = tempSensor ? tempSensor.state : 20;
+            const rh = humSensor ? humSensor.state : 50;
+            const comfort = calcolaComfort(tInt, rh);
+            html += `<div class="card comfort-box ${comfort.inComfort ? 'comfort-ok' : ''}">
+                <div class="card-title">Comfort ASHRAE 55 Inspired</div>
+                <h4>${comfort.inComfort ? 'Zona Comfort OK' : 'Fuori Zona Comfort'}</h4>
+                <p><strong>Stagione:</strong> ${comfort.stagione === 'estate' ? 'Estate' : 'Inverno'}</p>
+                <p><strong>Range:</strong> ${comfort.tMin}-${comfort.tMax}C / Umidita ${comfort.rhMin}-${comfort.rhMax}%</p>
+                <p><strong>Suggerimento:</strong> ${comfort.suggestion}</p>
             </div>`;
 
-            // Altri climate
-            if (data.climates && data.climates.length > 1) {
-                html += `<div class="card"><div class="card-title">Altre Zone</div>`;
-                data.climates.slice(1).forEach(c => {
-                    html += `<div class="climate-item">
-                        <div>
-                            <div class="climate-name">${c.friendly_name}</div>
-                            <div class="climate-state">${c.state} | Attuale: ${c.current_temperature != null ? c.current_temperature + '°C' : 'N/D'}</div>
-                        </div>
-                        <div class="climate-temp">${c.temperature != null ? c.temperature + '°C' : '--'}</div>
-                    </div>`;
+            // Deumidifica (calcolato frontend)
+            const deum = calcolaDeumidifica(tInt, rh, null, null);
+            html += `<div class="card deum-box">
+                <div class="card-title">Gestione Umidita</div>
+                <h4>Azione: ${deum.action.toUpperCase()}</h4>
+                <p><strong>Umidita interna:</strong> ${deum.umiditaInt}%</p>
+                <p>${deum.reason}</p>
+            </div>`;
+
+            // Ottimizzatore Economico
+            if (optData && optData.success) {
+                html += renderOptimizer(optData);
+            }
+
+            // Clima / Termostati
+            if (climates.length > 0) {
+                climates.forEach((c, idx) => {
+                    const isTermostato = isTermostatoEntity(c);
+                    html += renderClimateCard(c, idx, isTermostato);
                 });
-                html += `</div>`;
+            } else {
+                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#8892b0">Nessun dispositivo climate trovato su Home Assistant.</p></div>`;
             }
 
             document.getElementById('content').innerHTML = html;
         }
 
-        async function togglePower() {
-            const resp = await fetch('/api/status');
-            const data = await resp.json();
-            const action = data.power ? 'off' : 'on';
-            await fetch(`/api/power/${action}`, { method: 'POST' });
-            setTimeout(fetchData, 500);
+        function isTermostatoEntity(c) {
+            const eid = c.entity_id.toLowerCase();
+            const fname = (c.friendly_name || '').toLowerCase();
+            // Termostato = solo heat/off o entity_id contiene "termostato" / "caldaia"
+            const hasOnlyHeat = c.hvac_modes && c.hvac_modes.length <= 2 && c.hvac_modes.includes('heat') && !c.hvac_modes.includes('cool');
+            return eid.includes('termostato') || eid.includes('caldaia') || fname.includes('termostato') || hasOnlyHeat;
         }
 
-        async function setTemp(temp) {
-            await fetch(`/api/temp/${temp}`, { method: 'POST' });
-            setTimeout(fetchData, 500);
+        function renderClimateCard(c, idx, isTermostato) {
+            const isOn = c.state !== 'off' && c.state !== 'unavailable';
+            const currentTemp = c.current_temperature != null ? c.current_temperature : '--';
+            const targetTemp = c.temperature != null ? c.temperature : '--';
+            const title = isTermostato ? 'Termostato / Caldaia' : 'Climatizzazione';
+            const subtitle = isTermostato ? 'Solo ON/OFF e temperatura' : 'Modalita HVAC completa';
+
+            let html = `<div class="card">
+                <div class="card-title">${title} <span style="color:#8892b0;font-size:11px">- ${subtitle}</span></div>
+                <div class="climate-item">
+                    <div>
+                        <div class="climate-name">${c.friendly_name}</div>
+                        <div class="climate-state">Stato: ${isOn ? 'ON (' + c.state + ')' : 'OFF'} | Attuale: ${currentTemp}C</div>
+                    </div>
+                    <div class="climate-temp">${targetTemp}C</div>
+                </div>`;
+
+            // Temperatura (tutti)
+            html += `<div class="temp-control">
+                <button class="temp-btn" onclick="setTemp('${c.entity_id}', ${targetTemp - 1})">-</button>
+                <div class="temp-value">${targetTemp}</div>
+                <button class="temp-btn" onclick="setTemp('${c.entity_id}', ${targetTemp + 1})">+</button>
+            </div>`;
+
+            // Modalita - SOLO per clima (non termostato)
+            if (!isTermostato && c.hvac_modes) {
+                html += `<div class="mode-selector">`;
+                const modes = ['heat', 'cool', 'dry', 'auto', 'fan_only'];
+                const labels = {heat: 'Caldo', cool: 'Freddo', dry: 'Deumidifica', auto: 'Auto', fan_only: 'Ventilatore'};
+                modes.forEach(m => {
+                    if (c.hvac_modes.includes(m)) {
+                        html += `<button class="mode-btn ${c.hvac_mode === m ? 'active' : ''}" onclick="setMode('${c.entity_id}', '${m}')">${labels[m] || m}</button>`;
+                    }
+                });
+                html += `</div>`;
+            }
+
+            // ON/OFF (tutti)
+            html += `<div class="controls" style="margin-top:15px">
+                <button class="btn ${isOn ? 'btn-danger' : 'btn-primary'}" onclick="togglePower('${c.entity_id}', ${isOn ? 'off' : 'on'})">${isOn ? 'SPEGNI' : 'ACCENDI'}</button>
+            </div>`;
+
+            html += `</div>`;
+            return html;
         }
 
-        async function setMode(mode) {
-            await fetch(`/api/mode/${mode}`, { method: 'POST' });
-            setTimeout(fetchData, 500);
+        function renderOptimizer(d) {
+            return `<div class="card">
+                <div class="card-title">Ottimizzatore Economico</div>
+                <div class="price-grid">
+                    <div class="price-box elec">
+                        <span class="label">Luce (PUN)</span>
+                        <span class="value">${d.pun.raw.toFixed(4)} EUR/kWh</span>
+                        <small>Finale: ${d.pun.prezzoFinale.toFixed(4)}</small>
+                    </div>
+                    <div class="price-box gas">
+                        <span class="label">Gas (PSV)</span>
+                        <span class="value">${d.psv.raw.toFixed(4)} EUR/Smc</span>
+                        <small>Equiv: ${d.psv.prezzoPerKwhTermico.toFixed(4)} EUR/kWh</small>
+                    </div>
+                </div>
+                <div class="decision-box ${d.decisione === 'ELETTRICO' ? 'elec' : 'gas'}">
+                    <h4>Oggi conviene usare ${d.decisione}</h4>
+                    <p>Costo termico: Elettrico ${d.costoTermico.elettrico.toFixed(4)} vs Gas ${d.costoTermico.gas.toFixed(4)} EUR/kWh</p>
+                    <p class="savings">Risparmio stimato: ${d.risparmioStimato.percentuale}%</p>
+                </div>
+                <p class="opt-note">COP: ${d.parametri.cop} | Eff. caldaia: ${(d.parametri.boilerEff*100).toFixed(0)}% | Aggiornato: ${new Date(d.timestamp).toLocaleTimeString('it-IT')}</p>
+            </div>`;
         }
 
-        function toggleAlgo() {
-            algoEnabled = !algoEnabled;
-            document.getElementById('algo-status').textContent = algoEnabled ? 'Algoritmo: ON' : 'Algoritmo: OFF';
-            document.getElementById('algo-status').className = algoEnabled ? 'status-pill auto' : 'status-pill offline';
-            document.getElementById('algo-mode').textContent = algoEnabled ? 'AUTO' : 'MANUALE';
+        // Algoritmi frontend (ASHRAE 55 + Deumidifica)
+        function calcolaComfort(tInt, rh) {
+            const stagione = new Date().getMonth() >= 5 && new Date().getMonth() <= 8 ? 'estate' : 'inverno';
+            let tMin, tMax, rhMin, rhMax;
+            if (stagione === 'estate') { tMin = 23; tMax = 26; rhMin = 30; rhMax = 60; }
+            else { tMin = 20; tMax = 23; rhMin = 30; rhMax = 60; }
+            const inComfort = (tInt >= tMin && tInt <= tMax && rh >= rhMin && rh <= rhMax);
+            let suggestion = 'mantieni';
+            if (!inComfort) {
+                if (tInt > tMax) suggestion = 'raffreddare';
+                else if (tInt < tMin) suggestion = 'riscaldare';
+                else if (rh > rhMax) suggestion = 'deumidifica';
+                else suggestion = 'umidifica';
+            }
+            return { stagione, inComfort, tMin, tMax, rhMin, rhMax, suggestion };
         }
 
+        function calcolaDeumidifica(tInt, rhInt, tExt, rhExt) {
+            if (rhInt > 65) return { action: 'deumidifica', reason: 'Umidita interna elevata', umiditaInt: rhInt };
+            return { action: 'mantieni', reason: 'Umidita interna OK', umiditaInt: rhInt };
+        }
 
-        async function loadOptimizer() {
+        // Comandi
+        async function togglePower(entityId, action) {
+            const cmd = action === 'on' ? 'power_on' : 'power_off';
+            await sendCommand(entityId, cmd);
+            setTimeout(fetchData, 800);
+        }
+
+        async function setTemp(entityId, temp) {
+            await sendCommand(entityId, 'set_temp', String(temp));
+            setTimeout(fetchData, 800);
+        }
+
+        async function setMode(entityId, mode) {
+            await sendCommand(entityId, 'set_mode', mode);
+            setTimeout(fetchData, 800);
+        }
+
+        async function sendCommand(entityId, command, value) {
             try {
-                const res = await fetch('/api/convenienza');
-                const d = await res.json();
-                if (!d.success) throw new Error(d.error);
-
-                document.getElementById('opt-loading').style.display = 'none';
-                document.getElementById('opt-content').style.display = 'block';
-
-                document.getElementById('pun-val').textContent = d.pun.raw.toFixed(4) + ' EUR/kWh';
-                document.getElementById('pun-src').textContent = 'Finale: ' + d.pun.prezzoFinale.toFixed(4);
-
-                document.getElementById('psv-val').textContent = d.psv.raw.toFixed(4) + ' EUR/Smc';
-                document.getElementById('psv-src').textContent = 'Equiv: ' + d.psv.prezzoPerKwhTermico.toFixed(4) + ' EUR/kWh';
-
-                const box = document.getElementById('decision');
-                const isElec = d.decisione === 'ELETTRICO';
-                box.className = 'decision-box ' + (isElec ? 'elec' : 'gas');
-
-                document.getElementById('dec-title').textContent = 'Oggi conviene usare ' + d.decisione;
-                document.getElementById('dec-detail').textContent =
-                    'Costo termico: Elettrico ' + d.costoTermico.elettrico.toFixed(4) +
-                    ' EUR/kWh vs Gas ' + d.costoTermico.gas.toFixed(4) + ' EUR/kWh';
-                document.getElementById('dec-savings').textContent =
-                    'Risparmio stimato: ' + d.risparmioStimato.percentuale + '%';
-
-                document.getElementById('cop-display').textContent = d.parametri.cop;
-                document.getElementById('boiler-display').textContent = (d.parametri.boilerEff * 100).toFixed(0) + '%';
-                document.getElementById('last-update').textContent = new Date(d.timestamp).toLocaleTimeString('it-IT');
+                await fetch(`${API_BASE}/v1/ha/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entity_id: entityId, command, value })
+                });
             } catch (e) {
-                document.getElementById('opt-loading').textContent = 'Dati prezzi non disponibili. Riprovo...';
-                setTimeout(loadOptimizer, 10000);
+                alert('Errore comando: ' + e.message);
             }
         }
 
-        loadOptimizer();
-        setInterval(loadOptimizer, 3600000);
-
+        // Caricamento iniziale
         fetchData();
-        setInterval(fetchData, 10000);
+        setInterval(fetchData, 15000);
     </script>
 </body>
 </html>
