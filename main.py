@@ -76,6 +76,10 @@ class HACommand(BaseModel):
     command: str
     value: Optional[str] = None
 
+class PriceUpdate(BaseModel):
+    pun: Optional[float] = None
+    psv: Optional[float] = None
+
 def get_cop(temp_ext: float) -> float:
     if temp_ext >= 15: return 4.0
     if temp_ext >= 10: return 3.5
@@ -218,168 +222,100 @@ async def license_info(partner: dict = Security(get_partner)):
     return {"partner": partner["partner"], "rate_eur_user_month": partner["rate"], "tier": partner["tier"], "license": "Diritto d'Autore ex L. 633/1941", "terms": "AS IS - Scatola Nera"}
 
 # =============================================================================
-# ENERGY PRICES - Scraping da abbassalebollette.it (Zero API key)
+# ENERGY PRICES - API GME Ufficiale (mercati-energetici) + fallback
 # =============================================================================
-from datetime import timedelta
+from datetime import timedelta, date
 
-PUN_URL = 'https://www.abbassalebollette.it/glossario/pun-prezzo-unico-nazionale/'
-PSV_URL = 'https://www.abbassalebollette.it/glossario/psv/'
-MAX_DAYS = 30
-TTL_SECONDS = 3600
+# Fallback configurabili via env vars
+PUN_FALLBACK = float(os.getenv("PUN_FALLBACK", "0.125"))  # EUR/kWh
+PSV_FALLBACK = float(os.getenv("PSV_FALLBACK", "0.38"))   # EUR/Smc
 
-MONTHS_IT = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
-MONTH_INDEX = {m: i for i, m in enumerate(MONTHS_IT)}
+_energy_cache = {
+    'pun': {'latest': PUN_FALLBACK, 'fetched_at': 0, 'source': 'env_fallback'},
+    'psv': {'latest': PSV_FALLBACK, 'fetched_at': 0, 'source': 'env_fallback'},
+    'last_update': datetime.datetime.now().isoformat()
+}
 
-_energy_cache = {'pun': None, 'psv': None, 'last_update': None}
+# Prova import libreria GME
+try:
+    from mercati_energetici import MGP, MGP_GAS
+    GME_AVAILABLE = True
+except ImportError:
+    GME_AVAILABLE = False
+    logger.warning("[Energy] Libreria 'mercati-energetici' non installata. Usare: pip install mercati-energetici")
 
-def _strip_html(html: str) -> str:
-    text = re.sub(r'<script[\s\S]*?</script>', ' ', html, flags=re.IGNORECASE)
-    text = re.sub(r'<style[\s\S]*?</style>', ' ', text, flags=re.IGNORECASE)
-    text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'&nbsp;|&#160;', ' ', text, flags=re.IGNORECASE)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
-
-def _parse_date(value: str) -> Optional[datetime.datetime]:
-    m = re.match(r'^(\d{2})[\/-](\d{2})[\/-](\d{4})$', value)
-    if not m: return None
-    d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
-    if not d or not mo or not y: return None
-    return datetime.datetime(y, mo, d)
-
-def _parse_number(value: str) -> Optional[float]:
-    if not value: return None
-    v = re.sub(r'[^\d.,]', '', value)
-    if not v: return None
-    if ',' in v and '.' in v: v = v.replace('.', '').replace(',', '.')
-    elif ',' in v: v = v.replace(',', '.')
-    try: return float(v)
-    except ValueError: return None
-
-def _extract_series(html: str) -> List[Dict]:
-    text = _strip_html(html)
-    rows = []
-    regex = re.compile(r'(\d{2}[\/-]\d{2}[\/-]\d{4})[^0-9]{0,50}([0-9]+(?:[.,][0-9]+)?)(?:\s*€/?(?:kWh|MWh|Smc))?', re.IGNORECASE)
-    for match in regex.finditer(text):
-        date = _parse_date(match.group(1))
-        value = _parse_number(match.group(2))
-        if date and value is not None: rows.append({'date': date, 'value': value})
-    if not rows:
-        date_regex = re.compile(r'(\d{2}[\/-]\d{2}[\/-]\d{4})')
-        for dm in date_regex.finditer(text):
-            date = _parse_date(dm.group(1))
-            if not date: continue
-            slice_text = text[dm.end():dm.end()+120]
-            vm = re.search(r'([0-9]+(?:[.,][0-9]+)?)(?:\s*€/?(?:kWh|MWh|Smc))?', slice_text, re.IGNORECASE)
-            if vm:
-                value = _parse_number(vm.group(1))
-                if value is not None: rows.append({'date': date, 'value': value})
-    rows.sort(key=lambda x: x['date'])
-    return rows
-
-def _filter_last_days(series: List[Dict], days: int) -> List[Dict]:
-    cutoff = datetime.datetime.now() - timedelta(days=days)
-    filtered = [r for r in series if r['date'] >= cutoff]
-    return filtered if filtered else series
-
-def _get_previous_month_info(date: datetime.datetime = None) -> Dict:
-    if date is None: date = datetime.datetime.now()
-    if date.month > 1: prev = datetime.datetime(date.year, date.month - 1, 1)
-    else: prev = datetime.datetime(date.year - 1, 12, 1)
-    return {'month_name': MONTHS_IT[prev.month - 1], 'year': prev.year}
-
-def _extract_section(text: str, start_markers: List[str], end_markers: List[str]) -> str:
-    lower = text.lower()
-    start_idx = -1
-    for marker in start_markers:
-        idx = lower.find(marker.lower())
-        if idx != -1 and (start_idx == -1 or idx < start_idx): start_idx = idx
-    if start_idx == -1: return text
-    end_idx = -1
-    for marker in end_markers:
-        idx = lower.find(marker.lower(), start_idx + 1)
-        if idx != -1 and (end_idx == -1 or idx < end_idx): end_idx = idx
-    if end_idx == -1: return text[start_idx:]
-    return text[start_idx:end_idx]
-
-def _extract_previous_month_value(html: str, kind: str) -> Optional[Dict]:
-    text = _strip_html(html)
-    info = _get_previous_month_info()
-    label = f"{info['month_name'].capitalize()} {info['year']}"
-    if kind == 'pun':
-        section = _extract_section(text, ['i valori di pun monorario attuali'], ['il pun spiegato', 'storico pun'])
-        regex = re.compile(r'PUN\s+([A-Za-zà]+)\s+(\d{4})(?:\s*\[[^\]]+\])?\s+([0-9.,]+)\s*€/?kWh', re.IGNORECASE)
-        for match in regex.finditer(section):
-            mn = match.group(1).lower()
-            y = int(match.group(2))
-            if mn == info['month_name'] and y == info['year']:
-                value = _parse_number(match.group(3))
-                if value is not None: return {'label': label, 'value': value}
-        return None
-    section = _extract_section(text, ['valori indice psv per mese e anno', 'valori indice psv'], ['indice psv', 'psv spiegato'])
-    regex = re.compile(r'PSV\s+([A-Za-zà]+)\s+(\d{4})(?:\s*\[[^\]]+\])?\s+([0-9.,]+)(?:\s*\[[^\]]+\])?\s+([0-9.,]+)', re.IGNORECASE)
-    for match in regex.finditer(section):
-        mn = match.group(1).lower()
-        y = int(match.group(2))
-        if mn == info['month_name'] and y == info['year']:
-            value = _parse_number(match.group(4))
-            if value is not None: return {'label': label, 'value': value}
-    table_section = _extract_section(html, ['Valori Indice PSV per Mese e Anno'], ['</table>'])
-    row_regex = re.compile('<tr[^>]*>\s*<td[^>]*>\s*<strong>\s*PSV\s+([A-Za-zà]+)\s+(\d{4})[^<]*</strong>\s*</td>\s*<td[^>]*>\s*<strong>[^<]*</strong>\s*</td>\s*<td[^>]*>\s*<strong>\s*([0-9.,]+)[^<]*</strong>', re.IGNORECASE)
-    for match in row_regex.finditer(table_section):
-        mn = match.group(1).lower()
-        y = int(match.group(2))
-        if mn == info['month_name'] and y == info['year']:
-            value = _parse_number(match.group(3))
-            if value is not None: return {'label': label, 'value': value}
-    row_regex_plain = re.compile('<tr[^>]*>\s*<td[^>]*>\s*PSV\s+([A-Za-zà]+)\s+(\d{4})[^<]*</td>\s*<td[^>]*>\s*[^<]*</td>\s*<td[^>]*>\s*([0-9.,]+)\s*</td>', re.IGNORECASE)
-    for match in row_regex_plain.finditer(table_section):
-        mn = match.group(1).lower()
-        y = int(match.group(2))
-        if mn == info['month_name'] and y == info['year']:
-            value = _parse_number(match.group(3))
-            if value is not None: return {'label': label, 'value': value}
-    return None
-
-async def _fetch_text(url: str) -> str:
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'it-IT,it;q=0.9,en;q=0.7',
-    }
-    resp = requests.get(url, headers=headers, timeout=15)
-    resp.raise_for_status()
-    return resp.text
-
-async def _get_data(url: str, cache_key: str, scale_series: float, scale_prev: float, kind: str, force_refresh: bool = False) -> Dict:
+async def _fetch_gme_prices() -> Dict:
+    """Recupera PUN e PSV dalle API ufficiali GME."""
     global _energy_cache
-    cached = _energy_cache.get(cache_key)
-    now_ts = int(datetime.datetime.now().timestamp())
-    if not force_refresh and cached and (now_ts - cached.get('fetched_at', 0)) <= TTL_SECONDS:
-        return {**cached, 'stale': False}
+    today = date.today()
+    pun_val = None
+    psv_val = None
+
+    if not GME_AVAILABLE:
+        return {'pun': None, 'psv': None, 'error': 'mercati-energetici non installato'}
+
     try:
-        html = await _fetch_text(url)
-        raw = _extract_series(html)
-        if not raw: raise ValueError('nessun dato trovato')
-        series = _filter_last_days(raw, MAX_DAYS)
-        series = [{'date': r['date'], 'value': r['value'] * scale_series} for r in series]
-        latest = series[-1]['value'] if series else 0
-        previous_month = _extract_previous_month_value(html, kind) if kind else None
-        previous_scaled = None
-        if previous_month: previous_scaled = {'label': previous_month['label'], 'value': previous_month['value'] * scale_prev}
-        payload = {'fetched_at': now_ts, 'latest': latest, 'previous_month': previous_scaled, 'series': series}
-        _energy_cache[cache_key] = payload
-        return {**payload, 'stale': False}
+        # PUN (Prezzo Unico Nazionale) - EUR/MWh
+        async with MGP() as mgp:
+            pun_data = await mgp.daily_pun(today)
+            if pun_data and len(pun_data) > 0:
+                # pun_data è lista di dict, prendo il prezzo medio
+                pun_mwh = float(pun_data[0].get('prezzo', 0))
+                pun_val = pun_mwh / 1000  # converti EUR/MWh → EUR/kWh
+                logger.info(f"[Energy] GME PUN: {pun_val:.6f} EUR/kWh")
     except Exception as e:
-        logger.error(f"[Energy] Errore {cache_key}: {e}")
-        if cached: return {**cached, 'stale': True}
-        raise
+        logger.warning(f"[Energy] GME PUN fallito: {e}")
 
-async def get_pun_data(force_refresh: bool = False) -> Dict:
-    return await _get_data(PUN_URL, 'pun', 1/1000, 1, 'pun', force_refresh)
+    try:
+        # PSV (Prezzo di Scambio Virtuale) - EUR/MWh
+        async with MGP_GAS() as gas:
+            psv_data = await gas.daily_psv(today)
+            if psv_data and len(psv_data) > 0:
+                psv_mwh = float(psv_data[0].get('prezzo', 0))
+                # PSV GME è in EUR/MWh, convertiamo in EUR/Smc
+                # 1 MWh = 1000 kWh, PCS gas ~ 10.7 kWh/Smc
+                # EUR/MWh → EUR/kWh = /1000 → EUR/Smc = *10.7
+                psv_val = (psv_mwh / 1000) * 10.7
+                logger.info(f"[Energy] GME PSV: {psv_val:.4f} EUR/Smc")
+    except Exception as e:
+        logger.warning(f"[Energy] GME PSV fallito: {e}")
 
-async def get_psv_data(force_refresh: bool = False) -> Dict:
-    return await _get_data(PSV_URL, 'psv', 1, 1, 'psv', force_refresh)
+    return {'pun': pun_val, 'psv': psv_val}
+
+async def aggiorna_prezzi(force_refresh: bool = False) -> Dict:
+    global _energy_cache
+    now = datetime.datetime.now()
+    now_ts = int(now.timestamp())
+
+    last_update = datetime.datetime.fromisoformat(_energy_cache['last_update']) if _energy_cache.get('last_update') else None
+    needs_refresh = force_refresh or not last_update or (now - last_update) > timedelta(hours=1)
+
+    if needs_refresh:
+        # 1. Prova API GME ufficiale
+        gme_data = await _fetch_gme_prices()
+
+        if gme_data['pun'] is not None:
+            _energy_cache['pun'] = {'latest': gme_data['pun'], 'fetched_at': now_ts, 'source': 'GME_API'}
+        else:
+            # Fallback env vars
+            _energy_cache['pun'] = {'latest': PUN_FALLBACK, 'fetched_at': now_ts, 'source': 'env_fallback'}
+
+        if gme_data['psv'] is not None:
+            _energy_cache['psv'] = {'latest': gme_data['psv'], 'fetched_at': now_ts, 'source': 'GME_API'}
+        else:
+            _energy_cache['psv'] = {'latest': PSV_FALLBACK, 'fetched_at': now_ts, 'source': 'env_fallback'}
+
+        _energy_cache['last_update'] = now.isoformat()
+        logger.info(f"[Energy] Aggiornato: PUN={_energy_cache['pun']['latest']:.6f} ({_energy_cache['pun']['source']}), PSV={_energy_cache['psv']['latest']:.4f} ({_energy_cache['psv']['source']})")
+
+    return {
+        'pun': _energy_cache['pun'],
+        'psv': _energy_cache['psv'],
+        'lastUpdate': _energy_cache['last_update']
+    }
+
+def get_energy_cache() -> Dict:
+    return _energy_cache
 
 def calcola_convenienza_energia(pun_latest: float, psv_latest: float, opts: Optional[Dict] = None) -> Dict:
     if opts is None: opts = {}
@@ -404,14 +340,6 @@ def calcola_convenienza_energia(pun_latest: float, psv_latest: float, opts: Opti
         'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
     }
 
-async def aggiorna_prezzi(force_refresh: bool = False) -> Dict:
-    pun, psv = await get_pun_data(force_refresh), await get_psv_data(force_refresh)
-    _energy_cache['last_update'] = datetime.datetime.now().isoformat()
-    return {'pun': pun, 'psv': psv, 'lastUpdate': _energy_cache['last_update']}
-
-def get_energy_cache() -> Dict:
-    return {'pun': _energy_cache.get('pun'), 'psv': _energy_cache.get('psv'), 'lastUpdate': _energy_cache.get('last_update')}
-
 @app.get("/api/energy-prices")
 @app.get("/v1/energy-prices")
 async def energy_prices(refresh: bool = False):
@@ -419,8 +347,18 @@ async def energy_prices(refresh: bool = False):
         prices = await aggiorna_prezzi(refresh)
         return {
             'success': True,
-            'pun': {'latest': prices['pun']['latest'], 'unit': 'EUR/kWh', 'source': 'abbassalebollette.it', 'stale': prices['pun'].get('stale', False), 'updated': prices['pun']['fetched_at']},
-            'psv': {'latest': prices['psv']['latest'], 'unit': 'EUR/Smc', 'source': 'abbassalebollette.it', 'stale': prices['psv'].get('stale', False), 'updated': prices['psv']['fetched_at']},
+            'pun': {
+                'latest': prices['pun']['latest'],
+                'unit': 'EUR/kWh',
+                'source': prices['pun'].get('source', 'unknown'),
+                'updated': prices['pun'].get('fetched_at'),
+            },
+            'psv': {
+                'latest': prices['psv']['latest'],
+                'unit': 'EUR/Smc',
+                'source': prices['psv'].get('source', 'unknown'),
+                'updated': prices['psv'].get('fetched_at'),
+            },
         }
     except Exception as e:
         logger.error(f"[Energy] Endpoint error: {e}")
@@ -431,13 +369,31 @@ async def energy_prices(refresh: bool = False):
 async def convenienza(cop: float = 3.5, boilerEff: float = 0.90, taxElec: float = 1.48, taxGas: float = 1.38):
     try:
         cache = get_energy_cache()
-        one_hour_ago = datetime.datetime.now() - timedelta(hours=1)
-        last_update = datetime.datetime.fromisoformat(cache['lastUpdate']) if cache.get('lastUpdate') else None
-        if not last_update or last_update < one_hour_ago:
-            await aggiorna_prezzi()
-            cache = get_energy_cache()
-        result = calcola_convenienza_energia(cache['pun']['latest'], cache['psv']['latest'], {'cop': cop, 'boilerEff': boilerEff, 'taxElec': taxElec, 'taxGas': taxGas})
+        result = calcola_convenienza_energia(
+            cache['pun']['latest'],
+            cache['psv']['latest'],
+            {'cop': cop, 'boilerEff': boilerEff, 'taxElec': taxElec, 'taxGas': taxGas}
+        )
         return {'success': True, **result}
     except Exception as e:
         logger.error(f"[Convenienza] Endpoint error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/energy-prices/update")
+@app.post("/v1/energy-prices/update")
+async def update_prices(data: PriceUpdate):
+    """Aggiorna manualmente i prezzi (override temporaneo)."""
+    global _energy_cache
+    now = datetime.datetime.now()
+    if data.pun is not None:
+        _energy_cache['pun'] = {'latest': data.pun, 'fetched_at': int(now.timestamp()), 'source': 'manual'}
+    if data.psv is not None:
+        _energy_cache['psv'] = {'latest': data.psv, 'fetched_at': int(now.timestamp()), 'source': 'manual'}
+    _energy_cache['last_update'] = now.isoformat()
+    return {
+        'success': True,
+        'pun': _energy_cache['pun']['latest'],
+        'psv': _energy_cache['psv']['latest'],
+        'source': 'manual',
+        'updated': now.isoformat()
+    }
