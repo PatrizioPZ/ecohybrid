@@ -8,7 +8,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const HA = config.homeassistant;
 
-// Client HA
+// =============================================================================
+// HOME ASSISTANT CLIENT (Percorso B + Test Locale)
+// =============================================================================
 async function haFetch(endpoint, options = {}) {
   if (!HA.enabled) return null;
   try {
@@ -28,37 +30,38 @@ async function haFetch(endpoint, options = {}) {
   }
 }
 
-// Legge stato reale da HA
+// Legge stato reale da HA (con helper per termostato)
 async function getRealState() {
   const states = await haFetch('states');
   if (!states) return null;
-  
+
   const climates = states.filter(e => e.entity_id.startsWith('climate.'));
-  const sensors = states.filter(e => 
-    e.entity_id.startsWith('sensor.') && 
-    (e.entity_id.includes('temperatura') || e.entity_id.includes('temperature') || e.entity_id.includes('humidity'))
-  );
-  
+  const sensors = states.filter(e => e.entity_id.startsWith('sensor.'));
+
+  // Helper temperatura (corretti)
+  const helperEffettiva = sensors.find(s => s.entity_id === 'sensor.temperatura_effettiva');
+  const helperDesiderata = sensors.find(s => s.entity_id === 'sensor.temperatura_desiderata');
+  const humiditySensor = sensors.find(s => s.entity_id.includes('humidity'));
+
   const main = climates.find(c => c.entity_id === HA.entityId) || climates[0];
   if (!main) return null;
-  
-  let indoorTemp = main.attributes.current_temperature || 20;
-  let humidity = 50;
-  
-  for (const s of sensors) {
-    try {
-      const val = parseFloat(s.state);
-      if (!isNaN(val)) {
-        if (s.entity_id.includes('humidity')) humidity = val;
-        else if (!indoorTemp) indoorTemp = val;
-      }
-    } catch(e) {}
+
+  let indoorTemp, targetTemp;
+  if (helperEffettiva && helperDesiderata) {
+    indoorTemp = parseFloat(helperEffettiva.state) || main.attributes.current_temperature || 20;
+    targetTemp = parseFloat(helperDesiderata.state) || main.attributes.temperature || 22;
+  } else {
+    indoorTemp = main.attributes.current_temperature || 20;
+    targetTemp = main.attributes.temperature || 22;
   }
-  
+
+  let humidity = 50;
+  if (humiditySensor) humidity = parseFloat(humiditySensor.state) || 50;
+
   return {
     power: main.state !== 'off' && main.state !== 'unavailable',
     currentTemp: indoorTemp,
-    targetTemp: main.attributes.temperature || 22,
+    targetTemp: targetTemp,
     humidity: humidity,
     mode: main.attributes.hvac_mode || 'cool',
     lastUpdate: Date.now(),
@@ -69,12 +72,22 @@ async function getRealState() {
       state: c.state,
       current_temperature: c.attributes.current_temperature,
       temperature: c.attributes.temperature,
-      hvac_mode: c.attributes.hvac_mode
+      hvac_mode: c.attributes.hvac_mode,
+      hvac_modes: c.attributes.hvac_modes || []
+    })),
+    sensors: sensors.filter(s => 
+      s.entity_id.includes('temperatura') || 
+      s.entity_id.includes('temperature') || 
+      s.entity_id.includes('humidity')
+    ).map(s => ({
+      entity_id: s.entity_id,
+      friendly_name: s.attributes.friendly_name || s.entity_id,
+      state: s.state,
+      unit: s.attributes.unit_of_measurement || '°C'
     }))
   };
 }
 
-// Stato runtime
 let state = { power: false, currentTemp: 20, targetTemp: 22, humidity: 50, mode: 'cool', lastUpdate: Date.now() };
 
 async function getState() {
@@ -85,12 +98,17 @@ async function getState() {
   return state;
 }
 
-// API Routes
+// =============================================================================
+// API ROUTES
+// =============================================================================
+
+// Dashboard dati
 app.get('/api/status', async (req, res) => {
   const s = await getState();
   res.json({ success: true, ...s, haConnected: HA.enabled && s.entityId !== undefined });
 });
 
+// Comandi HA
 app.post('/api/power/:st', async (req, res) => {
   const on = req.params.st === 'on';
   if (HA.enabled && state.entityId) {
@@ -125,12 +143,34 @@ app.post('/api/mode/:mode', async (req, res) => {
   res.json({ success: true, mode });
 });
 
+// Config
 app.get('/api/config', (req, res) => {
-  res.json({ success: true, app: config.app, mode: config.app.mode, ha: HA.enabled });
+  res.json({ 
+    success: true, 
+    app: config.app, 
+    mode: config.app.mode, 
+    ha: HA.enabled,
+    percorso_a: { enabled: true, description: 'Cloud-to-Cloud (Tuya/SmartThings)' },
+    percorso_b: { enabled: HA.enabled, description: 'Edge Tiny + Home Assistant' }
+  });
 });
 
+// Health
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', version: config.app.version, timestamp: new Date().toISOString() });
+});
+
+// =============================================================================
+// AVVIO
+// =============================================================================
 app.listen(config.server.port, config.server.host, () => {
-  console.log(`EcoHybrid v2.1 - Mode: ${config.app.mode}`);
-  console.log(`HA: ${HA.enabled ? HA.url : 'disabled'}`);
+  console.log(`\n========================================`);
+  console.log(`  ${config.app.name} v${config.app.version}`);
+  console.log(`  Mode: ${config.app.mode.toUpperCase()}`);
+  console.log(`  Percorso A: Cloud-to-Cloud (Tuya/SmartThings)`);
+  console.log(`  Percorso B: Edge Tiny + HA ${HA.enabled ? HA.url : '(non configurato)'}`);
+  console.log(`========================================`);
   console.log(`Server: http://${config.server.host}:${config.server.port}`);
+  console.log(`Dashboard: http://localhost:${config.server.port}/dashboard.html`);
+  console.log(`========================================\n`);
 });
