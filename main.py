@@ -245,7 +245,7 @@ def _parse_date(value: str) -> Optional[datetime.datetime]:
     if not m: return None
     d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
     if not d or not mo or not y: return None
-    return datetime.datetime(y, mo - 1, d)
+    return datetime.datetime(y, mo, d)
 
 def _parse_number(value: str) -> Optional[float]:
     if not value: return None
