@@ -66,7 +66,26 @@
         .weather-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
         .back-link { text-align: center; margin-top: 20px; }
         .back-link a { color: #ff0080; text-decoration: none; }
+    
+        /* === OTTIMIZZATORE ECONOMICO === */
+        .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .price-box { padding: 15px; border-radius: 12px; text-align: center; }
+        .price-box.elec { background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); }
+        .price-box.gas { background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.3); }
+        .price-box .label { display: block; font-size: 11px; color: #8892b0; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .price-box .value { font-size: 1.3rem; font-weight: 700; color: #fff; }
+        .price-box small { display: block; font-size: 11px; color: #8892b0; margin-top: 4px; }
+        .decision-box { padding: 18px; border-radius: 12px; margin-top: 15px; text-align: center; }
+        .decision-box.elec { background: rgba(76,175,80,0.1); border: 2px solid #4caf50; }
+        .decision-box.gas { background: rgba(255,152,0,0.1); border: 2px solid #ff9800; }
+        .decision-box h4 { font-size: 18px; margin-bottom: 8px; }
+        .decision-box.elec h4 { color: #4caf50; }
+        .decision-box.gas h4 { color: #ff9800; }
+        .decision-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
+        .savings { font-size: 1.1rem; font-weight: 700; color: #00d4aa; margin-top: 8px; }
+        .opt-note { font-size: 11px; color: #8892b0; margin-top: 10px; text-align: center; }
     </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -179,7 +198,37 @@
             // Stratificazione
             if (data.stratificazione) {
                 const s = data.stratificazione;
-                html += `<div class="card strat-box ${s.attivo ? 'strat-active' : ''}">
+                html += `
+            <!-- Ottimizzatore Economico -->
+            <div class="card" id="optimizer-card">
+                <div class="card-title">Ottimizzatore Economico</div>
+                <div id="opt-loading" style="text-align:center; color:#8892b0; padding:20px;">Caricamento prezzi energia...</div>
+                <div id="opt-content" style="display:none;">
+                    <div class="price-grid">
+                        <div class="price-box elec">
+                            <span class="label">Luce (PUN)</span>
+                            <span class="value" id="pun-val">--</span>
+                            <small id="pun-src">--</small>
+                        </div>
+                        <div class="price-box gas">
+                            <span class="label">Gas (PSV)</span>
+                            <span class="value" id="psv-val">--</span>
+                            <small id="psv-src">--</small>
+                        </div>
+                    </div>
+                    <div id="decision" class="decision-box">
+                        <h4 id="dec-title">--</h4>
+                        <p id="dec-detail">--</p>
+                        <p id="dec-savings" class="savings">--</p>
+                    </div>
+                    <p class="opt-note">
+                        COP pompa: <strong id="cop-display">3.5</strong> |
+                        Eff. caldaia: <strong id="boiler-display">90%</strong> |
+                        Aggiornato: <span id="last-update">--</span>
+                    </p>
+                </div>
+            </div>
+            <div class="card strat-box ${s.attivo ? 'strat-active' : ''}">
                     <div class="card-title">Pilastro 1: Riciclo Termico / Destratificazione</div>
                     <h4>${s.attivo ? 'Ventilazione Mescolante ATTIVA' : 'In attesa'}</h4>
                     <p><strong>Delta:</strong> ${s.delta}°C tra clima (alto) e termostato</p>
@@ -262,6 +311,45 @@
             document.getElementById('algo-status').className = algoEnabled ? 'status-pill auto' : 'status-pill offline';
             document.getElementById('algo-mode').textContent = algoEnabled ? 'AUTO' : 'MANUALE';
         }
+
+
+        async function loadOptimizer() {
+            try {
+                const res = await fetch('/api/convenienza');
+                const d = await res.json();
+                if (!d.success) throw new Error(d.error);
+
+                document.getElementById('opt-loading').style.display = 'none';
+                document.getElementById('opt-content').style.display = 'block';
+
+                document.getElementById('pun-val').textContent = d.pun.raw.toFixed(4) + ' EUR/kWh';
+                document.getElementById('pun-src').textContent = 'Finale: ' + d.pun.prezzoFinale.toFixed(4);
+
+                document.getElementById('psv-val').textContent = d.psv.raw.toFixed(4) + ' EUR/Smc';
+                document.getElementById('psv-src').textContent = 'Equiv: ' + d.psv.prezzoPerKwhTermico.toFixed(4) + ' EUR/kWh';
+
+                const box = document.getElementById('decision');
+                const isElec = d.decisione === 'ELETTRICO';
+                box.className = 'decision-box ' + (isElec ? 'elec' : 'gas');
+
+                document.getElementById('dec-title').textContent = 'Oggi conviene usare ' + d.decisione;
+                document.getElementById('dec-detail').textContent =
+                    'Costo termico: Elettrico ' + d.costoTermico.elettrico.toFixed(4) +
+                    ' EUR/kWh vs Gas ' + d.costoTermico.gas.toFixed(4) + ' EUR/kWh';
+                document.getElementById('dec-savings').textContent =
+                    'Risparmio stimato: ' + d.risparmioStimato.percentuale + '%';
+
+                document.getElementById('cop-display').textContent = d.parametri.cop;
+                document.getElementById('boiler-display').textContent = (d.parametri.boilerEff * 100).toFixed(0) + '%';
+                document.getElementById('last-update').textContent = new Date(d.timestamp).toLocaleTimeString('it-IT');
+            } catch (e) {
+                document.getElementById('opt-loading').textContent = 'Dati prezzi non disponibili. Riprovo...';
+                setTimeout(loadOptimizer, 10000);
+            }
+        }
+
+        loadOptimizer();
+        setInterval(loadOptimizer, 3600000);
 
         fetchData();
         setInterval(fetchData, 10000);
