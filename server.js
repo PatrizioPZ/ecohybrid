@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const config = require('./config.json');
+const energy = require('./energy-prices');
 
 const app = express();
 app.use(express.json());
@@ -357,6 +358,58 @@ app.get('/api/config', (req, res) => {
       algorithm: true
     }
   });
+});
+
+
+// =============================================================================
+// ENERGY PRICES + ALGORITMO CONVENIENZA
+// =============================================================================
+
+app.get('/api/energy-prices', async (req, res) => {
+  try {
+    const prices = await energy.aggiornaPrezzi(req.query.refresh === 'true');
+    res.json({
+      success: true,
+      pun: {
+        latest: prices.pun.latest,
+        unit: 'EUR/kWh',
+        source: 'abbassalebollette.it',
+        stale: prices.pun.stale || false,
+        updated: prices.pun.fetchedAt,
+      },
+      psv: {
+        latest: prices.psv.latest,
+        unit: 'EUR/Smc',
+        source: 'abbassalebollette.it',
+        stale: prices.psv.stale || false,
+        updated: prices.psv.fetchedAt,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/convenienza', async (req, res) => {
+  try {
+    let prices = energy.getCache();
+    const oneHourAgo = new Date(Date.now() - 3600000);
+
+    if (!prices.lastUpdate || new Date(prices.lastUpdate) < oneHourAgo) {
+      prices = await energy.aggiornaPrezzi();
+    }
+
+    const result = energy.calcolaConvenienza(prices.pun.latest, prices.psv.latest, {
+      cop: parseFloat(req.query.cop) || 3.5,
+      boilerEff: parseFloat(req.query.boilerEff) || 0.90,
+      taxElec: parseFloat(req.query.taxElec) || 1.48,
+      taxGas: parseFloat(req.query.taxGas) || 1.38,
+    });
+
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.listen(config.server.port, config.server.host, () => {
