@@ -1,9 +1,8 @@
 import datetime
 import logging
 import os
-import re
 from typing import Dict, Optional, List
-from fastapi import FastAPI, HTTPException, Security, status
+from fastapi import FastAPI, HTTPException, Security
 from fastapi.security.api_key import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -183,7 +182,7 @@ async def ha_sensors():
     sensors = []
     for entity in states:
         eid = entity["entity_id"]
-        if "temperatura" in eid or "temperature" in eid or "humidity" in eid:
+        if "temperatura" in eid or "temperature" in eid or "umidita" in eid or "humidity" in eid:
             try:
                 val = float(entity["state"])
                 sensors.append({"entity_id": eid, "state": val, "unit": entity["attributes"].get("unit_of_measurement", "°C"), "friendly_name": entity["attributes"].get("friendly_name", eid)})
@@ -209,113 +208,18 @@ async def tiny_telemetry(data: dict, partner: dict = Security(get_partner)):
     comfort = calcola_comfort(t_ext, umid)
     return {"status": "ON" if t_int < comfort["setpoint"] - 1 else "OFF", "setpoint": comfort["setpoint"], "mode": comfort["modalita"], "reason": "Ottimizzazione EcoHybrid v2.1", "timestamp": datetime.datetime.utcnow().isoformat() + "Z"}
 
-@app.get("/")
-async def root():
-    return {"name": "EcoHybrid Core Engine", "version": "2.1.0", "status": "operational", "ha_integration": HA_ENABLED, "license": "Diritto d'Autore ex L. 633/1941", "docs": "/docs", "endpoints": ["/v1/optimize", "/v1/ha/status", "/v1/ha/climate", "/v1/ha/command", "/v1/telemetry", "/v1/energy-prices", "/v1/convenienza", "/health"]}
-
-@app.get("/health")
-async def health():
-    return {"status": "ok", "timestamp": datetime.datetime.utcnow().isoformat() + "Z"}
-
-@app.get("/v1/license")
-async def license_info(partner: dict = Security(get_partner)):
-    return {"partner": partner["partner"], "rate_eur_user_month": partner["rate"], "tier": partner["tier"], "license": "Diritto d'Autore ex L. 633/1941", "terms": "AS IS - Scatola Nera"}
-
 # =============================================================================
-# ENERGY PRICES - API GME Ufficiale (mercati-energetici) + fallback
+# ENERGY PRICES - Fallback env vars + algoritmo convenienza
 # =============================================================================
-from datetime import timedelta, date
 
-# Fallback configurabili via env vars
-PUN_FALLBACK = float(os.getenv("PUN_FALLBACK", "0.125"))  # EUR/kWh
-PSV_FALLBACK = float(os.getenv("PSV_FALLBACK", "0.38"))   # EUR/Smc
+PUN_FALLBACK = float(os.getenv("PUN_FALLBACK", "0.125"))
+PSV_FALLBACK = float(os.getenv("PSV_FALLBACK", "0.38"))
 
 _energy_cache = {
     'pun': {'latest': PUN_FALLBACK, 'fetched_at': 0, 'source': 'env_fallback'},
     'psv': {'latest': PSV_FALLBACK, 'fetched_at': 0, 'source': 'env_fallback'},
     'last_update': datetime.datetime.now().isoformat()
 }
-
-# Prova import libreria GME
-try:
-    from mercati_energetici import MGP, MGP_GAS
-    GME_AVAILABLE = True
-except ImportError:
-    GME_AVAILABLE = False
-    logger.warning("[Energy] Libreria 'mercati-energetici' non installata. Usare: pip install mercati-energetici")
-
-async def _fetch_gme_prices() -> Dict:
-    """Recupera PUN e PSV dalle API ufficiali GME."""
-    global _energy_cache
-    today = date.today()
-    pun_val = None
-    psv_val = None
-
-    if not GME_AVAILABLE:
-        return {'pun': None, 'psv': None, 'error': 'mercati-energetici non installato'}
-
-    try:
-        # PUN (Prezzo Unico Nazionale) - EUR/MWh
-        async with MGP() as mgp:
-            pun_data = await mgp.daily_pun(today)
-            if pun_data and len(pun_data) > 0:
-                # pun_data è lista di dict, prendo il prezzo medio
-                pun_mwh = float(pun_data[0].get('prezzo', 0))
-                pun_val = pun_mwh / 1000  # converti EUR/MWh → EUR/kWh
-                logger.info(f"[Energy] GME PUN: {pun_val:.6f} EUR/kWh")
-    except Exception as e:
-        logger.warning(f"[Energy] GME PUN fallito: {e}")
-
-    try:
-        # PSV (Prezzo di Scambio Virtuale) - EUR/MWh
-        async with MGP_GAS() as gas:
-            psv_data = await gas.daily_psv(today)
-            if psv_data and len(psv_data) > 0:
-                psv_mwh = float(psv_data[0].get('prezzo', 0))
-                # PSV GME è in EUR/MWh, convertiamo in EUR/Smc
-                # 1 MWh = 1000 kWh, PCS gas ~ 10.7 kWh/Smc
-                # EUR/MWh → EUR/kWh = /1000 → EUR/Smc = *10.7
-                psv_val = (psv_mwh / 1000) * 10.7
-                logger.info(f"[Energy] GME PSV: {psv_val:.4f} EUR/Smc")
-    except Exception as e:
-        logger.warning(f"[Energy] GME PSV fallito: {e}")
-
-    return {'pun': pun_val, 'psv': psv_val}
-
-async def aggiorna_prezzi(force_refresh: bool = False) -> Dict:
-    global _energy_cache
-    now = datetime.datetime.now()
-    now_ts = int(now.timestamp())
-
-    last_update = datetime.datetime.fromisoformat(_energy_cache['last_update']) if _energy_cache.get('last_update') else None
-    needs_refresh = force_refresh or not last_update or (now - last_update) > timedelta(hours=1)
-
-    if needs_refresh:
-        # 1. Prova API GME ufficiale
-        gme_data = await _fetch_gme_prices()
-
-        if gme_data['pun'] is not None:
-            _energy_cache['pun'] = {'latest': gme_data['pun'], 'fetched_at': now_ts, 'source': 'GME_API'}
-        else:
-            # Fallback env vars
-            _energy_cache['pun'] = {'latest': PUN_FALLBACK, 'fetched_at': now_ts, 'source': 'env_fallback'}
-
-        if gme_data['psv'] is not None:
-            _energy_cache['psv'] = {'latest': gme_data['psv'], 'fetched_at': now_ts, 'source': 'GME_API'}
-        else:
-            _energy_cache['psv'] = {'latest': PSV_FALLBACK, 'fetched_at': now_ts, 'source': 'env_fallback'}
-
-        _energy_cache['last_update'] = now.isoformat()
-        logger.info(f"[Energy] Aggiornato: PUN={_energy_cache['pun']['latest']:.6f} ({_energy_cache['pun']['source']}), PSV={_energy_cache['psv']['latest']:.4f} ({_energy_cache['psv']['source']})")
-
-    return {
-        'pun': _energy_cache['pun'],
-        'psv': _energy_cache['psv'],
-        'lastUpdate': _energy_cache['last_update']
-    }
-
-def get_energy_cache() -> Dict:
-    return _energy_cache
 
 def calcola_convenienza_energia(pun_latest: float, psv_latest: float, opts: Optional[Dict] = None) -> Dict:
     if opts is None: opts = {}
@@ -342,47 +246,24 @@ def calcola_convenienza_energia(pun_latest: float, psv_latest: float, opts: Opti
 
 @app.get("/api/energy-prices")
 @app.get("/v1/energy-prices")
-async def energy_prices(refresh: bool = False):
-    try:
-        prices = await aggiorna_prezzi(refresh)
-        return {
-            'success': True,
-            'pun': {
-                'latest': prices['pun']['latest'],
-                'unit': 'EUR/kWh',
-                'source': prices['pun'].get('source', 'unknown'),
-                'updated': prices['pun'].get('fetched_at'),
-            },
-            'psv': {
-                'latest': prices['psv']['latest'],
-                'unit': 'EUR/Smc',
-                'source': prices['psv'].get('source', 'unknown'),
-                'updated': prices['psv'].get('fetched_at'),
-            },
-        }
-    except Exception as e:
-        logger.error(f"[Energy] Endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+async def energy_prices():
+    cache = _energy_cache
+    return {
+        'success': True,
+        'pun': {'latest': cache['pun']['latest'], 'unit': 'EUR/kWh', 'source': cache['pun']['source']},
+        'psv': {'latest': cache['psv']['latest'], 'unit': 'EUR/Smc', 'source': cache['psv']['source']},
+    }
 
 @app.get("/api/convenienza")
 @app.get("/v1/convenienza")
 async def convenienza(cop: float = 3.5, boilerEff: float = 0.90, taxElec: float = 1.48, taxGas: float = 1.38):
-    try:
-        cache = get_energy_cache()
-        result = calcola_convenienza_energia(
-            cache['pun']['latest'],
-            cache['psv']['latest'],
-            {'cop': cop, 'boilerEff': boilerEff, 'taxElec': taxElec, 'taxGas': taxGas}
-        )
-        return {'success': True, **result}
-    except Exception as e:
-        logger.error(f"[Convenienza] Endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    cache = _energy_cache
+    result = calcola_convenienza_energia(cache['pun']['latest'], cache['psv']['latest'], {'cop': cop, 'boilerEff': boilerEff, 'taxElec': taxElec, 'taxGas': taxGas})
+    return {'success': True, **result}
 
 @app.post("/api/energy-prices/update")
 @app.post("/v1/energy-prices/update")
 async def update_prices(data: PriceUpdate):
-    """Aggiorna manualmente i prezzi (override temporaneo)."""
     global _energy_cache
     now = datetime.datetime.now()
     if data.pun is not None:
@@ -390,10 +271,16 @@ async def update_prices(data: PriceUpdate):
     if data.psv is not None:
         _energy_cache['psv'] = {'latest': data.psv, 'fetched_at': int(now.timestamp()), 'source': 'manual'}
     _energy_cache['last_update'] = now.isoformat()
-    return {
-        'success': True,
-        'pun': _energy_cache['pun']['latest'],
-        'psv': _energy_cache['psv']['latest'],
-        'source': 'manual',
-        'updated': now.isoformat()
-    }
+    return {'success': True, 'pun': _energy_cache['pun']['latest'], 'psv': _energy_cache['psv']['latest'], 'source': 'manual', 'updated': now.isoformat()}
+
+@app.get("/")
+async def root():
+    return {"name": "EcoHybrid Core Engine", "version": "2.1.0", "status": "operational", "ha_integration": HA_ENABLED, "license": "Diritto d'Autore ex L. 633/1941", "docs": "/docs", "endpoints": ["/v1/optimize", "/v1/ha/status", "/v1/ha/climate", "/v1/ha/command", "/v1/telemetry", "/v1/energy-prices", "/v1/convenienza", "/health"]}
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "timestamp": datetime.datetime.utcnow().isoformat() + "Z"}
+
+@app.get("/v1/license")
+async def license_info(partner: dict = Security(get_partner)):
+    return {"partner": partner["partner"], "rate_eur_user_month": partner["rate"], "tier": partner["tier"], "license": "Diritto d'Autore ex L. 633/1941", "terms": "AS IS - Scatola Nera"}
