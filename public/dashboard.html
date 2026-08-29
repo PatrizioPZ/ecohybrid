@@ -6,13 +6,7 @@
     <title>EcoHybrid Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; min-height: 100vh; padding: 20px; }
         .header { text-align: center; padding: 20px 0; }
         .header h1 { font-size: 28px; color: #ff0080; }
         .header p { color: #8892b0; font-size: 14px; }
@@ -33,7 +27,6 @@
         .btn-primary { background: #00d4aa; color: #1a1a2e; }
         .btn-danger { background: #e74c3c; color: #fff; }
         .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
-        .btn-warning { background: #ff0080; color: #fff; }
         .temp-control { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
         .temp-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: #fff; font-size: 20px; cursor: pointer; }
         .temp-value { font-size: 28px; font-weight: 700; min-width: 60px; text-align: center; }
@@ -46,15 +39,12 @@
         .mode-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
         .mode-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8892b0; cursor: pointer; font-size: 12px; }
         .mode-btn.active { background: #00d4aa; color: #1a1a2e; border-color: #00d4aa; }
-        .override-box { background: rgba(255,0,128,0.1); border: 1px solid rgba(255,0,128,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; text-align: center; }
-        .override-box p { font-size: 13px; color: #b0c4de; margin-bottom: 10px; }
         .comfort-box { background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
         .comfort-box h4 { color: #f39c12; margin-bottom: 8px; }
         .comfort-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
         .comfort-ok { background: rgba(0,212,170,0.2); border-color: #00d4aa; }
         .deum-box { background: rgba(155,89,182,0.1); border: 1px solid rgba(155,89,182,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
         .deum-box h4 { color: #9b59b6; margin-bottom: 8px; }
-        .deum-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
         .price-box { padding: 15px; border-radius: 12px; text-align: center; }
         .price-box.elec { background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); }
@@ -73,9 +63,6 @@
         .opt-note { font-size: 11px; color: #8892b0; margin-top: 10px; text-align: center; }
         .back-link { text-align: center; margin-top: 20px; }
         .back-link a { color: #ff0080; text-decoration: none; }
-        .thermostat-only { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; margin-top: 8px; }
-        .thermostat-only .label { color: #8892b0; font-size: 12px; }
-        .thermostat-only .value { color: #fff; font-size: 18px; font-weight: 600; }
     </style>
 <base target="_blank">
 </head>
@@ -92,7 +79,8 @@
     <div class="back-link"><a href="/">Torna alla home</a></div>
 
     <script>
-        const API_BASE = '';
+        // === CONFIG ===
+        const API_BASE = 'https://ecohybrid-api.onrender.com';
         let climates = [];
         let sensors = [];
 
@@ -113,7 +101,7 @@
 
                 render(climateData, sensorData, optData);
             } catch (e) {
-                document.getElementById('content').innerHTML = `<div class="error">Errore connessione: ${e.message}<br><small>Verifica che il backend sia attivo su Render</small></div>`;
+                document.getElementById('content').innerHTML = `<div class="error">Errore connessione: ${e.message}<br><small>Verifica che il backend sia attivo</small></div>`;
             }
         }
 
@@ -138,7 +126,7 @@
                 html += `</div></div>`;
             }
 
-            // Comfort ASHRAE 55 (calcolato frontend)
+            // Comfort
             const tempSensor = sensors.find(s => s.entity_id.includes('temperatura') || s.entity_id.includes('temperature'));
             const humSensor = sensors.find(s => s.entity_id.includes('umidita') || s.entity_id.includes('humidity'));
             const tInt = tempSensor ? tempSensor.state : 20;
@@ -152,8 +140,8 @@
                 <p><strong>Suggerimento:</strong> ${comfort.suggestion}</p>
             </div>`;
 
-            // Deumidifica (calcolato frontend)
-            const deum = calcolaDeumidifica(tInt, rh, null, null);
+            // Deumidifica
+            const deum = calcolaDeumidifica(tInt, rh);
             html += `<div class="card deum-box">
                 <div class="card-title">Gestione Umidita</div>
                 <h4>Azione: ${deum.action.toUpperCase()}</h4>
@@ -166,33 +154,32 @@
                 html += renderOptimizer(optData);
             }
 
-            // Clima / Termostati
+            // Dispositivi
             if (climates.length > 0) {
-                climates.forEach((c, idx) => {
-                    const isTermostato = isTermostatoEntity(c);
-                    html += renderClimateCard(c, idx, isTermostato);
+                climates.forEach(c => {
+                    html += renderDeviceCard(c);
                 });
             } else {
-                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#8892b0">Nessun dispositivo climate trovato su Home Assistant.</p></div>`;
+                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#8892b0">Nessun dispositivo climate trovato.</p></div>`;
             }
 
             document.getElementById('content').innerHTML = html;
         }
 
-        function isTermostatoEntity(c) {
+        function isTermostato(c) {
             const eid = c.entity_id.toLowerCase();
             const fname = (c.friendly_name || '').toLowerCase();
-            // Termostato = solo heat/off o entity_id contiene "termostato" / "caldaia"
             const hasOnlyHeat = c.hvac_modes && c.hvac_modes.length <= 2 && c.hvac_modes.includes('heat') && !c.hvac_modes.includes('cool');
             return eid.includes('termostato') || eid.includes('caldaia') || fname.includes('termostato') || hasOnlyHeat;
         }
 
-        function renderClimateCard(c, idx, isTermostato) {
+        function renderDeviceCard(c) {
+            const isTerm = isTermostato(c);
             const isOn = c.state !== 'off' && c.state !== 'unavailable';
             const currentTemp = c.current_temperature != null ? c.current_temperature : '--';
             const targetTemp = c.temperature != null ? c.temperature : '--';
-            const title = isTermostato ? 'Termostato / Caldaia' : 'Climatizzazione';
-            const subtitle = isTermostato ? 'Solo ON/OFF e temperatura' : 'Modalita HVAC completa';
+            const title = isTerm ? 'Termostato / Caldaia' : 'Climatizzazione';
+            const subtitle = isTerm ? 'ON/OFF + Temperatura' : 'Modalita HVAC completa';
 
             let html = `<div class="card">
                 <div class="card-title">${title} <span style="color:#8892b0;font-size:11px">- ${subtitle}</span></div>
@@ -211,8 +198,8 @@
                 <button class="temp-btn" onclick="setTemp('${c.entity_id}', ${targetTemp + 1})">+</button>
             </div>`;
 
-            // Modalita - SOLO per clima (non termostato)
-            if (!isTermostato && c.hvac_modes) {
+            // Modalita - SOLO clima
+            if (!isTerm && c.hvac_modes) {
                 html += `<div class="mode-selector">`;
                 const modes = ['heat', 'cool', 'dry', 'auto', 'fan_only'];
                 const labels = {heat: 'Caldo', cool: 'Freddo', dry: 'Deumidifica', auto: 'Auto', fan_only: 'Ventilatore'};
@@ -224,7 +211,7 @@
                 html += `</div>`;
             }
 
-            // ON/OFF (tutti)
+            // ON/OFF
             html += `<div class="controls" style="margin-top:15px">
                 <button class="btn ${isOn ? 'btn-danger' : 'btn-primary'}" onclick="togglePower('${c.entity_id}', ${isOn ? 'off' : 'on'})">${isOn ? 'SPEGNI' : 'ACCENDI'}</button>
             </div>`;
@@ -257,9 +244,9 @@
             </div>`;
         }
 
-        // Algoritmi frontend (ASHRAE 55 + Deumidifica)
         function calcolaComfort(tInt, rh) {
-            const stagione = new Date().getMonth() >= 5 && new Date().getMonth() <= 8 ? 'estate' : 'inverno';
+            const m = new Date().getMonth();
+            const stagione = (m >= 5 && m <= 8) ? 'estate' : 'inverno';
             let tMin, tMax, rhMin, rhMax;
             if (stagione === 'estate') { tMin = 23; tMax = 26; rhMin = 30; rhMax = 60; }
             else { tMin = 20; tMax = 23; rhMin = 30; rhMax = 60; }
@@ -274,12 +261,11 @@
             return { stagione, inComfort, tMin, tMax, rhMin, rhMax, suggestion };
         }
 
-        function calcolaDeumidifica(tInt, rhInt, tExt, rhExt) {
+        function calcolaDeumidifica(tInt, rhInt) {
             if (rhInt > 65) return { action: 'deumidifica', reason: 'Umidita interna elevata', umiditaInt: rhInt };
             return { action: 'mantieni', reason: 'Umidita interna OK', umiditaInt: rhInt };
         }
 
-        // Comandi
         async function togglePower(entityId, action) {
             const cmd = action === 'on' ? 'power_on' : 'power_off';
             await sendCommand(entityId, cmd);
@@ -308,7 +294,6 @@
             }
         }
 
-        // Caricamento iniziale
         fetchData();
         setInterval(fetchData, 15000);
     </script>
