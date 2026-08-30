@@ -11,19 +11,22 @@
         .header h1 { font-size: 28px; color: #ff0080; }
         .header p { color: #8892b0; font-size: 14px; }
         .status-bar { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
-        .status-pill { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-pill { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: default; }
         .status-pill.online { background: #00d4aa; color: #1a1a2e; }
         .status-pill.offline { background: #e74c3c; color: #fff; }
+        .status-pill.warn { background: #f39c12; color: #1a1a2e; }
         .status-pill.auto { background: #ff0080; color: #fff; }
         .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
-        .card-title { font-size: 14px; color: #8892b0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        .card-title { font-size: 14px; color: #8892b0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .device-type-icon { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #8892b0; }
         .climate-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .climate-item:last-child { border-bottom: none; }
         .climate-name { font-weight: 600; font-size: 16px; }
         .climate-temp { font-size: 24px; color: #00d4aa; }
         .climate-state { font-size: 12px; color: #8892b0; }
         .controls { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
         .btn-primary { background: #00d4aa; color: #1a1a2e; }
         .btn-danger { background: #e74c3c; color: #fff; }
         .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
@@ -35,7 +38,9 @@
         .sensor-value { font-size: 24px; font-weight: 700; color: #00d4aa; }
         .sensor-label { font-size: 11px; color: #8892b0; margin-top: 5px; }
         .loading { text-align: center; padding: 40px; color: #8892b0; }
-        .error { text-align: center; padding: 20px; color: #e74c3c; background: rgba(231,76,60,0.1); border-radius: 12px; }
+        .error { text-align: center; padding: 20px; color: #e74c3c; background: rgba(231,76,60,0.1); border-radius: 12px; margin-bottom: 15px; }
+        .error h4 { margin-bottom: 8px; }
+        .error p { font-size: 13px; color: #b0c4de; }
         .mode-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
         .mode-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8892b0; cursor: pointer; font-size: 12px; }
         .mode-btn.active { background: #00d4aa; color: #1a1a2e; border-color: #00d4aa; }
@@ -63,6 +68,10 @@
         .opt-note { font-size: 11px; color: #8892b0; margin-top: 10px; text-align: center; }
         .back-link { text-align: center; margin-top: 20px; }
         .back-link a { color: #ff0080; text-decoration: none; }
+        .info-box { background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .info-box h4 { color: #3498db; margin-bottom: 8px; }
+        .info-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
+        .info-box code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
     </style>
 <base target="_blank">
 </head>
@@ -79,35 +88,68 @@
     <div class="back-link"><a href="/">Torna alla home</a></div>
 
     <script>
-        // === CONFIG ===
-        const API_BASE = 'https://ecohybrid-api.onrender.com';
+        // === API BASE DINAMICO ===
+        // Se in locale (localhost/127.0.0.1) → usa localhost:8000
+        // Se su Netlify/GitHub Pages → usa Render
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = isLocal ? 'http://localhost:8000' : 'https://ecohybrid-api.onrender.com';
+
         let climates = [];
         let sensors = [];
+        let haConnected = false;
 
         async function fetchData() {
             try {
                 const [climateResp, sensorResp, optResp] = await Promise.all([
-                    fetch(`${API_BASE}/v1/ha/climate`).catch(() => null),
-                    fetch(`${API_BASE}/v1/ha/sensors`).catch(() => null),
-                    fetch(`${API_BASE}/api/convenienza`).catch(() => null)
+                    fetch(`${API_BASE}/v1/ha/climate`).catch(e => { console.error('Climate error:', e); return null; }),
+                    fetch(`${API_BASE}/v1/ha/sensors`).catch(e => { console.error('Sensors error:', e); return null; }),
+                    fetch(`${API_BASE}/api/convenienza`).catch(e => { console.error('Opt error:', e); return null; })
                 ]);
 
                 const climateData = climateResp && climateResp.ok ? await climateResp.json() : null;
                 const sensorData = sensorResp && sensorResp.ok ? await sensorResp.json() : null;
                 const optData = optResp && optResp.ok ? await optResp.json() : null;
 
+                // Se climateData ha errore 503, mostra il messaggio
+                if (climateResp && !climateResp.ok) {
+                    const err = await climateResp.json().catch(() => ({detail: 'Errore sconosciuto'}));
+                    renderError('HA non disponibile', err.detail || 'Home Assistant non configurato o non raggiungibile');
+                    return;
+                }
+
                 climates = climateData && climateData.climates ? climateData.climates : [];
                 sensors = sensorData && sensorData.sensors ? sensorData.sensors : [];
+                haConnected = climateData && climateData.ha_connected;
 
                 render(climateData, sensorData, optData);
             } catch (e) {
-                document.getElementById('content').innerHTML = `<div class="error">Errore connessione: ${e.message}<br><small>Verifica che il backend sia attivo</small></div>`;
+                renderError('Errore connessione', `Impossibile contattare il backend: ${e.message}<br><small>URL: ${API_BASE}</small>`);
             }
+        }
+
+        function renderError(title, message) {
+            const haStatus = document.getElementById('ha-status');
+            haStatus.className = 'status-pill offline';
+            haStatus.textContent = 'HA: Offline';
+
+            document.getElementById('content').innerHTML = `
+                <div class="error">
+                    <h4>${title}</h4>
+                    <p>${message}</p>
+                </div>
+                <div class="card info-box">
+                    <h4>Come risolvere</h4>
+                    <p>1. Verifica che il backend sia attivo: <code>${API_BASE}/health</code></p>
+                    <p>2. Se in locale: avvia il backend con <code>uvicorn main:app --reload --port 8000</code></p>
+                    <p>3. Se su Render: verifica che la variabile <code>HA_TOKEN</code> sia impostata nel dashboard Render</p>
+                    <p>4. Verifica che Home Assistant sia accessibile da Render (Tailscale attivo, token valido)</p>
+                </div>
+            `;
         }
 
         function render(climateData, sensorData, optData) {
             const haStatus = document.getElementById('ha-status');
-            if (climateData && climateData.ha_connected) {
+            if (haConnected) {
                 haStatus.className = 'status-pill online';
                 haStatus.textContent = 'HA: Connesso';
             } else {
@@ -156,50 +198,74 @@
 
             // Dispositivi
             if (climates.length > 0) {
+                html += `<div class="card"><div class="card-title">Dispositivi (${climates.length})</div>`;
                 climates.forEach(c => {
                     html += renderDeviceCard(c);
                 });
+                html += `</div>`;
+            } else if (haConnected) {
+                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#8892b0">Nessun dispositivo climate trovato su Home Assistant.</p></div>`;
             } else {
-                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#8892b0">Nessun dispositivo climate trovato.</p></div>`;
+                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#e74c3c">Home Assistant non connesso. Impossibile caricare i dispositivi.</p></div>`;
             }
 
             document.getElementById('content').innerHTML = html;
         }
 
-        function isTermostato(c) {
+        // === RILEVAMENTO TIPO DISPOSITIVO ===
+        function detectDeviceType(c) {
             const eid = c.entity_id.toLowerCase();
             const fname = (c.friendly_name || '').toLowerCase();
-            const hasOnlyHeat = c.hvac_modes && c.hvac_modes.length <= 2 && c.hvac_modes.includes('heat') && !c.hvac_modes.includes('cool');
-            return eid.includes('termostato') || eid.includes('caldaia') || fname.includes('termostato') || hasOnlyHeat;
+            const modes = c.hvac_modes || [];
+
+            // Valvola termostatica
+            if (eid.includes('valvola') || eid.includes('valve') || eid.includes('radiator') || 
+                fname.includes('valvola') || fname.includes('valve') || fname.includes('radiatore')) {
+                return { type: 'valve', label: 'Valvola', icon: 'VALVOLA' };
+            }
+
+            // Climatizzazione (ha cool, dry, fan_only)
+            if (modes.includes('cool') || modes.includes('dry') || modes.includes('fan_only')) {
+                return { type: 'clima', label: 'Climatizzazione', icon: 'CLIMA' };
+            }
+
+            // Termostato / Caldaia (solo heat e off)
+            if (modes.includes('heat') && !modes.includes('cool')) {
+                return { type: 'thermostat', label: 'Termostato / Caldaia', icon: 'CALDAIA' };
+            }
+
+            // Generico
+            return { type: 'generic', label: 'Dispositivo', icon: 'DEVICE' };
         }
 
         function renderDeviceCard(c) {
-            const isTerm = isTermostato(c);
+            const info = detectDeviceType(c);
             const isOn = c.state !== 'off' && c.state !== 'unavailable';
             const currentTemp = c.current_temperature != null ? c.current_temperature : '--';
             const targetTemp = c.temperature != null ? c.temperature : '--';
-            const title = isTerm ? 'Termostato / Caldaia' : 'Climatizzazione';
-            const subtitle = isTerm ? 'ON/OFF + Temperatura' : 'Modalita HVAC completa';
 
             let html = `<div class="card">
-                <div class="card-title">${title} <span style="color:#8892b0;font-size:11px">- ${subtitle}</span></div>
+                <div class="card-title">
+                    ${c.friendly_name}
+                    <span class="device-type-icon">${info.icon}</span>
+                </div>
                 <div class="climate-item">
                     <div>
-                        <div class="climate-name">${c.friendly_name}</div>
+                        <div class="climate-name">${info.label}</div>
                         <div class="climate-state">Stato: ${isOn ? 'ON (' + c.state + ')' : 'OFF'} | Attuale: ${currentTemp}C</div>
                     </div>
                     <div class="climate-temp">${targetTemp}C</div>
                 </div>`;
 
-            // Temperatura (tutti)
+            // Temperatura (tutti i tipi)
             html += `<div class="temp-control">
                 <button class="temp-btn" onclick="setTemp('${c.entity_id}', ${targetTemp - 1})">-</button>
                 <div class="temp-value">${targetTemp}</div>
                 <button class="temp-btn" onclick="setTemp('${c.entity_id}', ${targetTemp + 1})">+</button>
             </div>`;
 
-            // Modalita - SOLO clima
-            if (!isTerm && c.hvac_modes) {
+            // Modalita HVAC - SOLO per clima
+            if (info.type === 'clima' && c.hvac_modes) {
                 html += `<div class="mode-selector">`;
                 const modes = ['heat', 'cool', 'dry', 'auto', 'fan_only'];
                 const labels = {heat: 'Caldo', cool: 'Freddo', dry: 'Deumidifica', auto: 'Auto', fan_only: 'Ventilatore'};
@@ -211,10 +277,16 @@
                 html += `</div>`;
             }
 
-            // ON/OFF
-            html += `<div class="controls" style="margin-top:15px">
-                <button class="btn ${isOn ? 'btn-danger' : 'btn-primary'}" onclick="togglePower('${c.entity_id}', ${isOn ? 'off' : 'on'})">${isOn ? 'SPEGNI' : 'ACCENDI'}</button>
-            </div>`;
+            // ON/OFF (tutti tranne valvola - le valvole non si spengono, si setta temp bassa)
+            if (info.type !== 'valve') {
+                html += `<div class="controls" style="margin-top:15px">
+                    <button class="btn ${isOn ? 'btn-danger' : 'btn-primary'}" onclick="togglePower('${c.entity_id}', ${isOn ? 'off' : 'on'})">${isOn ? 'SPEGNI' : 'ACCENDI'}</button>
+                </div>`;
+            } else {
+                html += `<div class="controls" style="margin-top:15px">
+                    <span style="color:#8892b0;font-size:12px">Valvola: regola temperatura per aprire/chiudere</span>
+                </div>`;
+            }
 
             html += `</div>`;
             return html;
@@ -238,7 +310,7 @@
                 <div class="decision-box ${d.decisione === 'ELETTRICO' ? 'elec' : 'gas'}">
                     <h4>Oggi conviene usare ${d.decisione}</h4>
                     <p>Costo termico: Elettrico ${d.costoTermico.elettrico.toFixed(4)} vs Gas ${d.costoTermico.gas.toFixed(4)} EUR/kWh</p>
-                    <p class="savings">Risparmio stimato: ${d.risparmioStimato.percentuale}%</p>
+                    <p class="savings">Risparmio stimato: circa ${d.risparmioStimato.percentuale}%</p>
                 </div>
                 <p class="opt-note">COP: ${d.parametri.cop} | Eff. caldaia: ${(d.parametri.boilerEff*100).toFixed(0)}% | Aggiornato: ${new Date(d.timestamp).toLocaleTimeString('it-IT')}</p>
             </div>`;
