@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoHybrid - Dashboard Controllo</title>
+    <title>EcoHybrid - Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -21,6 +21,8 @@
         .status-pill.online { background: #00d4aa; color: #1a1a2e; }
         .status-pill.offline { background: #e74c3c; color: #fff; }
         .status-pill.auto { background: #ff0080; color: #fff; }
+        .status-pill.strat { background: #3498db; color: #fff; }
+        .status-pill.comfort { background: #f39c12; color: #fff; }
         .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
         .card-title { font-size: 14px; color: #8892b0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
         .climate-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -48,6 +50,20 @@
         .mode-btn.active { background: #00d4aa; color: #1a1a2e; border-color: #00d4aa; }
         .override-box { background: rgba(255,0,128,0.1); border: 1px solid rgba(255,0,128,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; text-align: center; }
         .override-box p { font-size: 13px; color: #b0c4de; margin-bottom: 10px; }
+        .strat-box { background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .strat-box h4 { color: #3498db; margin-bottom: 8px; }
+        .strat-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
+        .strat-active { background: rgba(0,212,170,0.2); border-color: #00d4aa; }
+        .comfort-box { background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .comfort-box h4 { color: #f39c12; margin-bottom: 8px; }
+        .comfort-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
+        .comfort-ok { background: rgba(0,212,170,0.2); border-color: #00d4aa; }
+        .deum-box { background: rgba(155,89,182,0.1); border: 1px solid rgba(155,89,182,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .deum-box h4 { color: #9b59b6; margin-bottom: 8px; }
+        .deum-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
+        .weather-box { background: rgba(52,152,219,0.05); border: 1px solid rgba(52,152,219,0.2); border-radius: 12px; padding: 15px; margin-top: 15px; }
+        .weather-box h4 { color: #3498db; margin-bottom: 8px; }
+        .weather-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
         .back-link { text-align: center; margin-top: 20px; }
         .back-link a { color: #ff0080; text-decoration: none; }
     </style>
@@ -61,6 +77,8 @@
     <div class="status-bar">
         <div class="status-pill offline" id="ha-status">HA: Connessione...</div>
         <div class="status-pill auto" id="algo-status">Algoritmo: ON</div>
+        <div class="status-pill offline" id="strat-status">Stratificazione: OFF</div>
+        <div class="status-pill offline" id="comfort-status">Comfort: --</div>
     </div>
     <div id="content"><div class="loading">Caricamento dati...</div></div>
     <div class="back-link"><a href="/">Torna alla home</a></div>
@@ -88,6 +106,26 @@
                 haStatus.textContent = 'HA: Offline';
             }
 
+            const stratStatus = document.getElementById('strat-status');
+            if (data.stratificazione && data.stratificazione.attivo) {
+                stratStatus.className = 'status-pill strat';
+                stratStatus.textContent = 'Stratificazione: ATTIVA';
+            } else {
+                stratStatus.className = 'status-pill offline';
+                stratStatus.textContent = 'Stratificazione: OFF';
+            }
+
+            const comfortStatus = document.getElementById('comfort-status');
+            if (data.comfort) {
+                if (data.comfort.inComfort) {
+                    comfortStatus.className = 'status-pill comfort';
+                    comfortStatus.textContent = 'Comfort: OK';
+                } else {
+                    comfortStatus.className = 'status-pill offline';
+                    comfortStatus.textContent = 'Comfort: ' + data.comfort.suggestion;
+                }
+            }
+
             let html = '';
 
             // Sensori
@@ -99,7 +137,59 @@
                 html += `</div></div>`;
             }
 
-            // Termostato principale
+            // Meteo esterno
+            if (data.weather && data.weather.tempExt !== null) {
+                html += `<div class="card weather-box">
+                    <div class="card-title">Meteo Esterno (weather.casa)</div>
+                    <h4>${data.weather.condition || 'N/D'}</h4>
+                    <p><strong>Temperatura:</strong> ${data.weather.tempExt}°C</p>
+                    <p><strong>Umidita:</strong> ${data.weather.humidityExt}%</p>
+                    <p><strong>Pressione:</strong> ${data.weather.pressure || 'N/D'} hPa</p>
+                </div>`;
+            }
+
+            // Comfort ASHRAE 55 Inspired
+            if (data.comfort) {
+                const c = data.comfort;
+                html += `<div class="card comfort-box ${c.inComfort ? 'comfort-ok' : ''}">
+                    <div class="card-title">Comfort ASHRAE 55 Inspired</div>
+                    <h4>${c.inComfort ? 'Zona Comfort Raggiunta' : 'Fuori Zona Comfort'}</h4>
+                    <p><strong>Stagione:</strong> ${c.stagione === 'estate' ? 'Estate' : 'Inverno'}</p>
+                    <p><strong>Range temperatura:</strong> ${c.tMin}°C - ${c.tMax}°C</p>
+                    <p><strong>Range umidita:</strong> ${c.rhMin}% - ${c.rhMax}%</p>
+                    <p><strong>Suggerimento:</strong> ${c.suggestion}</p>
+                    <p style="color:#8892b0; font-size:11px; margin-top:8px;">${c.note}</p>
+                </div>`;
+            }
+
+            // Deumidifica
+            if (data.deumidifica) {
+                const d = data.deumidifica;
+                html += `<div class="card deum-box">
+                    <div class="card-title">Gestione Umidita (Umidita Assoluta)</div>
+                    <h4>Azione: ${d.action.toUpperCase()}</h4>
+                    <p><strong>Umidita interna:</strong> ${d.umiditaInt}%</p>
+                    <p><strong>Umidita esterna:</strong> ${d.umiditaExt !== null ? d.umiditaExt + '%' : 'N/D'}</p>
+                    ${d.uaInt ? `<p><strong>Umidita assoluta interna:</strong> ${d.uaInt} g/m3</p>` : ''}
+                    ${d.uaExt ? `<p><strong>Umidita assoluta esterna:</strong> ${d.uaExt} g/m3</p>` : ''}
+                    <p style="color:#b0c4de; margin-top:8px;">${d.reason}</p>
+                </div>`;
+            }
+
+            // Stratificazione
+            if (data.stratificazione) {
+                const s = data.stratificazione;
+                html += `<div class="card strat-box ${s.attivo ? 'strat-active' : ''}">
+                    <div class="card-title">Pilastro 1: Riciclo Termico / Destratificazione</div>
+                    <h4>${s.attivo ? 'Ventilazione Mescolante ATTIVA' : 'In attesa'}</h4>
+                    <p><strong>Delta:</strong> ${s.delta}°C tra clima (alto) e termostato</p>
+                    <p><strong>Soglia:</strong> ${s.config ? s.config.deltaMin : '1.0'}°C per attivazione</p>
+                    ${s.attivo ? `<p><strong>Consumo:</strong> ${s.consumoW}W (vs 1000W compressore)</p><p><strong>Risparmio stimato:</strong> ${s.risparmio}</p>` : ''}
+                    <p style="color:#8892b0; font-size:12px; margin-top:8px;">${s.motivo}</p>
+                </div>`;
+            }
+
+            // Termostato
             html += `<div class="card">
                 <div class="card-title">Termostato Principale</div>
                 <div class="climate-item">
@@ -125,7 +215,7 @@
                     <button class="btn btn-primary" onclick="togglePower()">${data.power ? 'SPEGNI' : 'ACCENDI'}</button>
                 </div>
                 <div class="override-box">
-                    <p>L'algoritmo EcoHybrid gestisce automaticamente temperatura e modalita in base ai costi energetici, effemeridi e comfort ASHRAE 55.</p>
+                    <p>L'algoritmo EcoHybrid gestisce automaticamente temperatura, modalita, destratificazione e umidita in base ai costi energetici, effemeridi e comfort ASHRAE 55 Inspired.</p>
                     <button class="btn btn-warning" onclick="toggleAlgo()">${algoEnabled ? 'DISATTIVA ALGORITMO' : 'ATTIVA ALGORITMO'}</button>
                 </div>
             </div>`;
