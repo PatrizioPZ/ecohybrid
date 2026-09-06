@@ -1,330 +1,377 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoHybrid Dashboard</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; min-height: 100vh; padding: 20px; }
-        .header { text-align: center; padding: 20px 0; }
-        .header h1 { font-size: 28px; color: #ff0080; }
-        .header p { color: #8892b0; font-size: 14px; }
-        .status-bar { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
-        .status-pill { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .status-pill.online { background: #00d4aa; color: #1a1a2e; }
-        .status-pill.offline { background: #e74c3c; color: #fff; }
-        .status-pill.auto { background: #ff0080; color: #fff; }
-        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
-        .card-title { font-size: 14px; color: #8892b0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .device-type-icon { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #8892b0; }
-        .climate-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .climate-item:last-child { border-bottom: none; }
-        .climate-name { font-weight: 600; font-size: 16px; }
-        .climate-temp { font-size: 24px; color: #00d4aa; }
-        .climate-state { font-size: 12px; color: #8892b0; }
-        .controls { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
-        .btn-primary { background: #00d4aa; color: #1a1a2e; }
-        .btn-danger { background: #e74c3c; color: #fff; }
-        .temp-control { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
-        .temp-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); color: #fff; font-size: 20px; cursor: pointer; }
-        .temp-value { font-size: 28px; font-weight: 700; min-width: 60px; text-align: center; }
-        .sensor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
-        .sensor-box { background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2); border-radius: 12px; padding: 15px; text-align: center; }
-        .sensor-value { font-size: 24px; font-weight: 700; color: #00d4aa; }
-        .sensor-label { font-size: 11px; color: #8892b0; margin-top: 5px; }
-        .loading { text-align: center; padding: 40px; color: #8892b0; }
-        .error { text-align: center; padding: 20px; color: #e74c3c; background: rgba(231,76,60,0.1); border-radius: 12px; margin-bottom: 15px; }
-        .mode-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        .mode-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8892b0; cursor: pointer; font-size: 12px; }
-        .mode-btn.active { background: #00d4aa; color: #1a1a2e; border-color: #00d4aa; }
-        .comfort-box { background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
-        .comfort-box h4 { color: #f39c12; margin-bottom: 8px; }
-        .comfort-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
-        .comfort-ok { background: rgba(0,212,170,0.2); border-color: #00d4aa; }
-        .deum-box { background: rgba(155,89,182,0.1); border: 1px solid rgba(155,89,182,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
-        .deum-box h4 { color: #9b59b6; margin-bottom: 8px; }
-        .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .price-box { padding: 15px; border-radius: 12px; text-align: center; }
-        .price-box.elec { background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.3); }
-        .price-box.gas { background: rgba(255,152,0,0.1); border: 1px solid rgba(255,152,0,0.3); }
-        .price-box .label { display: block; font-size: 11px; color: #8892b0; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
-        .price-box .value { font-size: 1.3rem; font-weight: 700; color: #fff; }
-        .price-box small { display: block; font-size: 11px; color: #8892b0; margin-top: 4px; }
-        .decision-box { padding: 18px; border-radius: 12px; margin-top: 15px; text-align: center; }
-        .decision-box.elec { background: rgba(76,175,80,0.1); border: 2px solid #4caf50; }
-        .decision-box.gas { background: rgba(255,152,0,0.1); border: 2px solid #ff9800; }
-        .decision-box h4 { font-size: 18px; margin-bottom: 8px; }
-        .decision-box.elec h4 { color: #4caf50; }
-        .decision-box.gas h4 { color: #ff9800; }
-        .decision-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
-        .savings { font-size: 1.1rem; font-weight: 700; color: #00d4aa; margin-top: 8px; }
-        .opt-note { font-size: 11px; color: #8892b0; margin-top: 10px; text-align: center; }
-        .info-box { background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3); border-radius: 12px; padding: 15px; margin-top: 15px; }
-        .info-box h4 { color: #3498db; margin-bottom: 8px; }
-        .info-box p { font-size: 13px; color: #b0c4de; margin-bottom: 5px; }
-        .info-box code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>EcoHybrid Dashboard</h1>
-        <p>Controllo climatizzazione - Sviluppo locale</p>
-    </div>
-    <div class="status-bar">
-        <div class="status-pill offline" id="ha-status">HA: Connessione...</div>
-        <div class="status-pill auto" id="algo-status">Algoritmo: ON</div>
-    </div>
-    <div id="content"><div class="loading">Caricamento dati...</div></div>
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-    <script>
-        const API_BASE = '';
-        let climates = [];
-        let sensors = [];
-        let haConnected = false;
+// --- ECOHYBRID v2.5 — Sensori reali multi + Bollette + Flight Recorder + Poll HA ---
+const { 
+  router: sensoriRouter, 
+  CONFIG_SENSORI, 
+  storicoSensori, 
+  getFattore,
+  getSensoriAttivi,
+  mediaSensori 
+} = require('./server-sensori');
+const bolletteRouter = require('./router-bollette');
+const flightRecorder = require('./flight-recorder');
 
-        async function fetchData() {
-            try {
-                const [climateResp, sensorResp, optResp] = await Promise.all([
-                    fetch(`${API_BASE}/v1/ha/climate`).catch(e => { console.error('Climate error:', e); return null; }),
-                    fetch(`${API_BASE}/v1/ha/sensors`).catch(e => { console.error('Sensors error:', e); return null; }),
-                    fetch(`${API_BASE}/api/convenienza`).catch(e => { console.error('Opt error:', e); return null; })
-                ]);
+app.use('/api/sensori', sensoriRouter);
+app.use('/api/bollette', bolletteRouter);
+flightRecorder.attach(app);
 
-                const climateData = climateResp && climateResp.ok ? await climateResp.json() : null;
-                const sensorData = sensorResp && sensorResp.ok ? await sensorResp.json() : null;
-                const optData = optResp && optResp.ok ? await optResp.json() : null;
+const HA_URL = process.env.HA_URL || 'http://192.168.1.21';
+const HA_TOKEN = process.env.HA_TOKEN || '';
+const PUN_FALLBACK = parseFloat(process.env.PUN_FALLBACK || '0.125');
+const PSV_FALLBACK = parseFloat(process.env.PSV_FALLBACK || '0.38');
+const HOME_LAT = parseFloat(process.env.HOME_LAT || '45.8107');
+const HOME_LON = parseFloat(process.env.HOME_LON || '8.2675');
 
-                if (climateResp && !climateResp.ok) {
-                    const err = await climateResp.json().catch(() => ({detail: 'Errore sconosciuto'}));
-                    renderError('HA non disponibile', err.detail || 'Home Assistant non configurato');
-                    return;
-                }
+const SOGLIE_MESE = [21,21,22,23,23.5,24,25,26,24,23,22,21];
+const FLOOR = 20, TRIGGER = 3, OFFSET = 1, T_GIORNO = 21, T_NOTTE = 18, T_AWAY = 16;
+const ORA_GIORNO = 6, ORA_NOTTE = 22, OVERRIDE_MS = 24*60*60*1000;
+const DRY_SOGLIA = 65;
 
-                climates = climateData && climateData.climates ? climateData.climates : [];
-                sensors = sensorData && sensorData.sensors ? sensorData.sensors : [];
-                haConnected = climateData && climateData.ha_connected;
+let autopilotEnabled = false, lastManualOverride = null, presenceStatus = 'home';
+let outdoorTemp = null, indoorTemp = null, targetTemp = null, faseAttiva = 'giorno';
+let outdoorHum = null, indoorHum = null, thi = null, comfortLevel = 'ok';
+let autopilotError = null, lastCycleLog = [], tierLevel = 0;
+let haConnected = false;
+let indoorHumSource = 'stimata';
 
-                render(climateData, sensorData, optData);
-            } catch (e) {
-                renderError('Errore connessione', `Backend non raggiungibile: ${e.message}`);
-            }
-        }
+const HA_HEADERS = { 'Authorization': `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json' };
 
-        function renderError(title, message) {
-            const haStatus = document.getElementById('ha-status');
-            haStatus.className = 'status-pill offline';
-            haStatus.textContent = 'HA: Offline';
-            document.getElementById('content').innerHTML = `
-                <div class="error"><h4>${title}</h4><p>${message}</p></div>
-                <div class="card info-box">
-                    <h4>Come risolvere</h4>
-                    <p>1. Verifica che <code>npm start</code> sia attivo</p>
-                    <p>2. Verifica che <code>config.json</code> abbia <code>homeassistant.enabled: true</code> e <code>token</code> valido</p>
-                    <p>3. Verifica che Home Assistant sia accessibile</p>
-                </div>`;
-        }
+async function haGet(path) {
+  try { const res = await axios.get(`${HA_URL}${path}`, { headers: HA_HEADERS, timeout: 8000 }); haConnected = true; return res.data; }
+  catch(e) { haConnected = false; return null; }
+}
+async function haPost(path, body) {
+  try { return (await axios.post(`${HA_URL}${path}`, body, { headers: HA_HEADERS, timeout: 8000 })).data; }
+  catch(e) { return null; }
+}
 
-        function render(climateData, sensorData, optData) {
-            const haStatus = document.getElementById('ha-status');
-            if (haConnected) {
-                haStatus.className = 'status-pill online';
-                haStatus.textContent = 'HA: Connesso';
-            } else {
-                haStatus.className = 'status-pill offline';
-                haStatus.textContent = 'HA: Offline';
-            }
+// --- AVVIA POLL HA (legge sensori autonomamente da HA) ---
+require('./poll-ha').start(haGet, storicoSensori, CONFIG_SENSORI);
 
-            let html = '';
+async function getOutdoorFromMeteo() {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${HOME_LAT}&longitude=${HOME_LON}&current=temperature_2m,relative_humidity_2m`;
+    const res = await axios.get(url, { timeout: 10000 });
+    if (res.data && res.data.current) {
+      outdoorTemp = parseFloat(res.data.current.temperature_2m);
+      outdoorHum = parseFloat(res.data.current.relative_humidity_2m);
+      console.log(`[OUTDOOR] Open-Meteo fallback: ${outdoorTemp}C | UR ${outdoorHum}%`);
+      return { temp: outdoorTemp, hum: outdoorHum };
+    }
+  } catch(e) { console.log('[OUTDOOR] Meteo errore:', e.message); }
+  outdoorTemp = null; outdoorHum = null; return null;
+}
 
-            if (sensors.length > 0) {
-                html += `<div class="card"><div class="card-title">Sensori Ambientali</div><div class="sensor-grid">`;
-                sensors.forEach(s => {
-                    html += `<div class="sensor-box"><div class="sensor-value">${s.state}${s.unit}</div><div class="sensor-label">${s.friendly_name}</div></div>`;
-                });
-                html += `</div></div>`;
-            }
+async function getOutdoorTemp() {
+  const states = await haGet('/api/states');
+  if (states) {
+    const weather = states.find(s => s.entity_id.startsWith('weather.'));
+    if (weather && weather.attributes) {
+      const attrs = weather.attributes;
+      const temp = attrs.temperature ?? attrs.native_temperature ?? attrs.temp;
+      const hum = attrs.humidity ?? attrs.relative_humidity;
+      if (temp !== undefined && !isNaN(parseFloat(temp))) {
+        outdoorTemp = parseFloat(temp);
+        if (hum !== undefined && !isNaN(parseFloat(hum))) outdoorHum = parseFloat(hum);
+        console.log(`[OUTDOOR] HA weather (${weather.entity_id}): ${outdoorTemp}C | UR ${outdoorHum || 'N/D'}%`);
+        return { temp: outdoorTemp, hum: outdoorHum };
+      }
+    }
+  }
+  console.log('[OUTDOOR] HA weather non disp., uso Open-Meteo fallback...');
+  return await getOutdoorFromMeteo();
+}
 
-            const tempSensor = sensors.find(s => s.entity_id.includes('temperatura') || s.entity_id.includes('temperature'));
-            const humSensor = sensors.find(s => s.entity_id.includes('umidita') || s.entity_id.includes('humidity'));
-            const tInt = tempSensor ? tempSensor.state : 20;
-            const rh = humSensor ? humSensor.state : 50;
-            const comfort = calcolaComfort(tInt, rh);
-            html += `<div class="card comfort-box ${comfort.inComfort ? 'comfort-ok' : ''}">
-                <div class="card-title">Comfort ASHRAE 55 Inspired</div>
-                <h4>${comfort.inComfort ? 'Zona Comfort OK' : 'Fuori Zona Comfort'}</h4>
-                <p><strong>Stagione:</strong> ${comfort.stagione === 'estate' ? 'Estate' : 'Inverno'}</p>
-                <p><strong>Range:</strong> ${comfort.tMin}-${comfort.tMax}C / Umidita ${comfort.rhMin}-${comfort.rhMax}%</p>
-                <p><strong>Suggerimento:</strong> ${comfort.suggestion}</p>
-            </div>`;
+// === v2.5: Temperatura interna — PRIORITA sensori ZHA reali ===
+async function getIndoorTemp() {
+  const states = await haGet('/api/states');
+  if (!states) { indoorTemp = null; return null; }
 
-            const deum = calcolaDeumidifica(tInt, rh);
-            html += `<div class="card deum-box">
-                <div class="card-title">Gestione Umidita</div>
-                <h4>Azione: ${deum.action.toUpperCase()}</h4>
-                <p><strong>Umidita interna:</strong> ${deum.umiditaInt}%</p>
-                <p>${deum.reason}</p>
-            </div>`;
+  // PRIORITA 1: Sensori ZHA tarati (bagno, sonoff)
+  const tZHA = mediaSensori('sala', 'temperatura', 30);
+  if (tZHA !== null) {
+    indoorTemp = tZHA;
+    console.log(`[INDOOR] Sensore ZHA tarato: ${indoorTemp}C`);
+    return indoorTemp;
+  }
 
-            if (optData && optData.success) {
-                html += renderOptimizer(optData);
-            }
+  // PRIORITA 2: Helper esistenti (fallback, ma logghiamo avviso)
+  const helperKeywords = ['reale', 'effettiva', 'temperatura_sala', 'sala_reale', 'indoor_temp', 'temp_reale'];
+  const helper = states.find(s =>
+    s.entity_id.startsWith('sensor.') &&
+    helperKeywords.some(k => s.entity_id.toLowerCase().includes(k) || (s.attributes.friendly_name || '').toLowerCase().includes(k)) &&
+    !isNaN(parseFloat(s.state))
+  );
+  if (helper) { 
+    indoorTemp = parseFloat(helper.state); 
+    console.log(`[INDOOR] WARNING: uso helper ${helper.entity_id} = ${indoorTemp}C (nessun sensore ZHA attivo)`); 
+    return indoorTemp; 
+  }
 
-            if (climates.length > 0) {
-                html += `<div class="card"><div class="card-title">Dispositivi (${climates.length})</div>`;
-                climates.forEach(c => {
-                    html += renderDeviceCard(c);
-                });
-                html += `</div>`;
-            } else if (haConnected) {
-                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#8892b0">Nessun dispositivo climate trovato.</p></div>`;
-            } else {
-                html += `<div class="card"><div class="card-title">Dispositivi</div><p style="color:#e74c3c">Home Assistant non connesso.</p></div>`;
-            }
+  // PRIORITA 3: Media clima (no thermostat)
+  const climates = states.filter(s =>
+    s.entity_id.startsWith('climate.') && s.attributes && !isNaN(parseFloat(s.attributes.current_temperature)) &&
+    !(s.attributes.friendly_name || s.entity_id).toLowerCase().includes('thermostat') &&
+    !(s.attributes.friendly_name || s.entity_id).toLowerCase().includes('caldaia') &&
+    !(s.attributes.friendly_name || s.entity_id).toLowerCase().includes('termostato')
+  );
+  if (climates.length > 0) {
+    const temps = climates.map(s => parseFloat(s.attributes.current_temperature));
+    indoorTemp = Math.round(temps.reduce((a,b) => a+b, 0) / temps.length * 10) / 10;
+    console.log(`[INDOOR] Media clima (no thermostat): ${indoorTemp}C da ${climates.length} disp.`);
+    return indoorTemp;
+  }
 
-            document.getElementById('content').innerHTML = html;
-        }
+  const allClimates = states.filter(s => s.entity_id.startsWith('climate.') && s.attributes && !isNaN(parseFloat(s.attributes.current_temperature)));
+  if (allClimates.length > 0) {
+    const temps = allClimates.map(s => parseFloat(s.attributes.current_temperature));
+    indoorTemp = Math.round(temps.reduce((a,b) => a+b, 0) / temps.length * 10) / 10;
+    console.log(`[INDOOR] WARNING: tutti i climate (incl. thermostat): ${indoorTemp}C`);
+    return indoorTemp;
+  }
+  indoorTemp = null; console.log('[INDOOR] Nessun sensore trovato'); return null;
+}
 
-        function detectDeviceType(c) {
-            const eid = c.entity_id.toLowerCase();
-            const fname = (c.friendly_name || '').toLowerCase();
-            const modes = c.hvac_modes || [];
-            if (eid.includes('valvola') || eid.includes('valve') || eid.includes('radiator') || 
-                fname.includes('valvola') || fname.includes('valve') || fname.includes('radiatore')) {
-                return { type: 'valve', label: 'Valvola', icon: 'VALVOLA' };
-            }
-            if (modes.includes('cool') || modes.includes('dry') || modes.includes('fan_only')) {
-                return { type: 'clima', label: 'Climatizzazione', icon: 'CLIMA' };
-            }
-            if (modes.includes('heat') && !modes.includes('cool')) {
-                return { type: 'thermostat', label: 'Termostato / Caldaia', icon: 'CALDAIA' };
-            }
-            return { type: 'generic', label: 'Dispositivo', icon: 'DEVICE' };
-        }
+// === v2.5: Umidita — PRIORITA sensori ZHA reali ===
+function calcolaUmiditaInterna(tEst, urEst, tInt) {
+  // PRIORITA 1: media sensori reali ZHA
+  const urMedia = mediaSensori('sala', 'umidita', 30);
+  if (urMedia !== null) {
+    indoorHumSource = 'reale';
+    const attivi = getSensoriAttivi('sala', 30);
+    console.log(`[INDOOR] Media ${attivi.length} sensori ZHA: UR ${urMedia}%`);
+    return Math.round(urMedia);
+  }
 
-        function renderDeviceCard(c) {
-            const info = detectDeviceType(c);
-            const isOn = c.state !== 'off' && c.state !== 'unavailable';
-            const currentTemp = c.current_temperature != null ? c.current_temperature : '--';
-            const targetTemp = c.temperature != null ? c.temperature : '--';
-            
-            let html = `<div class="card">
-                <div class="card-title">${c.friendly_name} <span class="device-type-icon">${info.icon}</span></div>
-                <div class="climate-item">
-                    <div>
-                        <div class="climate-name">${info.label}</div>
-                        <div class="climate-state">Stato: ${isOn ? 'ON (' + c.state + ')' : 'OFF'} | Attuale: ${currentTemp}C</div>
-                    </div>
-                    <div class="climate-temp">${targetTemp}C</div>
-                </div>`;
+  // FALLBACK: formula stimata
+  indoorHumSource = 'stimata';
+  if (tEst === null || urEst === null || tInt === null) return null;
+  const fattore = getFattore();
+  const delta = tInt - tEst;
+  let urInt = urEst - (delta * fattore);
+  urInt = Math.max(15, Math.min(95, urInt));
+  console.log(`[INDOOR] Formula stimata: UR ${Math.round(urInt)}% (fattore ${fattore})`);
+  return Math.round(urInt);
+}
 
-            html += `<div class="temp-control">
-                <button class="temp-btn" onclick="setTemp('${c.entity_id}', ${targetTemp - 1})">-</button>
-                <div class="temp-value">${targetTemp}</div>
-                <button class="temp-btn" onclick="setTemp('${c.entity_id}', ${targetTemp + 1})">+</button>
-            </div>`;
+function calcolaTHI(tInt, urInt) {
+  if (tInt === null || urInt === null) return null;
+  return Math.round((tInt + (urInt / 10)) * 10) / 10;
+}
 
-            if (info.type === 'clima' && c.hvac_modes) {
-                html += `<div class="mode-selector">`;
-                const modes = ['heat', 'cool', 'dry', 'auto', 'fan_only'];
-                const labels = {heat: 'Caldo', cool: 'Freddo', dry: 'Deumidifica', auto: 'Auto', fan_only: 'Ventilatore'};
-                modes.forEach(m => {
-                    if (c.hvac_modes.includes(m)) {
-                        html += `<button class="mode-btn ${c.hvac_mode === m ? 'active' : ''}" onclick="setMode('${c.entity_id}', '${m}')">${labels[m] || m}</button>`;
-                    }
-                });
-                html += `</div>`;
-            }
+function calcolaComfortLevel(thiVal) {
+  if (thiVal === null) return 'sconosciuto';
+  if (thiVal < 26) return 'ok';
+  if (thiVal <= 28) return 'leggermente_fastidioso';
+  return 'fastidioso';
+}
 
-            if (info.type !== 'valve') {
-                html += `<div class="controls" style="margin-top:15px">
-                    <button class="btn ${isOn ? 'btn-danger' : 'btn-primary'}" onclick="togglePower('${c.entity_id}', ${isOn ? 'off' : 'on'})">${isOn ? 'SPEGNI' : 'ACCENDI'}</button>
-                </div>`;
-            } else {
-                html += `<div class="controls" style="margin-top:15px"><span style="color:#8892b0;font-size:12px">Valvola: regola temperatura per aprire/chiudere</span></div>`;
-            }
+function calcolaFase() { const ora = new Date().getHours(); if (presenceStatus === 'away') return 'away'; if (ora >= ORA_GIORNO && ora < ORA_NOTTE) return 'giorno'; return 'notte'; }
+function targetInverno(fase) { if (fase === 'away') return T_AWAY; if (fase === 'notte') return T_NOTTE; return T_GIORNO; }
+function targetEstate(tEst, tInt) { const mese = new Date().getMonth(), soglia = SOGLIE_MESE[mese]; if (tEst === null) return Math.max(FLOOR, soglia); if (tEst < 15) return Math.max(FLOOR, T_GIORNO); if (tEst < 18) { const grad = FLOOR + (18 - tEst) * 0.33; return Math.max(FLOOR, Math.min(T_GIORNO, grad)); } if (tInt === null) return Math.max(FLOOR, soglia); const forteCaldo = tEst > (tInt + TRIGGER); if (forteCaldo) return Math.max(soglia, tEst - OFFSET, FLOOR); return Math.max(FLOOR, soglia); }
 
-            html += `</div>`;
-            return html;
-        }
+function decidiAutopilot(tEst, tInt, fase, urInt, thiVal) {
+  const mese = new Date().getMonth(), soglia = SOGLIE_MESE[mese], isInv = tEst !== null && tEst < 18;
+  if (fase === 'away') return { action: 'eco', target: T_AWAY, mode: 'off', reason: 'Eco mode — fuori casa', inviaComando: true, gerarchia: 0 };
+  if (isInv) {
+    const target = targetInverno(fase);
+    if (tInt === null) return { action: 'heat', target, mode: 'heat', reason: `Inverno ${fase}: ${target}C`, inviaComando: true, gerarchia: 4 };
+    if (tInt < target - 0.5) return { action: 'heat', target, mode: 'heat', reason: `Inverno: ${tInt}C < ${target}C`, inviaComando: true, gerarchia: 4 };
+    return { action: 'off', target, mode: 'off', reason: `Inverno: ${tInt}C >= ${target}C`, inviaComando: false, gerarchia: 0 };
+  }
+  if (tEst === null) return { action: 'skip', target: null, mode: null, reason: 'Temp esterna non disponibile', inviaComando: false, gerarchia: 0 };
+  const target = targetEstate(tEst, tInt);
+  if (tInt === null) return { action: 'skip', target, mode: null, reason: 'Temp interna non disponibile', inviaComando: false, gerarchia: 0 };
+  if (tInt <= target + 0.5) return { action: 'off', target, mode: 'off', reason: `Estate: ${tInt}C <= target ${target}C. Nessun intervento.`, inviaComando: false, gerarchia: 0 };
 
-        function renderOptimizer(d) {
-            return `<div class="card">
-                <div class="card-title">Ottimizzatore Economico</div>
-                <div class="price-grid">
-                    <div class="price-box elec">
-                        <span class="label">Luce (PUN)</span>
-                        <span class="value">${d.pun.raw.toFixed(4)} EUR/kWh</span>
-                        <small>Finale: ${d.pun.prezzoFinale.toFixed(4)}</small>
-                    </div>
-                    <div class="price-box gas">
-                        <span class="label">Gas (PSV)</span>
-                        <span class="value">${d.psv.raw.toFixed(4)} EUR/Smc</span>
-                        <small>Equiv: ${d.psv.prezzoPerKwhTermico.toFixed(4)} EUR/kWh</small>
-                    </div>
-                </div>
-                <div class="decision-box ${d.decisione === 'ELETTRICO' ? 'elec' : 'gas'}">
-                    <h4>Oggi conviene usare ${d.decisione}</h4>
-                    <p>Costo termico: Elettrico ${d.costoTermico.elettrico.toFixed(4)} vs Gas ${d.costoTermico.gas.toFixed(4)} EUR/kWh</p>
-                    <p class="savings">Risparmio stimato: circa ${d.risparmioStimato.percentuale}%</p>
-                </div>
-                <p class="opt-note">COP: ${d.parametri.cop} | Eff. caldaia: ${(d.parametri.boilerEff*100).toFixed(0)}% | Aggiornato: ${new Date(d.timestamp).toLocaleTimeString('it-IT')}</p>
-            </div>`;
-        }
+  const diff = tInt - target;
+  const forteCaldo = tEst > (tInt + TRIGGER);
 
-        function calcolaComfort(tInt, rh) {
-            const m = new Date().getMonth();
-            const stagione = (m >= 5 && m <= 8) ? 'estate' : 'inverno';
-            let tMin, tMax, rhMin, rhMax;
-            if (stagione === 'estate') { tMin = 23; tMax = 26; rhMin = 30; rhMax = 60; }
-            else { tMin = 20; tMax = 23; rhMin = 30; rhMax = 60; }
-            const inComfort = (tInt >= tMin && tInt <= tMax && rh >= rhMin && rh <= rhMax);
-            let suggestion = 'mantieni';
-            if (!inComfort) {
-                if (tInt > tMax) suggestion = 'raffreddare';
-                else if (tInt < tMin) suggestion = 'riscaldare';
-                else if (rh > rhMax) suggestion = 'deumidifica';
-                else suggestion = 'umidifica';
-            }
-            return { stagione, inComfort, tMin, tMax, rhMin, rhMax, suggestion };
-        }
+  if (urInt !== null && urInt > DRY_SOGLIA) {
+    if (indoorHumSource !== 'reale') {
+      return { action: 'skip', target, mode: null, reason: `Umidita ${urInt}% > ${DRY_SOGLIA}% ma fonte=stimata — DRY BLOCCATO, attendo sensore reale`, inviaComando: false, gerarchia: 0 };
+    }
+    return { action: 'dry', target, mode: 'dry', reason: `Umidita ${urInt}% > ${DRY_SOGLIA}%. Deumidifico a ${target}C (sensore reale)`, inviaComando: true, gerarchia: 2 };
+  }
+  if (diff <= 1.5 && (urInt === null || urInt < DRY_SOGLIA)) {
+    return { action: 'fan', target, mode: 'fan_only', reason: `Diff ${diff.toFixed(1)}C, umidita ${urInt || 'N/D'}%. Ventilo (consumo minimo)`, inviaComando: true, gerarchia: 1 };
+  }
+  if (forteCaldo) {
+    return { action: 'cool', target, mode: 'cool', reason: `Forte caldo: T_est ${tEst}C >> T_int ${tInt}C. Raffreddo a ${target}C (consumo alto)`, inviaComando: true, gerarchia: 3 };
+  }
+  return { action: 'cool', target, mode: 'cool', reason: `Estate: ${tInt}C > soglia ${soglia}C (${['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'][mese]}). Raffreddo a ${target}C`, inviaComando: true, gerarchia: 3 };
+}
 
-        function calcolaDeumidifica(tInt, rhInt) {
-            if (rhInt > 65) return { action: 'deumidifica', reason: 'Umidita interna elevata', umiditaInt: rhInt };
-            return { action: 'mantieni', reason: 'Umidita interna OK', umiditaInt: rhInt };
-        }
+async function verificaEInvia(dev, decisione) {
+  const eid = dev.entity_id, attrs = dev.attributes || {};
+  const friendly = (attrs.friendly_name || eid).toLowerCase();
+  const isTerm = friendly.includes('thermostat') || friendly.includes('caldaia') || friendly.includes('termostato');
+  if (dev.state === 'unavailable') return { sent: false, reason: 'unavailable' };
 
-        async function togglePower(entityId, action) {
-            const cmd = action === 'on' ? 'power_on' : 'power_off';
-            await sendCommand(entityId, cmd);
-            setTimeout(fetchData, 800);
-        }
+  if (decisione.action === 'eco') {
+    if (isTerm) { const ct = attrs.temperature; if (ct !== undefined && Math.abs(ct - T_AWAY) < 0.5) return { sent: false, reason: 'gia 16C' }; await haPost('/api/services/climate/set_temperature', { entity_id: eid, temperature: T_AWAY }); return { sent: true, reason: 'eco 16C' }; }
+    else { if (dev.state === 'off') return { sent: false, reason: 'gia spento' }; await haPost('/api/services/climate/turn_off', { entity_id: eid }); return { sent: true, reason: 'eco spento' }; }
+  }
+  if (decisione.mode === 'heat') {
+    if (isTerm) { const ct = attrs.temperature; if (ct !== undefined && Math.abs(ct - decisione.target) < 0.5) return { sent: false, reason: `gia ${decisione.target}C` }; await haPost('/api/services/climate/set_temperature', { entity_id: eid, temperature: decisione.target }); return { sent: true, reason: `heat ${decisione.target}C` }; }
+    else { const ct = attrs.temperature, cm = dev.state; if (cm === 'heat' && ct !== undefined && Math.abs(ct - decisione.target) < 0.5) return { sent: false, reason: `gia heat ${decisione.target}C` }; if (dev.state === 'off') { await haPost('/api/services/climate/turn_on', { entity_id: eid }); await new Promise(r => setTimeout(r, 1000)); } await haPost('/api/services/climate/set_temperature', { entity_id: eid, temperature: decisione.target, hvac_mode: 'heat' }); return { sent: true, reason: `clima heat ${decisione.target}C` }; }
+  }
+  if (decisione.mode === 'cool') {
+    const ct = attrs.temperature, cm = dev.state;
+    if (cm === 'cool' && ct !== undefined && Math.abs(ct - decisione.target) < 0.5) return { sent: false, reason: `gia cool ${decisione.target}C` };
+    if (dev.state === 'off') { await haPost('/api/services/climate/turn_on', { entity_id: eid }); await new Promise(r => setTimeout(r, 1000)); }
+    await haPost('/api/services/climate/set_temperature', { entity_id: eid, temperature: decisione.target, hvac_mode: 'cool' });
+    return { sent: true, reason: `cool ${decisione.target}C` };
+  }
+  if (decisione.mode === 'dry') {
+    if (isTerm) return { sent: false, reason: 'termostato non supporta DRY' };
+    const cm = dev.state; if (cm === 'dry') return { sent: false, reason: `gia dry` }; if (dev.state === 'off') { await haPost('/api/services/climate/turn_on', { entity_id: eid }); await new Promise(r => setTimeout(r, 1000)); }
+    await haPost('/api/services/climate/set_temperature', { entity_id: eid, temperature: decisione.target, hvac_mode: 'dry' });
+    return { sent: true, reason: `dry ${decisione.target}C` };
+  }
+  if (decisione.mode === 'fan_only') {
+    if (isTerm) return { sent: false, reason: 'termostato non supporta FAN' };
+    const cm = dev.state; if (cm === 'fan_only') return { sent: false, reason: `gia fan` }; if (dev.state === 'off') { await haPost('/api/services/climate/turn_on', { entity_id: eid }); await new Promise(r => setTimeout(r, 1000)); }
+    await haPost('/api/services/climate/set_temperature', { entity_id: eid, temperature: decisione.target, hvac_mode: 'fan_only' });
+    return { sent: true, reason: `fan_only` };
+  }
+  if (decisione.mode === 'off') { if (dev.state === 'off') return { sent: false, reason: 'gia spento' }; await haPost('/api/services/climate/turn_off', { entity_id: eid }); return { sent: true, reason: 'spento' }; }
+  return { sent: false, reason: 'nessuna azione' };
+}
 
-        async function setTemp(entityId, temp) {
-            await sendCommand(entityId, 'set_temp', String(temp));
-            setTimeout(fetchData, 800);
-        }
+async function autopilotCycle() {
+  if (!autopilotEnabled) return;
+  if (lastManualOverride && (Date.now() - lastManualOverride) < OVERRIDE_MS) {
+    const rim = Math.ceil((OVERRIDE_MS - (Date.now() - lastManualOverride)) / 3600000);
+    console.log(`[AUTOPILOT] Override attivo, ${rim}h rimanenti`);
+    lastCycleLog.push({ time: new Date().toISOString(), action: 'skip', reason: `Override ${rim}h`, inviati: 0 });
+    if (lastCycleLog.length > 20) lastCycleLog.shift(); return;
+  }
+  if (lastManualOverride && (Date.now() - lastManualOverride) >= OVERRIDE_MS) { console.log('[AUTOPILOT] Override scaduto, riattivo'); lastManualOverride = null; }
 
-        async function setMode(entityId, mode) {
-            await sendCommand(entityId, 'set_mode', mode);
-            setTimeout(fetchData, 800);
-        }
+  const outData = await getOutdoorTemp();
+  await getIndoorTemp();
+  faseAttiva = calcolaFase();
 
-        async function sendCommand(entityId, command, value) {
-            try {
-                await fetch(`${API_BASE}/v1/ha/command`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ entity_id: entityId, command, value })
-                });
-            } catch (e) {
-                alert('Errore comando: ' + e.message);
-            }
-        }
+  indoorHum = calcolaUmiditaInterna(outdoorTemp, outdoorHum, indoorTemp);
+  thi = calcolaTHI(indoorTemp, indoorHum);
+  comfortLevel = calcolaComfortLevel(thi);
 
-        fetchData();
-        setInterval(fetchData, 15000);
-    </script>
-</body>
-</html>
+  const d = decidiAutopilot(outdoorTemp, indoorTemp, faseAttiva, indoorHum, thi);
+  targetTemp = d.target;
+  autopilotError = d.action === 'skip' ? d.reason : null;
+
+  console.log(`[AUTOPILOT] Fase:${faseAttiva} Est:${outdoorTemp}C/${outdoorHum}% Int:${indoorTemp}C/${indoorHum}% THI:${thi} Comfort:${comfortLevel} Target:${d.target} Action:${d.action} Ger:${d.gerarchia} FonteUR:${indoorHumSource}`);
+
+  let inviati = 0, saltati = 0;
+  if (d.inviaComando) {
+    const states = await haGet('/api/states');
+    if (!states) { autopilotError = 'HA non raggiungibile'; lastCycleLog.push({ time: new Date().toISOString(), action: 'skip', reason: 'HA down', inviati: 0 }); if (lastCycleLog.length > 20) lastCycleLog.shift(); return; }
+    const climates = states.filter(s => s.entity_id.startsWith('climate.'));
+    for (const dev of climates) { const r = await verificaEInvia(dev, d); if (r.sent) inviati++; else saltati++; }
+  }
+
+  const cycleData = { 
+    time: new Date().toISOString(), 
+    esterna: outdoorTemp, 
+    ur_est: outdoorHum, 
+    interna: indoorTemp, 
+    ur_int: indoorHum, 
+    ur_fonte: indoorHumSource, 
+    thi, 
+    comfort: comfortLevel, 
+    fase: faseAttiva, 
+    action: d.action, 
+    gerarchia: d.gerarchia, 
+    target: d.target, 
+    reason: d.reason, 
+    inviati, 
+    saltati 
+  };
+
+  lastCycleLog.push(cycleData);
+  if (lastCycleLog.length > 20) lastCycleLog.shift();
+
+  // Flight Recorder
+  flightRecorder.recordCycle(cycleData);
+
+  console.log(`[AUTOPILOT] Inv:${inviati} Skip:${saltati}`);
+}
+
+setInterval(autopilotCycle, 15 * 60 * 1000);
+
+async function keepaliveCycle() {
+  const states = await haGet('/api/states'); if (!states) return;
+  const unav = states.filter(s => s.entity_id.startsWith('climate.') && s.state === 'unavailable');
+  for (const dev of unav) { console.log(`[KEEPALIVE] ${dev.entity_id}`); await haPost('/api/services/climate/turn_on', { entity_id: dev.entity_id }); await new Promise(r => setTimeout(r, 2000)); const cur = await haGet(`/api/states/${dev.entity_id}`); if (cur && cur.attributes && cur.attributes.temperature) await haPost('/api/services/climate/set_temperature', { entity_id: dev.entity_id, temperature: cur.attributes.temperature }); }
+}
+setInterval(keepaliveCycle, 10 * 60 * 1000);
+
+app.get('/api/convenienza', (req, res) => { const pun = PUN_FALLBACK, psv = PSV_FALLBACK, cop = 3, ce = pun / cop, cg = psv / 10, risp = Math.abs(ce - cg) / Math.max(ce, cg) * 100, conv = ce < cg ? 'ELETTRICO' : 'GAS'; res.json({ convenienza: conv, risparmio_circa: `circa ${Math.round(risp)}%`, risparmio_percento: Math.round(risp), prezzi: { pun, psv, costo_elettrico_kwh_termico: ce, costo_gas_kwh_termico: cg }, cop, nota: 'Stima fallback. Carica bollette per dati reali.' }); });
+app.get('/api/energy-prices', (req, res) => res.json({ pun: PUN_FALLBACK, psv: PSV_FALLBACK, fonte: 'fallback' }));
+app.get('/v1/ha/climate', async (req, res) => { const s = await haGet('/api/states'); if (!s) return res.status(503).json({ error: 'HA down' }); res.json(s.filter(x => x.entity_id.startsWith('climate.'))); });
+app.get('/v1/ha/sensors', async (req, res) => { const s = await haGet('/api/states'); if (!s) return res.status(503).json({ error: 'HA down' }); res.json(s.filter(x => x.entity_id.startsWith('sensor.'))); });
+
+app.post('/v1/ha/command', async (req, res) => {
+  const { entity_id, command, temperature, hvac_mode } = req.body;
+  if (!entity_id) return res.status(400).json({ error: 'entity_id richiesto' });
+  lastManualOverride = Date.now();
+  let service = 'climate/turn_on', payload = { entity_id };
+  if (command === 'power_off' || command === 'turn_off') service = 'climate/turn_off';
+  else if (command === 'set_temperature' && temperature !== undefined) { service = 'climate/set_temperature'; payload.temperature = parseFloat(temperature); }
+  else if (command === 'set_hvac_mode' && hvac_mode) { service = 'climate/set_hvac_mode'; payload.hvac_mode = hvac_mode; }
+  else if (command === 'turn_on') service = 'climate/turn_on';
+  const result = await haPost(`/api/services/${service}`, payload);
+  res.json({ success: !!result, override_tracked: true, override_durata_h: 24, timestamp: lastManualOverride, message: 'Autopilot in pausa 24h' });
+});
+
+app.post('/api/presence', (req, res) => { const { status, lat, lon } = req.body; if (status === 'home' || status === 'away') { presenceStatus = status; if (status === 'away') tierLevel = Math.max(tierLevel, 1); } if (lat && lon && HOME_LAT && HOME_LON) { const R = 6371000, dLat = (lat - HOME_LAT) * Math.PI / 180, dLon = (lon - HOME_LON) * Math.PI / 180, a = Math.sin(dLat / 2) ** 2 + Math.cos(HOME_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2, dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)), ns = dist < 200 ? 'home' : 'away'; if (presenceStatus !== ns) { presenceStatus = ns; console.log(`[PRESENZA] ${ns} (${Math.round(dist)}m)`); } } res.json({ presence: presenceStatus, outdoor_temp: outdoorTemp, target_temp: targetTemp }); });
+app.get('/api/presence', (req, res) => res.json({ presence: presenceStatus, outdoor_temp: outdoorTemp, target_temp: targetTemp }));
+app.post('/api/ha/wake', async (req, res) => { const { entity_id } = req.body; if (!entity_id) return res.status(400).json({ error: 'entity_id richiesto' }); await haPost('/api/services/climate/turn_on', { entity_id }); res.json({ success: true, message: `Wake ${entity_id}` }); });
+app.post('/api/ha/keepalive', async (req, res) => { const { entity_id } = req.body; if (entity_id) { await haPost('/api/services/climate/turn_on', { entity_id }); await new Promise(r => setTimeout(r, 2000)); const cur = await haGet(`/api/states/${entity_id}`); if (cur && cur.attributes && cur.attributes.temperature) await haPost('/api/services/climate/set_temperature', { entity_id, temperature: cur.attributes.temperature }); res.json({ success: true, message: `Keepalive ${entity_id}` }); } else { await keepaliveCycle(); res.json({ success: true, message: 'Keepalive globale' }); } });
+app.post('/api/autopilot', (req, res) => { const { enabled } = req.body; if (typeof enabled === 'boolean') { autopilotEnabled = enabled; console.log(`[AUTOPILOT] ${enabled ? 'ON' : 'OFF'}`); } res.json({ enabled: autopilotEnabled, target_temp: targetTemp, outdoor_temp: outdoorTemp, error: autopilotError }); });
+app.get('/api/autopilot', (req, res) => res.json({ enabled: autopilotEnabled, target_temp: targetTemp, outdoor_temp: outdoorTemp, error: autopilotError }));
+
+app.get('/api/status', async (req, res) => {
+  await getOutdoorTemp(); await getIndoorTemp();
+  faseAttiva = calcolaFase();
+  indoorHum = calcolaUmiditaInterna(outdoorTemp, outdoorHum, indoorTemp);
+  thi = calcolaTHI(indoorTemp, indoorHum);
+  comfortLevel = calcolaComfortLevel(thi);
+  const mese = new Date().getMonth(), soglia = SOGLIE_MESE[mese], isInv = outdoorTemp !== null && outdoorTemp < 18, fc = !isInv && indoorTemp !== null && outdoorTemp !== null && outdoorTemp > (indoorTemp + TRIGGER);
+  let or = null; if (lastManualOverride && (Date.now() - lastManualOverride) < OVERRIDE_MS) or = Math.ceil((OVERRIDE_MS - (Date.now() - lastManualOverride)) / 3600000);
+  const sensoriAttivi = getSensoriAttivi ? getSensoriAttivi('sala', 30) : [];
+  res.json({ autopilot: autopilotEnabled, presence: presenceStatus, fase: faseAttiva, outdoor_temp: outdoorTemp, outdoor_hum: outdoorHum, indoor_temp: indoorTemp, indoor_hum: indoorHum, indoor_hum_source: indoorHumSource, sensori_attivi: sensoriAttivi.length, thi, comfort: comfortLevel, target_temp: targetTemp, soglia_mese: soglia, mese: mese + 1, is_inverno: isInv, forte_caldo: fc, override_attivo: !!or, override_rimanente_h: or, autopilot_error: autopilotError, ha_connected: haConnected, tier_level: tierLevel, cycle_log: lastCycleLog.slice(-5) });
+});
+
+app.get('/api/config', (req, res) => { const mese = new Date().getMonth(); res.json({ versione: '2.5-FaseA-v3', filosofia: 'Installa e non ci pensi piu', override_durata_h: 24, soglie_mese: SOGLIE_MESE, mese_corrente: mese + 1, soglia_corrente: SOGLIE_MESE[mese], orari: { giorno: `${ORA_GIORNO}:00`, notte: `${ORA_NOTTE}:00` }, target_giorno: T_GIORNO, target_notte: T_NOTTE, target_away: T_AWAY, floor: FLOOR, dry_soglia: DRY_SOGLIA, tier_levels: { 0: 'Base', 1: 'Smart', 2: 'Ottimizzato' }, note: ['Fonte meteo: HA weather (Meteo.it/Met.no) > Open-Meteo fallback (solo temp)', 'Soglia DRY: 65% — ATTIVA solo con sensore reale, BLOCCATA su stimata', 'Thermostat escluso da calcolo T_int', 'Umidita: media sensori ZHA attivi (<30min), altrimenti formula stimata', 'Temperatura: PRIORITA sensori ZHA tarati, fallback helper/clima', 'Calibrazione umidita: raccogliere 7-14 giorni con sensori reali'] }); });
+app.post('/api/bolletta', (req, res) => { tierLevel = 2; res.json({ success: true, tier_level: tierLevel, message: 'Bolletta ricevuta. Ottimizzato attivato.', nota: 'Usa /api/bollette/upload per PDF parser' }); });
+
+// --- SIMULAZIONE SENSORE (per test senza hardware) ---
+app.post('/api/sensori/simula', (req, res) => {
+  const { temperatura, umidita, sensore_id } = req.body;
+  if (temperatura === undefined || umidita === undefined) {
+    return res.status(400).json({ errore: 'Servono temperatura e umidita' });
+  }
+  const record = {
+    stanza: 'sala',
+    sensore_id: sensore_id || 'simulato',
+    temperatura: parseFloat(temperatura),
+    umidita: parseFloat(umidita),
+    timestamp: new Date().toISOString(),
+    fonte: 'simulazione'
+  };
+  if (storicoSensori) storicoSensori.push(record);
+  res.json({ ok: true, messaggio: 'Dato simulato registrato', record, fonte_attiva: 'reale' });
+});
+
+app.use(express.static('public'));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => { console.log(`========================================`); console.log(` EcoHybrid v2.5-FaseA-v3 | Port ${PORT}`); console.log(` HA weather > Open-Meteo fallback (temp only)`); console.log(` Soglia DRY: ${DRY_SOGLIA}% | DRY BLOCCATO su umidita stimata`); console.log(` Autopilot: OFF (default sicurezza)`); console.log(` Sensori: ZHA tarati > helper > clima`); console.log(` Poll HA: attivo (legge ogni 5 min)`); console.log(` Flight Recorder: /api/flight/*`); console.log(` Bollette: /api/bollette/* pronto`); console.log(`========================================`); });
